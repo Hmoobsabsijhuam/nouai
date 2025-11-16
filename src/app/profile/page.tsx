@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, Timestamp } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useFirebase, useMemoFirebase } from '@/firebase';
@@ -21,7 +21,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Header } from '@/components/dashboard/header';
-import { Loader2, X, User as UserIcon } from 'lucide-react';
+import { Loader2, X, User as UserIcon, CalendarIcon } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
@@ -29,10 +29,19 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/context/auth-context';
 import { useDoc } from '@/firebase/firestore/use-doc';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { Calendar } from '@/components/ui/calendar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 
 const formSchema = z.object({
   displayName: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
   email: z.string().email(),
+  dateOfBirth: z.date().optional(),
+  status: z.enum(["Active", "Away", "Do Not Disturb"]).optional(),
+  country: z.string().optional(),
 });
 
 function ProfileSkeleton() {
@@ -121,6 +130,9 @@ export default function ProfilePage() {
       form.reset({
         displayName: profileUser.displayName || '',
         email: profileUser.email || '',
+        dateOfBirth: profileUser.dateOfBirth ? (profileUser.dateOfBirth as Timestamp).toDate() : undefined,
+        status: profileUser.status || undefined,
+        country: profileUser.country || '',
       });
       if (profileUser.photoURL) {
         setPhotoPreview(profileUser.photoURL);
@@ -167,7 +179,7 @@ export default function ProfilePage() {
 
       const userDocRef = doc(firestore, 'users', targetUserId);
       await setDoc(userDocRef, {
-        displayName: values.displayName,
+        ...values,
         photoURL: photoURL,
       }, { merge: true });
       
@@ -273,6 +285,82 @@ export default function ProfilePage() {
                         <FormLabel>Email</FormLabel>
                         <FormControl>
                           <Input placeholder="name@example.com" {...field} disabled />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                   <FormField
+                    control={form.control}
+                    name="dateOfBirth"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Date of birth</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={"outline"}
+                                className={cn(
+                                  "w-[240px] pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value ? (
+                                  format(field.value, "PPP")
+                                ) : (
+                                  <span>Pick a date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              disabled={(date) =>
+                                date > new Date() || date < new Date("1900-01-01")
+                              }
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a status" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Active">Active</SelectItem>
+                            <SelectItem value="Away">Away</SelectItem>
+                            <SelectItem value="Do Not Disturb">Do Not Disturb</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="country"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Country</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g. United States" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

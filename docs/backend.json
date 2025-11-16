@@ -28,6 +28,20 @@
           "type": "string",
           "format": "date-time",
           "description": "The timestamp when the user was created."
+        },
+        "dateOfBirth": {
+          "type": "string",
+          "format": "date",
+          "description": "The user's date of birth."
+        },
+        "status": {
+          "type": "string",
+          "description": "The user's current status.",
+          "enum": ["Active", "Away", "Do Not Disturb"]
+        },
+        "country": {
+          "type": "string",
+          "description": "The user's country of residence."
         }
       },
       "required": [
