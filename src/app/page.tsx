@@ -6,7 +6,7 @@ import { useAuth } from '@/context/auth-context';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Header } from '@/components/dashboard/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle2, FileText, Bell, BarChart2 } from 'lucide-react';
+import { CheckCircle2, FileText, Bell } from 'lucide-react';
 import Image from 'next/image';
 import AdminDashboard from '@/components/dashboard/admin-dashboard';
 import {
@@ -15,6 +15,9 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart"
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
+import { useFirebase, useMemoFirebase } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
+import { useCollection } from '@/firebase/firestore/use-collection';
 
 const chartData = [
   { month: "January", desktop: 186 },
@@ -72,6 +75,18 @@ function DashboardSkeleton() {
 }
 
 function UserDashboard({ user }: { user: any }) {
+  const { firestore } = useFirebase();
+
+  const userNotificationsQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(
+      collection(firestore, 'users', user.uid, 'user_notifications'),
+      where('read', '==', false)
+    );
+  }, [firestore, user]);
+
+  const { data: notifications } = useCollection(userNotificationsQuery);
+
   return (
     <>
       <h1 className="mb-4 text-3xl font-bold tracking-tight">
@@ -113,7 +128,11 @@ function UserDashboard({ user }: { user: any }) {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <p className="text-muted-foreground">No new notifications.</p>
+                {notifications && notifications.length > 0 ? (
+                   <p className="text-muted-foreground">You have {notifications.length} unread notifications.</p>
+                ) : (
+                  <p className="text-muted-foreground">No new notifications.</p>
+                )}
               </div>
             </CardContent>
           </Card>

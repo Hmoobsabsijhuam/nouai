@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, getDocs, writeBatch, doc } from 'firebase/firestore';
 import { useFirebase } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -52,18 +52,37 @@ export default function NotificationsPage() {
     if (!firestore) return;
     setLoading(true);
     try {
+      // 1. Create the global notification
       const notificationsCollection = collection(firestore, 'notifications');
-      await addDoc(notificationsCollection, {
+      const newNotifDocRef = await addDoc(notificationsCollection, {
         message: values.message,
         createdAt: serverTimestamp(),
-        read: false, // Initially unread
       });
+
+      // 2. Fan-out to all users
+      const usersCollection = collection(firestore, 'users');
+      const usersSnapshot = await getDocs(usersCollection);
+      const batch = writeBatch(firestore);
+
+      usersSnapshot.forEach((userDoc) => {
+        const userNotifRef = doc(firestore, 'users', userDoc.id, 'user_notifications', newNotifDocRef.id);
+        batch.set(userNotifRef, {
+          message: values.message,
+          createdAt: serverTimestamp(),
+          read: false, // Per-user read status
+          globalNotificationId: newNotifDocRef.id,
+        });
+      });
+
+      await batch.commit();
+
       toast({
         title: 'Notification Sent',
-        description: 'Your message has been broadcast to all users.',
+        description: `Your message has been broadcast to ${usersSnapshot.size} users.`,
       });
       form.reset();
     } catch (error: any) {
+      console.error("Error sending notification:", error);
       toast({
         title: 'Error',
         description: 'Failed to send notification. Please try again.',

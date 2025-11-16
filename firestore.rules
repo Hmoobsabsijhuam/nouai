@@ -7,6 +7,7 @@
  *
  * Data Structure:
  * - /users/{userId}: Stores individual user profiles, accessible only to the user themselves.
+ * - /users/{userId}/user_notifications/{notificationId}: Stores per-user notification status.
  * - /roles_admin/{userId}: Stores admin role assignments; the existence of a document
  *   indicates admin privileges.
  * - /notifications/{notificationId}: Stores global notifications sent by admins.
@@ -28,6 +29,19 @@ service cloud.firestore {
       allow list: if isAdmin();
       allow create: if true;
       allow delete: if false;
+
+      /**
+       * @description Manages per-user notification data.
+       * @path /users/{userId}/user_notifications/{notificationId}
+       * @allow (get, list, update) - Owner can read and update their own notifications.
+       * @allow (create) - Admins can create (fan-out) notifications for users.
+       */
+      match /user_notifications/{notificationId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isAdmin();
+        allow update: if isOwner(userId) && request.resource.data.read == true;
+        allow delete: if false;
+      }
     }
 
     /**
@@ -54,14 +68,12 @@ service cloud.firestore {
      * @path /notifications/{notificationId}
      * @allow (list, get) - Any signed-in user can read notifications.
      * @allow (create) - Only admins can create new notifications.
-     * @allow (update) - Users can mark notifications as read.
-     * @deny (delete) - No one can delete notifications.
+     * @deny (update, delete) - Nobody can change a global notification after creation.
      */
     match /notifications/{notificationId} {
       allow list, get: if isSignedIn();
       allow create: if isAdmin();
-      allow update: if isSignedIn() && request.resource.data.read == true;
-      allow delete: if false;
+      allow update, delete: if false;
     }
 
     function isSignedIn() {

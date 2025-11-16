@@ -55,7 +55,28 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Notification",
       "type": "object",
-      "description": "Represents a notification sent to users.",
+      "description": "Represents a global notification sent by an admin.",
+      "properties": {
+        "message": {
+          "type": "string",
+          "description": "The content of the notification."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the notification was created."
+        }
+      },
+      "required": [
+        "message",
+        "createdAt"
+      ]
+    },
+    "UserNotification": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User Notification",
+      "type": "object",
+      "description": "Represents a user-specific notification, tracking read status.",
       "properties": {
         "message": {
           "type": "string",
@@ -68,13 +89,18 @@
         },
         "read": {
           "type": "boolean",
-          "description": "Indicates if the notification has been read by a user."
+          "description": "Indicates if the notification has been read by the user."
+        },
+        "globalNotificationId": {
+            "type": "string",
+            "description": "The ID of the original global notification."
         }
       },
       "required": [
         "message",
         "createdAt",
-        "read"
+        "read",
+        "globalNotificationId"
       ]
     }
   },
@@ -94,10 +120,16 @@
             "$ref": "#/backend/entities/User"
           },
           "description": "Stores user profiles. Uses path-based ownership for private user data, ensuring that only the authenticated user can access their profile.",
-          "params": [
+          "subcollections": [
             {
-              "name": "userId",
-              "description": "The unique identifier of the user."
+              "path": "user_notifications/{notificationId}",
+              "definition": {
+                "entityName": "UserNotification",
+                "schema": {
+                  "$ref": "#/backend/entities/UserNotification"
+                },
+                "description": "Stores notifications specific to a user, including their read status."
+              }
             }
           ]
         }
@@ -109,13 +141,7 @@
           "schema": {
             "$ref": "#/backend/entities/Admin"
           },
-          "description": "This collection stores admin role assignments. The existence of a document with the user's UID indicates that the user has admin privileges. This supports secure list operations (QAPs) by allowing rules to check for the existence of this document without needing to filter based on its contents.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user who has admin privileges."
-            }
-          ]
+          "description": "This collection stores admin role assignments. The existence of a document with the user's UID indicates that the user has admin privileges. This supports secure list operations (QAPs) by allowing rules to check for the existence of this document without needing to filter based on its contents."
         }
       },
       {
@@ -125,16 +151,10 @@
           "schema": {
             "$ref": "#/backend/entities/Notification"
           },
-          "description": "Stores global notifications sent by the admin to all users.",
-          "params": [
-            {
-              "name": "notificationId",
-              "description": "The unique identifier of the notification."
-            }
-          ]
+          "description": "Stores global notifications sent by the admin. These are fanned out to individual user notification subcollections."
         }
       }
     ],
-    "reasoning": "The Firestore structure is designed to securely manage user authentication and admin roles, ensuring authorization independence and supporting secure list operations (QAPs). We achieve this by separating user data and admin role definitions into distinct collections. The structure prioritizes simplicity and leverages path-based ownership for user data. Admin roles are determined by the *existence* of a document in a dedicated `/roles_admin/{uid}` collection, enabling simple presence checks in security rules without relying on complex data comparisons. This is more robust than storing the admin role within the user document itself. The path-based ownership structure `/users/{userId}` ensures secure `list` operations, as rules can easily restrict access based on the authenticated user ID. A global `notifications` collection is added for admins to broadcast messages to all users, with rules allowing all signed-in users to read and admins to write."
+    "reasoning": "The Firestore structure is designed to securely manage user authentication and admin roles, ensuring authorization independence and supporting secure list operations (QAPs). We achieve this by separating user data and admin role definitions into distinct collections. The structure prioritizes simplicity and leverages path-based ownership for user data. Admin roles are determined by the *existence* of a document in a dedicated `/roles_admin/{uid}` collection, enabling simple presence checks in security rules without relying on complex data comparisons. This is more robust than storing the admin role within the user document itself. The path-based ownership structure `/users/{userId}` ensures secure `list` operations, as rules can easily restrict access based on the authenticated user ID. A global `notifications` collection is added for admins to broadcast messages. A `user_notifications` subcollection is added under each user to handle per-user read status, improving scalability and query efficiency."
   }
 }

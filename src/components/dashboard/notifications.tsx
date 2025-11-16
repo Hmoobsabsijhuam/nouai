@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Bell } from 'lucide-react';
-import { collection, query, orderBy, limit, serverTimestamp, updateDoc, doc } from 'firebase/firestore';
+import { collection, query, orderBy, limit, writeBatch, doc } from 'firebase/firestore';
 import { useCollection, WithId } from '@/firebase/firestore/use-collection';
 import { useFirebase, useMemoFirebase } from '@/firebase';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/popover';
 import { formatDistanceToNow } from 'date-fns';
 
-interface Notification {
+interface UserNotification {
   message: string;
   createdAt: any; // Firestore Timestamp
   read: boolean;
@@ -23,34 +23,36 @@ export function Notifications() {
   const { firestore, user } = useFirebase();
   const [open, setOpen] = useState(false);
 
-  const notificationsCollection = useMemoFirebase(
+  const notificationsQuery = useMemoFirebase(
     () =>
-      firestore
+      firestore && user
         ? query(
-            collection(firestore, 'notifications'),
+            collection(firestore, 'users', user.uid, 'user_notifications'),
             orderBy('createdAt', 'desc'),
             limit(10)
           )
         : null,
-    [firestore]
+    [firestore, user]
   );
   
-  const { data: notifications, isLoading } = useCollection<Notification>(
-    notificationsCollection
+  const { data: notifications, isLoading } = useCollection<UserNotification>(
+    notificationsQuery
   );
 
   const unreadCount = notifications?.filter(n => !n.read).length || 0;
 
   useEffect(() => {
-    if (open && user && notifications) {
-      // When popover opens, mark all visible notifications as read
+    if (open && user && firestore && notifications) {
+      // When popover opens, mark all visible notifications as read for the current user
       const unreadNotifications = notifications.filter(n => !n.read);
+      if (unreadNotifications.length === 0) return;
+
+      const batch = writeBatch(firestore);
       unreadNotifications.forEach(notif => {
-        if (firestore) {
-          const notifRef = doc(firestore, 'notifications', notif.id);
-          updateDoc(notifRef, { read: true });
-        }
+        const notifRef = doc(firestore, 'users', user.uid, 'user_notifications', notif.id);
+        batch.update(notifRef, { read: true });
       });
+      batch.commit().catch(console.error);
     }
   }, [open, user, firestore, notifications]);
 
