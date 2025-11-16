@@ -4,10 +4,11 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useFirebase } from '@/firebase';
+import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,15 +20,14 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Header } from '@/components/dashboard/header';
-import { Loader2, X } from 'lucide-react';
+import { Loader2, X, User as UserIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User as UserIcon } from 'lucide-react';
+import { Label } from '@/components/ui/label';
 
 const formSchema = z.object({
   displayName: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -68,9 +68,10 @@ function ProfileSkeleton() {
 
 export default function ProfilePage() {
   const { user, firestore, isUserLoading, auth, firebaseApp } = useFirebase();
+  const { updateUser } = useAuth(); // Get the updateUser function
   const router = useRouter();
   const { toast } = useToast();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
@@ -89,29 +90,14 @@ export default function ProfilePage() {
   }, [user, isUserLoading, router]);
 
   useEffect(() => {
-    if (user && firestore) {
-      const fetchUserData = async () => {
-        const userDocRef = doc(firestore, 'users', user.uid);
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          form.reset({
-            displayName: userData.displayName || user.displayName || '',
-            email: userData.email || user.email || '',
-          });
-          setPhotoPreview(userData.photoURL || user.photoURL);
-        } else {
-            form.reset({
-                displayName: user.displayName || '',
-                email: user.email || '',
-            });
-            setPhotoPreview(user.photoURL);
-        }
-        setLoading(false);
-      };
-      fetchUserData();
+    if (user) {
+      form.reset({
+        displayName: user.displayName || '',
+        email: user.email || '',
+      });
+      setPhotoPreview(user.photoURL);
     }
-  }, [user, firestore, form]);
+  }, [user, form]);
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -125,7 +111,7 @@ export default function ProfilePage() {
     if (!firestore || !user || !auth?.currentUser || !firebaseApp) return;
     setLoading(true);
     try {
-      let photoURL = photoPreview;
+      let photoURL = user.photoURL; // Start with the existing photoURL
 
       if (photoFile) {
         const storage = getStorage(firebaseApp);
@@ -145,22 +131,25 @@ export default function ProfilePage() {
       await setDoc(userDocRef, {
         displayName: values.displayName,
         photoURL: photoURL,
-        email: values.email, // ensure email is saved
-        id: user.uid, // ensure id is saved
+        email: values.email, 
+        id: user.uid,
       }, { merge: true });
+
+      // Manually update the user in the auth context
+      updateUser(auth.currentUser);
 
       toast({
         title: 'Profile Updated',
         description: 'Your profile has been successfully updated.',
       });
+      
       setPhotoFile(null); // Reset file input after successful upload
-      // Manually update the preview to the new URL to avoid stale data
-      setPhotoPreview(photoURL);
+      setPhotoPreview(photoURL); // Ensure preview shows the new URL
     } catch (error: any) {
       console.error("Profile update error:", error);
       toast({
         title: 'Error',
-        description: 'Failed to update profile. Please try again.',
+        description: error.message || 'Failed to update profile. Please try again.',
         variant: 'destructive',
       });
     } finally {
@@ -168,12 +157,8 @@ export default function ProfilePage() {
     }
   }
 
-  if (isUserLoading || loading) {
+  if (isUserLoading || !user) {
     return <ProfileSkeleton />;
-  }
-
-  if (!user) {
-    return null; // or a redirect component
   }
 
   return (

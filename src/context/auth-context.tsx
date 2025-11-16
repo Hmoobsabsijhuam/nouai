@@ -3,14 +3,35 @@
 import type { ReactNode } from 'react';
 import { useFirebase, UserHookResult } from '@/firebase';
 import { createContext, useContext } from 'react';
+import { User } from 'firebase/auth';
 
-const AuthContext = createContext<UserHookResult | undefined>(undefined);
+// Extend the context to include a function to update the user
+interface AuthContextType extends UserHookResult {
+  updateUser: (user: User) => void;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const userHook = useFirebase();
+  const firebaseHook = useFirebase();
+  const { user, isUserLoading, userError, setUser } = firebaseHook;
+
+  // The function that will be exposed to update the user state
+  const updateUser = (newUser: User) => {
+    if (setUser) {
+      setUser(newUser);
+    }
+  };
+
+  const contextValue = {
+    user,
+    isUserLoading,
+    userError,
+    updateUser, // Provide the updater function
+  };
 
   return (
-    <AuthContext.Provider value={{ user: userHook.user, isUserLoading: userHook.isUserLoading, userError: userHook.userError }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

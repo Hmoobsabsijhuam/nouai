@@ -1,6 +1,6 @@
 'use client';
 
-import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
+import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect, Dispatch, SetStateAction } from 'react';
 import { FirebaseApp } from 'firebase/app';
 import { Firestore } from 'firebase/firestore';
 import { Auth, User, onAuthStateChanged } from 'firebase/auth';
@@ -30,6 +30,7 @@ export interface FirebaseContextState {
   user: User | null;
   isUserLoading: boolean; // True during initial auth check
   userError: Error | null; // Error from auth listener
+  setUser: Dispatch<SetStateAction<User | null>> | null;
 }
 
 // Return type for useFirebase()
@@ -40,6 +41,7 @@ export interface FirebaseServicesAndUser {
   user: User | null;
   isUserLoading: boolean;
   userError: Error | null;
+  setUser: Dispatch<SetStateAction<User | null>> | null;
 }
 
 // Return type for useUser() - specific to user auth state
@@ -61,29 +63,35 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   firestore,
   auth,
 }) => {
-  const [userAuthState, setUserAuthState] = useState<UserAuthState>({
-    user: null,
-    isUserLoading: true, // Start loading until first auth event
-    userError: null,
-  });
+  const [user, setUser] = useState<User | null>(null);
+  const [isUserLoading, setIsUserLoading] = useState(true);
+  const [userError, setUserError] = useState<Error | null>(null);
+
 
   // Effect to subscribe to Firebase auth state changes
   useEffect(() => {
     if (!auth) { // If no Auth service instance, cannot determine user state
-      setUserAuthState({ user: null, isUserLoading: false, userError: new Error("Auth service not provided.") });
+      setUser(null);
+      setIsUserLoading(false);
+      setUserError(new Error("Auth service not provided."));
       return;
     }
 
-    setUserAuthState({ user: null, isUserLoading: true, userError: null }); // Reset on auth instance change
+    setIsUserLoading(true); // Reset on auth instance change
+    setUserError(null);
 
     const unsubscribe = onAuthStateChanged(
       auth,
       (firebaseUser) => { // Auth state determined
-        setUserAuthState({ user: firebaseUser, isUserLoading: false, userError: null });
+        setUser(firebaseUser);
+        setIsUserLoading(false);
+        setUserError(null);
       },
       (error) => { // Auth listener error
         console.error("FirebaseProvider: onAuthStateChanged error:", error);
-        setUserAuthState({ user: null, isUserLoading: false, userError: error });
+        setUser(null);
+        setIsUserLoading(false);
+        setUserError(error);
       }
     );
     return () => unsubscribe(); // Cleanup
@@ -97,11 +105,12 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
       firebaseApp: servicesAvailable ? firebaseApp : null,
       firestore: servicesAvailable ? firestore : null,
       auth: servicesAvailable ? auth : null,
-      user: userAuthState.user,
-      isUserLoading: userAuthState.isUserLoading,
-      userError: userAuthState.userError,
+      user,
+      isUserLoading,
+      userError,
+      setUser
     };
-  }, [firebaseApp, firestore, auth, userAuthState]);
+  }, [firebaseApp, firestore, auth, user, isUserLoading, userError]);
 
   return (
     <FirebaseContext.Provider value={contextValue}>
@@ -133,6 +142,7 @@ export const useFirebase = (): FirebaseServicesAndUser => {
     user: context.user,
     isUserLoading: context.isUserLoading,
     userError: context.userError,
+    setUser: context.setUser,
   };
 };
 
