@@ -22,6 +22,7 @@ import Link from 'next/link';
 interface UserData {
   email: string;
   id: string;
+  displayName: string;
 }
 
 export default function AdminDashboard({ user }: { user: any }) {
@@ -87,6 +88,7 @@ export default function AdminDashboard({ user }: { user: any }) {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Display Name</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>User ID</TableHead>
                 <TableHead>Role</TableHead>
@@ -96,6 +98,7 @@ export default function AdminDashboard({ user }: { user: any }) {
               {isLoading ? (
                 Array.from({ length: 3 }).map((_, i) => (
                   <TableRow key={i}>
+                    <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-[250px]" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-[250px]" /></TableCell>
                     <TableCell><Skeleton className="h-6 w-[70px] rounded-full" /></TableCell>
@@ -104,6 +107,7 @@ export default function AdminDashboard({ user }: { user: any }) {
               ) : users && users.length > 0 ? (
                 users.map((u: WithId<UserData>) => (
                   <TableRow key={u.id}>
+                    <TableCell>{u.displayName || 'N/A'}</TableCell>
                     <TableCell className="font-medium">{u.email}</TableCell>
                     <TableCell>{u.id}</TableCell>
                     <TableCell>
@@ -117,7 +121,7 @@ export default function AdminDashboard({ user }: { user: any }) {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center">
+                  <TableCell colSpan={4} className="text-center">
                     No users found.
                   </TableCell>
                 </TableRow>
