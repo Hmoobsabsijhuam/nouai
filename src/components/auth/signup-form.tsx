@@ -55,7 +55,11 @@ export function SignupForm() {
     setLoading(true);
     try {
       await createUserWithEmailAndPassword(auth, values.email, values.password);
-      router.push('/');
+      toast({
+        title: 'Account Created',
+        description: 'You can now sign in with your credentials.',
+      });
+      router.push('/login');
     } catch (error: any) {
       toast({
         title: 'Sign Up Failed',
