@@ -74,7 +74,8 @@ function DashboardSkeleton() {
   );
 }
 
-function UserDashboard({ user }: { user: any }) {
+function UserDashboard() {
+  const { user } = useAuth(); // Use context to get live user data
   const { firestore } = useFirebase();
 
   const userNotificationsQuery = useMemoFirebase(() => {
@@ -86,6 +87,10 @@ function UserDashboard({ user }: { user: any }) {
   }, [firestore, user]);
 
   const { data: notifications } = useCollection(userNotificationsQuery);
+
+  if (!user) {
+    return null; // Should not happen if logic in DashboardPage is correct
+  }
 
   return (
     <>
@@ -207,7 +212,7 @@ export default function DashboardPage() {
     <div className="flex min-h-screen w-full flex-col bg-background">
       <Header />
       <main className="flex-1 p-4 md:p-8">
-        {isAdmin ? <AdminDashboard user={user} /> : <UserDashboard user={user} />}
+        {isAdmin ? <AdminDashboard user={user} /> : <UserDashboard />}
       </main>
     </div>
   );
