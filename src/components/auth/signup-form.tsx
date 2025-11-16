@@ -7,10 +7,10 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { useFirebase } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { getFirestore, doc } from 'firebase/firestore';
-import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { doc, setDoc } from 'firebase/firestore';
+
 
 import { Button } from '@/components/ui/button';
 import {
@@ -42,6 +42,7 @@ const formSchema = z
 export function SignupForm() {
   const router = useRouter();
   const { toast } = useToast();
+  const { auth, firestore } = useFirebase();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -57,22 +58,23 @@ export function SignupForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true);
+    if (!auth || !firestore) return;
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
 
       await updateProfile(user, { displayName: values.displayName });
       
-      const db = getFirestore();
-      const userDocRef = doc(db, 'users', user.uid);
+      const userDocRef = doc(firestore, 'users', user.uid);
       
       const userData = {
         id: user.uid,
         email: user.email,
         displayName: values.displayName,
+        photoURL: user.photoURL,
       };
 
-      setDocumentNonBlocking(userDocRef, userData, { merge: true });
+      await setDoc(userDocRef, userData, { merge: true });
 
       toast({
         title: 'Account Created',

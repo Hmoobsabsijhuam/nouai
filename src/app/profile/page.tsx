@@ -67,7 +67,7 @@ function ProfileSkeleton() {
 
 
 export default function ProfilePage() {
-  const { user, firestore, isUserLoading, auth } = useFirebase();
+  const { user, firestore, isUserLoading, auth, firebaseApp } = useFirebase();
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -123,13 +123,13 @@ export default function ProfilePage() {
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!firestore || !user || !auth?.currentUser) return;
+    if (!firestore || !user || !auth?.currentUser || !firebaseApp) return;
     setLoading(true);
     try {
-      let photoURL = user.photoURL;
+      let photoURL = photoPreview;
 
       if (photoFile) {
-        const storage = getStorage();
+        const storage = getStorage(firebaseApp);
         const storageRef = ref(storage, `profile-pictures/${user.uid}`);
         const uploadResult = await uploadBytes(storageRef, photoFile);
         photoURL = await getDownloadURL(uploadResult.ref);
@@ -146,6 +146,8 @@ export default function ProfilePage() {
       await setDoc(userDocRef, {
         displayName: values.displayName,
         photoURL: photoURL,
+        email: values.email, // ensure email is saved
+        id: user.uid, // ensure id is saved
       }, { merge: true });
 
       toast({
@@ -153,7 +155,12 @@ export default function ProfilePage() {
         description: 'Your profile has been successfully updated.',
       });
       setPhotoFile(null); // Reset file input after successful upload
+      // Force a reload of the user object to reflect changes in the UI
+      await auth.currentUser.reload();
+      // Manually update the preview to the new URL to avoid stale data
+      setPhotoPreview(photoURL);
     } catch (error: any) {
+      console.error("Profile update error:", error);
       toast({
         title: 'Error',
         description: 'Failed to update profile. Please try again.',

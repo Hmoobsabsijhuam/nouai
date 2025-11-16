@@ -3,8 +3,7 @@
 import { LogOut, User as UserIcon, Settings } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 
-import { useAuth } from '@/context/auth-context';
-import { auth } from '@/lib/firebase';
+import { useFirebase } from '@/firebase';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,10 +17,12 @@ import {
 import Link from 'next/link';
 
 export function UserNav() {
-  const { user } = useAuth();
+  const { user, auth } = useFirebase();
 
   const handleLogout = async () => {
-    await signOut(auth);
+    if(auth) {
+      await signOut(auth);
+    }
   };
 
   if (!user) {
@@ -33,9 +34,11 @@ export function UserNav() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-9 w-9 rounded-full">
           <Avatar className="h-9 w-9">
-            <AvatarImage src={user.photoURL ?? ''} alt={user.email ?? ''} />
+            <AvatarImage src={user.photoURL ?? ''} alt={user.displayName ?? user.email ?? ''} />
             <AvatarFallback>
-              {user.email ? (
+              {user.displayName ? (
+                user.displayName.charAt(0).toUpperCase()
+              ) : user.email ? (
                 user.email.charAt(0).toUpperCase()
               ) : (
                 <UserIcon className="h-5 w-5" />
