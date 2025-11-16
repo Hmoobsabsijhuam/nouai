@@ -20,9 +20,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Header } from '@/components/dashboard/header';
-import { Loader2 } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
+import Link from 'next/link';
 
 const formSchema = z.object({
   displayName: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -151,8 +152,18 @@ export default function ProfilePage() {
         <div className="w-full max-w-2xl">
           <Card>
             <CardHeader>
-              <CardTitle>My Profile</CardTitle>
-              <CardDescription>Manage your account settings and profile information.</CardDescription>
+                <div className="flex items-start justify-between">
+                    <div>
+                        <CardTitle>My Profile</CardTitle>
+                        <CardDescription>Manage your account settings and profile information.</CardDescription>
+                    </div>
+                     <Link href="/" passHref>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <X className="h-5 w-5" />
+                            <span className="sr-only">Close</span>
+                        </Button>
+                    </Link>
+                </div>
             </CardHeader>
             <CardContent>
               <Form {...form}>
