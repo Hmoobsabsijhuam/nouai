@@ -184,7 +184,7 @@ export default function ProfilePage() {
       
       // Create a clean data object, removing undefined values
       const dataToSave = Object.fromEntries(
-        Object.entries(values).filter(([, value]) => value !== undefined)
+        Object.entries(values).filter(([, value]) => value !== undefined && value !== '')
       );
 
       await setDoc(userDocRef, {
@@ -346,7 +346,7 @@ export default function ProfilePage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Marital Status</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value || ''}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select a status" />
@@ -388,5 +388,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
