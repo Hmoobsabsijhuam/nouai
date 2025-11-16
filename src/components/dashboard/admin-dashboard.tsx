@@ -83,8 +83,6 @@ export default function AdminDashboard({ user }: { user: any }) {
     setSelectedDay(data);
   };
 
-  const userCount = users ? users.length : 0;
-
   return (
     <div>
       <h1 className="mb-4 text-3xl font-bold tracking-tight">
@@ -180,68 +178,6 @@ export default function AdminDashboard({ user }: { user: any }) {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>All Registered Users</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Avatar</TableHead>
-                <TableHead>Display Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Joined</TableHead>
-                <TableHead>Role</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                Array.from({ length: 3 }).map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell><Skeleton className="h-10 w-10 rounded-full" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-[250px]" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
-                    <TableCell><Skeleton className="h-6 w-[70px] rounded-full" /></TableCell>
-                  </TableRow>
-                ))
-              ) : users && users.length > 0 ? (
-                users.map((u: WithId<UserData>) => (
-                  <TableRow key={u.id}>
-                    <TableCell>
-                      <Avatar>
-                        <AvatarImage src={u.photoURL ?? undefined} alt={u.displayName || ''} />
-                        <AvatarFallback>
-                           {u.displayName ? u.displayName.charAt(0).toUpperCase() : u.email.charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                    </TableCell>
-                    <TableCell>{u.displayName || 'N/A'}</TableCell>
-                    <TableCell className="font-medium">{u.email}</TableCell>
-                    <TableCell>
-                      {u.createdAt ? format(u.createdAt.toDate(), 'MMM d, yyyy') : 'N/A'}
-                    </TableCell>
-                    <TableCell>
-                      {u.email === 'admin@noukha.com' ? (
-                        <Badge>Admin</Badge>
-                      ) : (
-                        <Badge variant="secondary">User</Badge>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center">
-                    No users found.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
       <Dialog open={!!selectedDay} onOpenChange={() => setSelectedDay(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
