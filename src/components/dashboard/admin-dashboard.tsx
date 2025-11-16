@@ -28,6 +28,7 @@ import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { format } from 'date-fns';
+import { UserListDialog } from './user-list-dialog';
 
 interface UserData {
   email: string;
@@ -46,6 +47,7 @@ type ChartDataItem = {
 export default function AdminDashboard({ user }: { user: any }) {
   const { firestore } = useFirebase();
   const [selectedDay, setSelectedDay] = useState<ChartDataItem | null>(null);
+  const [isUserListOpen, setIsUserListOpen] = useState(false);
 
   const usersCollection = useMemoFirebase(
     () => (firestore ? collection(firestore, 'users') : null),
@@ -103,9 +105,12 @@ export default function AdminDashboard({ user }: { user: any }) {
             ) : (
               <div className="text-2xl font-bold">{totalUsers}</div>
             )}
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground mb-4">
               Total number of users in the system.
             </p>
+             <Button size="sm" onClick={() => setIsUserListOpen(true)} disabled={isLoading}>
+              View All Users
+            </Button>
           </CardContent>
         </Card>
         <Card>
@@ -217,6 +222,12 @@ export default function AdminDashboard({ user }: { user: any }) {
           </div>
         </DialogContent>
       </Dialog>
+      <UserListDialog 
+          isOpen={isUserListOpen} 
+          onOpenChange={setIsUserListOpen}
+          users={users}
+          isLoading={isLoading}
+        />
     </div>
   );
 }
