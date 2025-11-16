@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 import { useFirebase, UserHookResult } from '@/firebase';
-import { createContext, useContext, Dispatch, SetStateAction } from 'react';
+import { createContext, useContext } from 'react';
 import { User } from 'firebase/auth';
 
 // Extend the context to include a function to update the user
@@ -22,7 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const contextValue = {
+  const contextValue: AuthContextType = {
     user,
     isUserLoading,
     userError,
@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export const useAuth = () => {
+export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');

@@ -27,6 +27,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Label } from '@/components/ui/label';
+import { useAuth } from '@/context/auth-context';
 
 const formSchema = z.object({
   displayName: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -66,7 +67,8 @@ function ProfileSkeleton() {
 
 
 export default function ProfilePage() {
-  const { user, firestore, isUserLoading, auth, firebaseApp, setUser } = useFirebase();
+  const { user, firestore, isUserLoading, auth, firebaseApp } = useFirebase();
+  const { updateUser } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -108,7 +110,7 @@ export default function ProfilePage() {
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!firestore || !user || !auth?.currentUser || !firebaseApp || !setUser) return;
+    if (!firestore || !user || !auth?.currentUser || !firebaseApp || !updateUser) return;
     setLoading(true);
     try {
       let photoURL = user.photoURL;
@@ -136,7 +138,7 @@ export default function ProfilePage() {
       await auth.currentUser.reload();
       const freshUser = auth.currentUser;
       
-      setUser(freshUser);
+      updateUser(freshUser);
 
       toast({
         title: 'Profile Updated',
