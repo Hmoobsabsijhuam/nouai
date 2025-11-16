@@ -9,6 +9,8 @@ import * as z from 'zod';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
+import { getFirestore, doc } from 'firebase/firestore';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -54,7 +56,19 @@ export function SignupForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true);
     try {
-      await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const user = userCredential.user;
+      
+      const db = getFirestore();
+      const userDocRef = doc(db, 'users', user.uid);
+      
+      const userData = {
+        id: user.uid,
+        email: user.email,
+      };
+
+      setDocumentNonBlocking(userDocRef, userData, { merge: true });
+
       toast({
         title: 'Account Created',
         description: 'You can now sign in with your credentials.',

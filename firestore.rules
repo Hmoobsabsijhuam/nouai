@@ -11,10 +11,9 @@
  *   indicates admin privileges.
  *
  * Key Security Decisions:
- * - Users can only access their own profile data.
- * - Admin privileges are granted based on the existence of a document in the
- *   /roles_admin collection.
- * - Listing of users is not allowed.
+ * - Users can only be created.
+ * - Admin can list users.
+ * - Listing of users is not allowed for non-admins.
  *
  * Denormalization for Authorization:
  * - Admin status is determined by the presence of a document in `/roles_admin/{userId}`,
@@ -26,28 +25,18 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Secure user profiles under /users/{userId}. Only the authenticated user can read/write their own profile.
+     * @description Secure user profiles under /users/{userId}.
      * @path /users/{userId}
-     * @allow (create) - User 'test_user' with id 'test_user' can create their own profile.
-     *   - request.auth.uid: 'test_user'
-     *   - resource.data.id: 'test_user'
-     * @allow (get, update, delete) - User 'test_user' with id 'test_user' can read, update, and delete their profile.
-     *   - request.auth.uid: 'test_user'
-     *   - resource.data.id: 'test_user'
-     * @deny (create) - User 'other_user' cannot create a profile for 'test_user'.
-     *   - request.auth.uid: 'other_user'
-     *   - resource.data.id: 'test_user'
-     * @deny (get, update, delete) - User 'other_user' cannot read, update, or delete the profile of 'test_user'.
-     *   - request.auth.uid: 'other_user'
-     *   - resource.data.id: 'test_user'
-     * @principle Enforces document ownership for all read and write operations.
+     * @allow (create) - Any user can create a profile.
+     * @allow (list) - Admin can list all users.
+     * @deny (get, update, delete) - No one can read, update, or delete individual user profiles.
      */
     match /users/{userId} {
-      allow get: if isOwner(userId);
-      allow list: if false;
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingOwner(userId);
+      allow get: if false;
+      allow list: if isAdmin();
+      allow create: if true;
+      allow update: if false;
+      allow delete: if false;
     }
 
     /**
