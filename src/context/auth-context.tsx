@@ -6,7 +6,8 @@ import { createContext, useContext } from 'react';
 import { User } from 'firebase/auth';
 
 // Extend the context to include a function to update the user
-interface AuthContextType extends UserHookResult {
+interface AuthContextType extends Omit<UserHookResult, 'isUserLoading'> {
+  loading: boolean;
   updateUser: (user: User | null) => void;
 }
 
@@ -24,7 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const contextValue: AuthContextType = {
     user,
-    isUserLoading,
+    loading: isUserLoading,
     userError,
     updateUser, // Provide the updater function
   };

@@ -114,7 +114,7 @@ export default function ProfilePage() {
         toast({ title: "Access Denied", description: "You can only view your own profile.", variant: 'destructive' });
         router.replace('/');
     }
-  }, [currentUser, isAuthLoading, router, profileUserId, isAdmin]);
+  }, [currentUser, isAuthLoading, router, profileUserId, isAdmin, toast]);
 
   useEffect(() => {
     if (profileUser) {
@@ -171,10 +171,14 @@ export default function ProfilePage() {
         photoURL: photoURL,
       }, { merge: true });
       
+      // If the current user updated their own profile, reload their auth state
+      // to get the latest data (displayName, photoURL) and update the app's context.
       if(isOwnProfile && auth.currentUser) {
         await auth.currentUser.reload();
         const freshUser = auth.currentUser;
-        if(updateUser) updateUser(freshUser);
+        if(updateUser) {
+          updateUser(freshUser);
+        }
       }
 
       toast({
