@@ -7,7 +7,7 @@ import { User } from 'firebase/auth';
 
 // Extend the context to include a function to update the user
 interface AuthContextType extends UserHookResult {
-  updateUser: (user: User) => void;
+  updateUser: (user: User | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -17,7 +17,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { user, isUserLoading, userError, setUser } = firebaseHook;
 
   // The function that will be exposed to update the user state
-  const updateUser = (newUser: User) => {
+  const updateUser = (newUser: User | null) => {
     if (setUser) {
       setUser(newUser);
     }

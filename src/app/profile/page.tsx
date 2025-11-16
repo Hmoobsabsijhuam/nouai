@@ -136,7 +136,10 @@ export default function ProfilePage() {
       }, { merge: true });
       
       await auth.currentUser.reload();
-      updateUser(auth.currentUser);
+      const freshUser = auth.currentUser;
+      if (freshUser) {
+        updateUser(freshUser);
+      }
 
       toast({
         title: 'Profile Updated',
