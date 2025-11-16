@@ -2,12 +2,13 @@
 
 import type { ReactNode } from 'react';
 import { useFirebase, UserHookResult } from '@/firebase';
-import { createContext, useContext } from 'react';
+import { createContext, useContext, Dispatch, SetStateAction } from 'react';
 import { User } from 'firebase/auth';
 
 // Extend the context to include a function to update the user
 interface AuthContextType extends UserHookResult {
   updateUser: (user: User | null) => void;
+  setUser: Dispatch<SetStateAction<User | null>> | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,6 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isUserLoading,
     userError,
     updateUser, // Provide the updater function
+    setUser,
   };
 
   return (
