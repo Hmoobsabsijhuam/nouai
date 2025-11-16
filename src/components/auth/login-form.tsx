@@ -65,7 +65,7 @@ export function LoginForm() {
 
   return (
     <AuthCard
-      title="Welcome Back"
+      title="Nou AI Login"
       description="Enter your credentials to access your account"
     >
       <Form {...form}>
