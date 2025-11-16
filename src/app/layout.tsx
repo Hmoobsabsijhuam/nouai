@@ -4,7 +4,7 @@ import { Providers } from './providers';
 import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
-  title: 'SecureLogin',
+  title: 'Nou AI',
   description: 'Secure user authentication with Firebase and Next.js',
 };
 
