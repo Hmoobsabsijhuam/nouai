@@ -1,11 +1,10 @@
 'use client';
 
-import { useMemo } from 'react';
-import { collection, getFirestore } from 'firebase/firestore';
+import { collection } from 'firebase/firestore';
 import { useCollection } from '@/firebase/firestore/use-collection';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users } from 'lucide-react';
-import { useFirebase } from '@/firebase';
+import { useFirebase, useMemoFirebase } from '@/firebase';
 
 export default function AdminDashboard({ user }: { user: any }) {
   const { firestore } = useFirebase();
