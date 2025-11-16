@@ -1,0 +1,88 @@
+/**
+ * @fileoverview Firestore Security Rules for SecureLogin application.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model for user profiles
+ * and uses a dedicated collection to manage admin roles.
+ *
+ * Data Structure:
+ * - /users/{userId}: Stores individual user profiles, accessible only to the user themselves.
+ * - /roles_admin/{userId}: Stores admin role assignments; the existence of a document
+ *   indicates admin privileges.
+ *
+ * Key Security Decisions:
+ * - Users can only access their own profile data.
+ * - Admin privileges are granted based on the existence of a document in the
+ *   /roles_admin collection.
+ * - Listing of users is not allowed.
+ *
+ * Denormalization for Authorization:
+ * - Admin status is determined by the presence of a document in `/roles_admin/{userId}`,
+ *   avoiding the need to store admin status in the user document and preventing
+ *   unauthorized modifications.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Secure user profiles under /users/{userId}. Only the authenticated user can read/write their own profile.
+     * @path /users/{userId}
+     * @allow (create) - User 'test_user' with id 'test_user' can create their own profile.
+     *   - request.auth.uid: 'test_user'
+     *   - resource.data.id: 'test_user'
+     * @allow (get, update, delete) - User 'test_user' with id 'test_user' can read, update, and delete their profile.
+     *   - request.auth.uid: 'test_user'
+     *   - resource.data.id: 'test_user'
+     * @deny (create) - User 'other_user' cannot create a profile for 'test_user'.
+     *   - request.auth.uid: 'other_user'
+     *   - resource.data.id: 'test_user'
+     * @deny (get, update, delete) - User 'other_user' cannot read, update, or delete the profile of 'test_user'.
+     *   - request.auth.uid: 'other_user'
+     *   - resource.data.id: 'test_user'
+     * @principle Enforces document ownership for all read and write operations.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Manages admin roles using documents under /roles_admin/{userId}. The presence of a document signifies admin status.
+     * @path /roles_admin/{userId}
+     * @allow (create) - Admin account 'admin@noukha.com' can create their admin role document.
+     *   - request.auth.uid: [The UID associated with admin@noukha.com]
+     * @allow (get) - Any authenticated user can check if they have admin privileges by reading their role document.
+     *   - request.auth.uid: 'some_user'
+     * @deny (create) - A non-admin user cannot create their own admin role document.
+     *   - request.auth.uid: 'normal_user'
+     * @principle Restricts admin role creation to authorized personnel.
+     */
+    match /roles_admin/{userId} {
+      allow get: if isSignedIn();
+      allow list: if false;
+      allow create: if isAdmin();
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    function isAdmin() {
+      return request.auth.token.email == 'admin@noukha.com';
+    }
+  }
+}
