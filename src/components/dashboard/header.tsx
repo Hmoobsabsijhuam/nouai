@@ -1,7 +1,18 @@
+'use client';
+
 import Link from 'next/link';
 import { Logo } from '@/components/icons/logo';
 import { UserNav } from './user-nav';
 import { Notifications } from './notifications';
+import { Home, Search, MoreVertical } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export function Header() {
   return (
@@ -11,8 +22,35 @@ export function Header() {
           <Logo className="h-8 w-8" />
           <span className="text-lg font-bold">Nou AI</span>
         </Link>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 md:gap-4">
+           <Link href="/" passHref>
+            <Button variant="ghost" size="icon">
+              <Home className="h-5 w-5" />
+              <span className="sr-only">Home</span>
+            </Button>
+          </Link>
+          <div className="relative w-full max-w-xs">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search..."
+              className="pl-9"
+            />
+          </div>
           <Notifications />
+           <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <MoreVertical className="h-5 w-5" />
+                <span className="sr-only">More options</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem>Settings</DropdownMenuItem>
+              <DropdownMenuItem>Support</DropdownMenuItem>
+              <DropdownMenuItem>Help</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <UserNav />
         </div>
       </div>
