@@ -182,10 +182,14 @@ export default function ProfilePage() {
 
       const userDocRef = doc(firestore, 'users', targetUserId);
       
-      // Create a clean data object, removing undefined values
-      const dataToSave = Object.fromEntries(
-        Object.entries(values).filter(([, value]) => value !== undefined && value !== '')
-      );
+      const dataToSave: any = {};
+      Object.keys(values).forEach(key => {
+        const value = (values as any)[key];
+        if (value !== undefined && value !== '') {
+          dataToSave[key] = value;
+        }
+      });
+
 
       await setDoc(userDocRef, {
         ...dataToSave,
@@ -368,7 +372,7 @@ export default function ProfilePage() {
                       <FormItem>
                         <FormLabel>Country</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g. United States" {...field} />
+                          <Input placeholder="e.g. United States" {...field} value={field.value ?? ''} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
