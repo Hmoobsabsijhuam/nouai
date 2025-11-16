@@ -40,7 +40,7 @@ const formSchema = z.object({
   displayName: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
   email: z.string().email(),
   dateOfBirth: z.date().optional(),
-  status: z.enum(["Active", "Away", "Do Not Disturb"]).optional(),
+  status: z.enum(["Single", "Married"]).optional(),
   country: z.string().optional(),
 });
 
@@ -345,7 +345,7 @@ export default function ProfilePage() {
                     name="status"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Status</FormLabel>
+                        <FormLabel>Marital Status</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
@@ -353,9 +353,8 @@ export default function ProfilePage() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="Active">Active</SelectItem>
-                            <SelectItem value="Away">Away</SelectItem>
-                            <SelectItem value="Do Not Disturb">Do Not Disturb</SelectItem>
+                            <SelectItem value="Single">Single</SelectItem>
+                            <SelectItem value="Married">Married</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />

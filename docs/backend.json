@@ -36,8 +36,11 @@
         },
         "status": {
           "type": "string",
-          "description": "The user's current status.",
-          "enum": ["Active", "Away", "Do Not Disturb"]
+          "description": "The user's marital status.",
+          "enum": [
+            "Single",
+            "Married"
+          ]
         },
         "country": {
           "type": "string",
