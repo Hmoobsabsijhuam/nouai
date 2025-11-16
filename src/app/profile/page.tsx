@@ -68,7 +68,7 @@ function ProfileSkeleton() {
 
 export default function ProfilePage() {
   const { user, firestore, isUserLoading, auth, firebaseApp } = useFirebase();
-  const { updateUser } = useAuth(); // Get the updateUser function
+  const { updateUser } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -95,7 +95,9 @@ export default function ProfilePage() {
         displayName: user.displayName || '',
         email: user.email || '',
       });
-      setPhotoPreview(user.photoURL);
+      if (user.photoURL) {
+        setPhotoPreview(user.photoURL);
+      }
     }
   }, [user, form]);
 
@@ -111,7 +113,7 @@ export default function ProfilePage() {
     if (!firestore || !user || !auth?.currentUser || !firebaseApp) return;
     setLoading(true);
     try {
-      let photoURL = user.photoURL; // Start with the existing photoURL
+      let photoURL = user.photoURL;
 
       if (photoFile) {
         const storage = getStorage(firebaseApp);
@@ -120,13 +122,11 @@ export default function ProfilePage() {
         photoURL = await getDownloadURL(uploadResult.ref);
       }
       
-      // Update Firebase Auth profile
       await updateProfile(auth.currentUser, {
         displayName: values.displayName,
         photoURL: photoURL,
       });
 
-      // Update Firestore document
       const userDocRef = doc(firestore, 'users', user.uid);
       await setDoc(userDocRef, {
         displayName: values.displayName,
@@ -134,8 +134,8 @@ export default function ProfilePage() {
         email: values.email, 
         id: user.uid,
       }, { merge: true });
-
-      // Manually update the user in the auth context
+      
+      await auth.currentUser.reload();
       updateUser(auth.currentUser);
 
       toast({
@@ -143,8 +143,7 @@ export default function ProfilePage() {
         description: 'Your profile has been successfully updated.',
       });
       
-      setPhotoFile(null); // Reset file input after successful upload
-      setPhotoPreview(photoURL); // Ensure preview shows the new URL
+      setPhotoFile(null);
     } catch (error: any) {
       console.error("Profile update error:", error);
       toast({
