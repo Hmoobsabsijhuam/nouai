@@ -181,8 +181,14 @@ export default function ProfilePage() {
       }
 
       const userDocRef = doc(firestore, 'users', targetUserId);
+      
+      // Create a clean data object, removing undefined values
+      const dataToSave = Object.fromEntries(
+        Object.entries(values).filter(([, value]) => value !== undefined)
+      );
+
       await setDoc(userDocRef, {
-        ...values,
+        ...dataToSave,
         photoURL: photoURL,
       }, { merge: true });
       
