@@ -8,14 +8,12 @@ import { User } from 'firebase/auth';
 // Extend the context to include a function to update the user
 interface AuthContextType extends UserHookResult {
   updateUser: (user: User | null) => void;
-  setUser: Dispatch<SetStateAction<User | null>> | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const firebaseHook = useFirebase();
-  const { user, isUserLoading, userError, setUser } = firebaseHook;
+  const { user, isUserLoading, userError, setUser } = useFirebase();
 
   // The function that will be exposed to update the user state
   const updateUser = (newUser: User | null) => {
@@ -29,7 +27,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isUserLoading,
     userError,
     updateUser, // Provide the updater function
-    setUser,
   };
 
   return (

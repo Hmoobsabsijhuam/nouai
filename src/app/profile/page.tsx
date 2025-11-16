@@ -8,7 +8,6 @@ import { doc, setDoc } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useFirebase } from '@/firebase';
-import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import {
@@ -67,8 +66,7 @@ function ProfileSkeleton() {
 
 
 export default function ProfilePage() {
-  const { user, firestore, isUserLoading, auth, firebaseApp } = useFirebase();
-  const { updateUser } = useAuth();
+  const { user, firestore, isUserLoading, auth, firebaseApp, setUser } = useFirebase();
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -110,7 +108,7 @@ export default function ProfilePage() {
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!firestore || !user || !auth?.currentUser || !firebaseApp) return;
+    if (!firestore || !user || !auth?.currentUser || !firebaseApp || !setUser) return;
     setLoading(true);
     try {
       let photoURL = user.photoURL;
@@ -137,9 +135,8 @@ export default function ProfilePage() {
       
       await auth.currentUser.reload();
       const freshUser = auth.currentUser;
-      if (freshUser) {
-        updateUser(freshUser);
-      }
+      
+      setUser(freshUser);
 
       toast({
         title: 'Profile Updated',
