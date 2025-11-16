@@ -9,7 +9,7 @@ import * as z from 'zod';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { useFirebase } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 
 import { Button } from '@/components/ui/button';
@@ -72,6 +72,7 @@ export function SignupForm() {
         email: user.email,
         displayName: values.displayName,
         photoURL: user.photoURL,
+        createdAt: serverTimestamp(),
       };
 
       await setDoc(userDocRef, userData, { merge: true });
