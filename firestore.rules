@@ -20,13 +20,13 @@ service cloud.firestore {
      * @path /users/{userId}
      * @allow (create) - Any user can create a profile.
      * @allow (list) - Admin can list all users.
-     * @deny (get, update, delete) - No one can read, update, or delete individual user profiles.
+     * @allow (get, update) - Only the owner can get and update their own profile.
+     * @deny (delete) - No one can delete profiles.
      */
     match /users/{userId} {
-      allow get: if false;
+      allow get, update: if isOwner(userId);
       allow list: if isAdmin();
       allow create: if true;
-      allow update: if false;
       allow delete: if false;
     }
 

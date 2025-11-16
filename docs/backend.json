@@ -14,6 +14,10 @@
           "type": "string",
           "description": "User's email address.",
           "format": "email"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "The user's display name."
         }
       },
       "required": [

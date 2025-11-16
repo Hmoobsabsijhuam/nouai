@@ -1,6 +1,6 @@
 'use client';
 
-import { LogOut, User as UserIcon } from 'lucide-react';
+import { LogOut, User as UserIcon, Settings } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 
 import { useAuth } from '@/context/auth-context';
@@ -15,6 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import Link from 'next/link';
 
 export function UserNav() {
   const { user } = useAuth();
@@ -54,6 +55,13 @@ export function UserNav() {
             </p>
           </div>
         </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild className="cursor-pointer">
+          <Link href="/profile">
+            <Settings className="mr-2 h-4 w-4" />
+            <span>Profile</span>
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={handleLogout} className="cursor-pointer">
           <LogOut className="mr-2 h-4 w-4" />

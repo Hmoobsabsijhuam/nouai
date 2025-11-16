@@ -75,7 +75,7 @@ function UserDashboard({ user }: { user: any }) {
   return (
     <>
       <h1 className="mb-4 text-3xl font-bold tracking-tight">
-        Welcome, {user.email}!
+        Welcome, {user.displayName || user.email}!
       </h1>
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">

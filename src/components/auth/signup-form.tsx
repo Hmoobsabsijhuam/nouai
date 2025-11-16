@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { getFirestore, doc } from 'firebase/firestore';
@@ -27,6 +27,7 @@ import { Eye, EyeOff, UserPlus } from 'lucide-react';
 
 const formSchema = z
   .object({
+    displayName: z.string().min(2, { message: 'Display name must be at least 2 characters.' }),
     email: z.string().email({ message: 'Please enter a valid email.' }),
     password: z
       .string()
@@ -47,6 +48,7 @@ export function SignupForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      displayName: '',
       email: '',
       password: '',
       confirmPassword: '',
@@ -58,6 +60,8 @@ export function SignupForm() {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
+
+      await updateProfile(user, { displayName: values.displayName });
       
       const db = getFirestore();
       const userDocRef = doc(db, 'users', user.uid);
@@ -65,6 +69,7 @@ export function SignupForm() {
       const userData = {
         id: user.uid,
         email: user.email,
+        displayName: values.displayName,
       };
 
       setDocumentNonBlocking(userDocRef, userData, { merge: true });
@@ -95,6 +100,19 @@ export function SignupForm() {
     >
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <FormField
+            control={form.control}
+            name="displayName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Display Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="Your Name" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           <FormField
             control={form.control}
             name="email"
