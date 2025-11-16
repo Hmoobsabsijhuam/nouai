@@ -16,8 +16,9 @@ import {
 } from "@/components/ui/chart"
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
 import { useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { collection, query, where, doc } from 'firebase/firestore';
 import { useCollection } from '@/firebase/firestore/use-collection';
+import { useDoc } from '@/firebase/firestore/use-doc';
 
 const chartData = [
   { month: "January", desktop: 186 },
@@ -75,27 +76,42 @@ function DashboardSkeleton() {
 }
 
 function UserDashboard() {
-  const { user } = useAuth(); // Use context to get live user data
+  const { user: authUser } = useAuth(); // Live auth user from context
   const { firestore } = useFirebase();
 
+  // Create a real-time listener for the user's profile document in Firestore
+  const userDocRef = useMemoFirebase(() => {
+    if (!firestore || !authUser) return null;
+    return doc(firestore, 'users', authUser.uid);
+  }, [firestore, authUser]);
+
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc(userDocRef);
+
+  // Use the Firestore profile data for display, but fall back to auth data
+  const displayName = userProfile?.displayName || authUser?.displayName || authUser?.email;
+
   const userNotificationsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
+    if (!firestore || !authUser) return null;
     return query(
-      collection(firestore, 'users', user.uid, 'user_notifications'),
+      collection(firestore, 'users', authUser.uid, 'user_notifications'),
       where('read', '==', false)
     );
-  }, [firestore, user]);
+  }, [firestore, authUser]);
 
   const { data: notifications } = useCollection(userNotificationsQuery);
 
-  if (!user) {
+  if (isProfileLoading) {
+    return <DashboardSkeleton />;
+  }
+  
+  if (!authUser) {
     return null; // Should not happen if logic in DashboardPage is correct
   }
 
   return (
     <>
       <h1 className="mb-4 text-3xl font-bold tracking-tight">
-        Welcome, {user.displayName || user.email}!
+        Welcome, {displayName}!
       </h1>
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
