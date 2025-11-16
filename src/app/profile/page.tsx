@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth';
 import { useFirebase } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
@@ -107,19 +107,19 @@ export default function ProfilePage() {
 
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!firestore || !user || !auth) return;
+    if (!firestore || !user || !auth?.currentUser) return;
     setLoading(true);
     try {
       // Update Firebase Auth profile
-      await updateProfile(auth.currentUser!, {
+      await updateProfile(auth.currentUser, {
         displayName: values.displayName,
       });
 
       // Update Firestore document
       const userDocRef = doc(firestore, 'users', user.uid);
-      await updateDoc(userDocRef, {
+      await setDoc(userDocRef, {
         displayName: values.displayName,
-      });
+      }, { merge: true });
 
       toast({
         title: 'Profile Updated',
