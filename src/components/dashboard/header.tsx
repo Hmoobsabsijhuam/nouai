@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Logo } from '@/components/icons/logo';
 import { UserNav } from './user-nav';
 import { Notifications } from './notifications';
-import { Home, Search, MoreVertical } from 'lucide-react';
+import { Home, Search, MoreVertical, LifeBuoy, HelpCircle, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -12,6 +12,8 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
 
 export function Header() {
@@ -46,9 +48,22 @@ export function Header() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>Settings</DropdownMenuItem>
-              <DropdownMenuItem>Support</DropdownMenuItem>
-              <DropdownMenuItem>Help</DropdownMenuItem>
+                <DropdownMenuLabel>More</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/profile">
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                    <LifeBuoy className="mr-2 h-4 w-4" />
+                    <span>Support</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                    <HelpCircle className="mr-2 h-4 w-4" />
+                    <span>Help</span>
+                </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <UserNav />
