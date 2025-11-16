@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Logo } from '@/components/icons/logo';
 import { UserNav } from './user-nav';
+import { Notifications } from './notifications';
 
 export function Header() {
   return (
@@ -10,7 +11,10 @@ export function Header() {
           <Logo className="h-8 w-8" />
           <span className="text-lg font-bold">SecureLogin</span>
         </Link>
-        <UserNav />
+        <div className="flex items-center gap-4">
+          <Notifications />
+          <UserNav />
+        </div>
       </div>
     </header>
   );

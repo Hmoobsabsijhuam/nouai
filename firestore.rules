@@ -9,16 +9,7 @@
  * - /users/{userId}: Stores individual user profiles, accessible only to the user themselves.
  * - /roles_admin/{userId}: Stores admin role assignments; the existence of a document
  *   indicates admin privileges.
- *
- * Key Security Decisions:
- * - Users can only be created.
- * - Admin can list users.
- * - Listing of users is not allowed for non-admins.
- *
- * Denormalization for Authorization:
- * - Admin status is determined by the presence of a document in `/roles_admin/{userId}`,
- *   avoiding the need to store admin status in the user document and preventing
- *   unauthorized modifications.
+ * - /notifications/{notificationId}: Stores global notifications sent by admins.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -56,6 +47,21 @@ service cloud.firestore {
       allow create: if isAdmin();
       allow update: if false;
       allow delete: if isAdmin();
+    }
+
+    /**
+     * @description Manages global notifications.
+     * @path /notifications/{notificationId}
+     * @allow (list, get) - Any signed-in user can read notifications.
+     * @allow (create) - Only admins can create new notifications.
+     * @allow (update) - Users can mark notifications as read.
+     * @deny (delete) - No one can delete notifications.
+     */
+    match /notifications/{notificationId} {
+      allow list, get: if isSignedIn();
+      allow create: if isAdmin();
+      allow update: if isSignedIn() && request.resource.data.read == true;
+      allow delete: if false;
     }
 
     function isSignedIn() {
