@@ -17,12 +17,14 @@ import { useFirebase, useMemoFirebase } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 
 interface UserData {
   email: string;
   id: string;
   displayName: string;
+  photoURL?: string;
 }
 
 export default function AdminDashboard({ user }: { user: any }) {
@@ -88,6 +90,7 @@ export default function AdminDashboard({ user }: { user: any }) {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Avatar</TableHead>
                 <TableHead>Display Name</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>User ID</TableHead>
@@ -98,6 +101,7 @@ export default function AdminDashboard({ user }: { user: any }) {
               {isLoading ? (
                 Array.from({ length: 3 }).map((_, i) => (
                   <TableRow key={i}>
+                    <TableCell><Skeleton className="h-10 w-10 rounded-full" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-[250px]" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-[250px]" /></TableCell>
@@ -107,6 +111,14 @@ export default function AdminDashboard({ user }: { user: any }) {
               ) : users && users.length > 0 ? (
                 users.map((u: WithId<UserData>) => (
                   <TableRow key={u.id}>
+                    <TableCell>
+                      <Avatar>
+                        <AvatarImage src={u.photoURL} alt={u.displayName || ''} />
+                        <AvatarFallback>
+                           {u.displayName ? u.displayName.charAt(0).toUpperCase() : u.email.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                    </TableCell>
                     <TableCell>{u.displayName || 'N/A'}</TableCell>
                     <TableCell className="font-medium">{u.email}</TableCell>
                     <TableCell>{u.id}</TableCell>
@@ -121,7 +133,7 @@ export default function AdminDashboard({ user }: { user: any }) {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center">
+                  <TableCell colSpan={5} className="text-center">
                     No users found.
                   </TableCell>
                 </TableRow>

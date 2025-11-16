@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useFirebase } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -20,10 +21,12 @@ import {
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Header } from '@/components/dashboard/header';
-import { Loader2, X } from 'lucide-react';
+import { Loader2, X, Upload } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { User as UserIcon } from 'lucide-react';
 
 const formSchema = z.object({
   displayName: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -68,6 +71,8 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [isFormLoading, setIsFormLoading] = useState(true);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -94,11 +99,13 @@ export default function ProfilePage() {
             displayName: userData.displayName || user.displayName || '',
             email: userData.email || user.email || '',
           });
+          setPhotoPreview(userData.photoURL || user.photoURL);
         } else {
             form.reset({
                 displayName: user.displayName || '',
                 email: user.email || '',
             });
+            setPhotoPreview(user.photoURL);
         }
         setIsFormLoading(false);
       };
@@ -106,26 +113,45 @@ export default function ProfilePage() {
     }
   }, [user, firestore, form]);
 
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setPhotoFile(file);
+      setPhotoPreview(URL.createObjectURL(file));
+    }
+  };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!firestore || !user || !auth?.currentUser) return;
     setLoading(true);
     try {
+      let photoURL = user.photoURL;
+
+      if (photoFile) {
+        const storage = getStorage();
+        const storageRef = ref(storage, `profile-pictures/${user.uid}`);
+        const uploadResult = await uploadBytes(storageRef, photoFile);
+        photoURL = await getDownloadURL(uploadResult.ref);
+      }
+      
       // Update Firebase Auth profile
       await updateProfile(auth.currentUser, {
         displayName: values.displayName,
+        photoURL: photoURL,
       });
 
       // Update Firestore document
       const userDocRef = doc(firestore, 'users', user.uid);
       await setDoc(userDocRef, {
         displayName: values.displayName,
+        photoURL: photoURL,
       }, { merge: true });
 
       toast({
         title: 'Profile Updated',
         description: 'Your profile has been successfully updated.',
       });
+      setPhotoFile(null); // Reset file input after successful upload
     } catch (error: any) {
       toast({
         title: 'Error',
@@ -168,6 +194,23 @@ export default function ProfilePage() {
             <CardContent>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <div className="flex items-center gap-4">
+                        <Avatar className="h-20 w-20">
+                          <AvatarImage src={photoPreview ?? undefined} alt={user.displayName ?? ''} />
+                          <AvatarFallback>
+                            {user.displayName ? (
+                              user.displayName.charAt(0).toUpperCase()
+                            ) : (
+                              <UserIcon className="h-10 w-10" />
+                            )}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="grid w-full max-w-sm items-center gap-1.5">
+                            <Label htmlFor="picture">Profile Picture</Label>
+                            <Input id="picture" type="file" accept="image/*" onChange={handlePhotoChange} className="file:text-primary file:font-semibold" />
+                             <p className="text-xs text-muted-foreground">Recommended: Square image, up to 1MB.</p>
+                        </div>
+                    </div>
                   <FormField
                     control={form.control}
                     name="displayName"
