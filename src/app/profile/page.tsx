@@ -70,8 +70,7 @@ export default function ProfilePage() {
   const { user, firestore, isUserLoading, auth, firebaseApp } = useFirebase();
   const router = useRouter();
   const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
-  const [isFormLoading, setIsFormLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
@@ -108,7 +107,7 @@ export default function ProfilePage() {
             });
             setPhotoPreview(user.photoURL);
         }
-        setIsFormLoading(false);
+        setLoading(false);
       };
       fetchUserData();
     }
@@ -155,8 +154,6 @@ export default function ProfilePage() {
         description: 'Your profile has been successfully updated.',
       });
       setPhotoFile(null); // Reset file input after successful upload
-      // Force a reload of the user object to reflect changes in the UI
-      await auth.currentUser.reload();
       // Manually update the preview to the new URL to avoid stale data
       setPhotoPreview(photoURL);
     } catch (error: any) {
@@ -171,7 +168,7 @@ export default function ProfilePage() {
     }
   }
 
-  if (isUserLoading || isFormLoading) {
+  if (isUserLoading || loading) {
     return <ProfileSkeleton />;
   }
 
