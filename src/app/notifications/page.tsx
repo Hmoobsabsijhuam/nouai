@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -19,7 +20,7 @@ import {
 } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Send } from 'lucide-react';
+import { Send, X } from 'lucide-react';
 import { Header } from '@/components/dashboard/header';
 
 const formSchema = z.object({
@@ -88,8 +89,18 @@ export default function NotificationsPage() {
         <div className="w-full max-w-2xl">
           <Card>
             <CardHeader>
-              <CardTitle>Send a Notification</CardTitle>
-              <CardDescription>Broadcast a message to all registered users.</CardDescription>
+              <div className="flex items-start justify-between">
+                <div>
+                  <CardTitle>Send a Notification</CardTitle>
+                  <CardDescription>Broadcast a message to all registered users.</CardDescription>
+                </div>
+                <Link href="/" passHref>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <X className="h-5 w-5" />
+                      <span className="sr-only">Close</span>
+                  </Button>
+                </Link>
+              </div>
             </CardHeader>
             <CardContent>
               <Form {...form}>
