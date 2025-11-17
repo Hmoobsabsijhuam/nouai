@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { doc, setDoc, Timestamp, deleteDoc, query, collection, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
-import { updateProfile, sendPasswordResetEmail, deleteUser, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from 'firebase/auth';
+import { updateProfile, sendPasswordResetEmail, deleteUser, reauthenticateWithCredential, EmailAuthProvider, updatePassword, signOut } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useFirebase, useMemoFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
@@ -288,7 +288,7 @@ export default function ProfilePage() {
   }
 
   async function onPasswordSubmit(values: z.infer<typeof passwordFormSchema>) {
-    if (!currentUser || !currentUser.email || !firestore) {
+    if (!currentUser || !currentUser.email || !firestore || !auth) {
       toast({ title: 'Error', description: 'Not authenticated.', variant: 'destructive' });
       return;
     }
@@ -302,11 +302,13 @@ export default function ProfilePage() {
       await notifyAdmin(firestore, `User ${currentUser.email} has changed their password.`);
 
       toast({
-        title: 'Password Updated',
-        description: 'Your password has been changed successfully.',
+        title: 'Password Updated Successfully',
+        description: 'Please sign in again with your new password.',
       });
-      passwordForm.reset();
-      setShowPasswordForm(false);
+
+      await signOut(auth);
+      router.push('/login');
+
     } catch (error: any) {
       let description = 'An error occurred while changing your password.';
       if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
@@ -632,5 +634,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
