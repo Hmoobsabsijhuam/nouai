@@ -10,7 +10,7 @@ import { CheckCircle2, FileText, Bell, ArrowRight, ImageIcon, VideoIcon } from '
 import Image from 'next/image';
 import AdminDashboard from '@/components/dashboard/admin-dashboard';
 import { useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, limit, Timestamp } from 'firebase/firestore';
+import { collection, query, orderBy, limit, Timestamp, doc } from 'firebase/firestore';
 import { useCollection, WithId } from '@/firebase/firestore/use-collection';
 import { useDoc } from '@/firebase/firestore/use-doc';
 import { Button } from '@/components/ui/button';
@@ -295,3 +295,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
