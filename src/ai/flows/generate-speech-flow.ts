@@ -58,6 +58,7 @@ const generateSpeechFlow = ai.defineFlow(
     name: 'generateSpeechFlow',
     inputSchema: GenerateSpeechInputSchema,
     outputSchema: GenerateSpeechOutputSchema,
+    system: 'You are a multilingual AI assistant capable of generating audio from text in various languages, including Hmong.',
   },
   async (input) => {
     const { media } = await ai.generate({

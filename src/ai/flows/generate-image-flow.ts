@@ -29,6 +29,7 @@ const generateImageFlow = ai.defineFlow(
     name: 'generateImageFlow',
     inputSchema: GenerateImageInputSchema,
     outputSchema: GenerateImageOutputSchema,
+    system: 'You are a multilingual AI assistant capable of generating images from text prompts in various languages, including Hmong.',
   },
   async (input) => {
     const { media } = await ai.generate({
