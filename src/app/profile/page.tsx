@@ -7,7 +7,7 @@ import * as z from 'zod';
 import { doc, setDoc, Timestamp, deleteDoc, query, collection, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 import { updateProfile, sendPasswordResetEmail, deleteUser, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { useFirebase, useMemoFirebase } from '@/firebase';
+import { useFirebase, useMemoFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import {
@@ -58,7 +58,6 @@ const passwordFormSchema = z.object({
 
 async function notifyAdmin(firestore: any, message: string) {
   try {
-    // 1. Find the admin's user ID
     const usersRef = collection(firestore, 'users');
     const q = query(usersRef, where('email', '==', 'admin@noukha.com'));
     const querySnapshot = await getDocs(q);
@@ -71,16 +70,25 @@ async function notifyAdmin(firestore: any, message: string) {
     const adminDoc = querySnapshot.docs[0];
     const adminId = adminDoc.id;
 
-    // 2. Create a notification for the admin
     const adminNotifCollection = collection(firestore, 'users', adminId, 'user_notifications');
-    await addDoc(adminNotifCollection, {
+    const notificationData = {
       message: message,
       createdAt: serverTimestamp(),
       read: false,
+    };
+
+    addDoc(adminNotifCollection, notificationData).catch((error) => {
+      const permissionError = new FirestorePermissionError({
+        path: adminNotifCollection.path,
+        operation: 'create',
+        requestResourceData: notificationData,
+      });
+      errorEmitter.emit('permission-error', permissionError);
     });
+
   } catch (error) {
-    console.error("Failed to send admin notification:", error);
-    // We don't show a toast here because this is a background task.
+    // This outer try-catch handles errors from getDocs, not the addDoc.
+    console.error("Failed to find admin to send notification:", error);
   }
 }
 
@@ -624,3 +632,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
