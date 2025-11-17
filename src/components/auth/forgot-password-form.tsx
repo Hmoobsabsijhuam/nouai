@@ -59,11 +59,11 @@ export function ForgotPasswordForm() {
   if (submitted) {
     return (
       <AuthCard
-        title="Check Your Email"
-        description={`We've sent a password reset link to ${form.getValues('email')}.`}
+        title="Check Koj Tus Email"
+        description={`Peb twb xa ib tug link rau koj tus email ${form.getValues('email')}.`}
       >
         <div className="text-center text-sm">
-          Didn&apos;t receive it? Check your spam folder or{' '}
+          Yog tias tsis pom? Check koj lub spam folder los yog{' '}
           <button
             onClick={() => onSubmit(form.getValues())}
             disabled={loading}
@@ -75,7 +75,7 @@ export function ForgotPasswordForm() {
         </div>
         <div className="mt-6 text-center text-sm">
           <Link href="/login" className="font-semibold text-primary hover:underline">
-            Back to login
+            Rov qab login
           </Link>
         </div>
       </AuthCard>
@@ -103,7 +103,7 @@ export function ForgotPasswordForm() {
             )}
           />
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Sending...' : 'Xa tus Password Reset Link'}
+            {loading ? 'Tab tom xa...' : 'Xa tus Password Reset Link'}
             <KeyRound className="ml-2 h-4 w-4" />
           </Button>
         </form>

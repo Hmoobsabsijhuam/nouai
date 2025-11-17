@@ -187,7 +187,7 @@ export function SignupForm() {
       <div className="mt-6 text-center text-sm">
         Yog muaj account lawm ces rov mus ?{' '}
         <Link href="/login" className="font-semibold text-primary hover:underline">
-          Sign in
+          Nkag Mus
         </Link>
       </div>
     </AuthCard>

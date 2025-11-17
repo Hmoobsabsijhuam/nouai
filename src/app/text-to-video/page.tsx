@@ -20,7 +20,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Download, Loader2, Video, Wand2, X } from 'lucide-react';
 
 const formSchema = z.object({
-  prompt: z.string().min(5, { message: 'Prompt must be at least 5 characters long.' }),
+  prompt: z.string().min(5, { message: 'Prompt yuav tsum muaj yam tsawg kawg yog 5 tus niam ntawv.' }),
 });
 
 export default function GenerateVideoPage() {
@@ -76,11 +76,11 @@ export default function GenerateVideoPage() {
             createdAt: serverTimestamp(),
         });
 
-        toast({ title: 'Video Generated!', description: 'Your video has been created and saved.' });
+        toast({ title: 'Koj daim video tau lawm!', description: 'Koj daim video tsim tau thiab save cia lawm.' });
 
     } catch (error: any) {
-      console.error('Video generation failed:', error);
-      let description = 'An unexpected error occurred during video generation.';
+      console.error('Koj daim video tsim tsis tau:', error);
+      let description = 'Muaj tej yam yuam kev thaum Nou AI tab tom tsim koj daim video.';
        if (typeof error.message === 'string') {
         if (error.message.includes('429') || error.message.toLowerCase().includes('quota')) {
             description = 'You have exceeded the free usage limit for video generation. Please try again later.';
@@ -92,7 +92,7 @@ export default function GenerateVideoPage() {
       }
       
       toast({
-        title: 'Video Generation Failed',
+        title: 'Koj li video tsim tsis tau',
         description: description,
         variant: 'destructive',
       });
@@ -120,9 +120,9 @@ export default function GenerateVideoPage() {
                         <div>
                             <CardTitle className="flex items-center gap-2">
                                 <Video />
-                                Text-to-Video Generation
+                                Sau Prompt Ua Video
                             </CardTitle>
-                            <CardDescription>Describe the video you want to create. This can take up to a minute.</CardDescription>
+                            <CardDescription>Sau Koj Li Prompt Rau Nou AI. Nws Yuav Siv Sijhawm Me Ntsis Nawb.</CardDescription>
                         </div>
                         <Link href="/" passHref>
                             <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -142,7 +142,7 @@ export default function GenerateVideoPage() {
                                 <FormItem className="w-full">
                                     <FormLabel className="sr-only">Prompt</FormLabel>
                                     <FormControl>
-                                    <Input placeholder="e.g., A majestic dragon soaring over a mystical forest at dawn." {...field} />
+                                    <Input placeholder="Piv txwv: Ib tug hluas nkauj hmoob zoo zoo nkauj tab tom ntis plaub hau" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -150,7 +150,7 @@ export default function GenerateVideoPage() {
                             />
                             <Button type="submit" disabled={isGenerating} className="w-full sm:w-auto">
                                 {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-                                {isGenerating ? 'Generating...' : 'Generate'}
+                                {isGenerating ? 'Tab tom tsim...' : 'Tsim Video'}
                             </Button>
                         </form>
                     </Form>
@@ -160,13 +160,13 @@ export default function GenerateVideoPage() {
             {(isGenerating || generatedVideoUrl) && (
                 <Card className="mb-8">
                     <CardHeader>
-                        <CardTitle>Result</CardTitle>
+                        <CardTitle>Thaum Tawm Los</CardTitle>
                     </CardHeader>
                     <CardContent className="flex items-center justify-center">
                        {isGenerating ? (
                            <div className="flex flex-col items-center gap-4 p-8 text-muted-foreground">
                                <Loader2 className="h-8 w-8 animate-spin" />
-                               <p>Generating your video... this can take up to a minute.</p>
+                               <p>Tab tom tsim koj li Video... Nov yuav siv sijhawm me ntsis nawb.</p>
                            </div>
                        ) : generatedVideoUrl ? (
                            <video src={generatedVideoUrl} controls autoPlay muted loop className="rounded-lg w-full max-w-md"></video>
@@ -185,9 +185,9 @@ export default function GenerateVideoPage() {
 
             <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
                 <Video className="mx-auto h-12 w-12 text-muted-foreground" />
-                <h3 className="mt-4 text-lg font-semibold">Video Gallery Coming Soon</h3>
+                <h3 className="mt-4 text-lg font-semibold">Koj Daim Video Yuav Tshwm Ntawm No</h3>
                 <p className="mt-2 text-sm text-muted-foreground">
-                Your generated videos will appear here in a future update.
+                Koj cov video nws yuav tshwm rau ntawm no yog thaum koj sau prompt rau Nou AI lawm.
                 </p>
             </div>
         </div>

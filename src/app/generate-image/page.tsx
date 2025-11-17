@@ -24,7 +24,7 @@ import { Download, ImageIcon, Loader2, Wand2, X } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 const formSchema = z.object({
-  prompt: z.string().min(5, { message: 'Prompt must be at least 5 characters long.' }),
+  prompt: z.string().min(5, { message: 'Prompt yuav tsum muaj yam tsawg kawg yog 5 tus niam ntawv.' }),
 });
 
 interface GeneratedImage {
@@ -115,10 +115,10 @@ export default function GenerateImagePage() {
             createdAt: serverTimestamp(),
         });
 
-        toast({ title: 'Image Generated!', description: 'Your image has been created and saved.' });
+        toast({ title: 'Koj daim duab tau lawm lau!', description: 'Koj daim duab tsim tau thiab save cia lawm.' });
 
     } catch (error: any) {
-      console.error('Image generation failed:', error);
+      console.error('Koj daim duab tsim tsis tau:', error);
       let description = 'An unexpected error occurred.';
       if (typeof error.message === 'string') {
         if (error.message.includes('429') || error.message.toLowerCase().includes('quota')) {
@@ -129,7 +129,7 @@ export default function GenerateImagePage() {
       }
       
       toast({
-        title: 'Image Generation Failed',
+        title: 'Koj daim duab tsim tsis tau',
         description: description,
         variant: 'destructive',
       });
@@ -157,9 +157,9 @@ export default function GenerateImagePage() {
                         <div>
                             <CardTitle className="flex items-center gap-2">
                                 <Wand2 />
-                                Text-to-Image Generation
+                                Sau Prompt Tsim Duab
                             </CardTitle>
-                            <CardDescription>Describe the image you want to create. Be as specific as you can!</CardDescription>
+                            <CardDescription>Sau Koj li prompt rau Nou AI mam li tsim duab rau koj raws li qhov koj xav tau.</CardDescription>
                         </div>
                         <Link href="/" passHref>
                             <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -179,7 +179,7 @@ export default function GenerateImagePage() {
                                 <FormItem className="w-full">
                                     <FormLabel className="sr-only">Prompt</FormLabel>
                                     <FormControl>
-                                    <Input placeholder="e.g., A majestic lion in a futuristic city, cinematic lighting" {...field} />
+                                    <Input placeholder="Piv txwv: Ib tug hluas nkauj hmoob zoo zoo nkauj tab tom ntsis plaub hau" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -187,7 +187,7 @@ export default function GenerateImagePage() {
                             />
                             <Button type="submit" disabled={isGenerating} className="w-full sm:w-auto">
                                 {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-                                {isGenerating ? 'Generating...' : 'Generate'}
+                                {isGenerating ? 'Tab tom tsim duab...' : 'Tsim Duab'}
                             </Button>
                         </form>
                     </Form>
@@ -197,13 +197,13 @@ export default function GenerateImagePage() {
             {(isGenerating || generatedImageUrl) && (
                 <Card className="mb-8">
                     <CardHeader>
-                        <CardTitle>Result</CardTitle>
+                        <CardTitle>Thaum Tsim Tau Lawm</CardTitle>
                     </CardHeader>
                     <CardContent className="flex items-center justify-center">
                        {isGenerating ? (
                            <div className="flex flex-col items-center gap-4 p-8 text-muted-foreground">
                                <Loader2 className="h-8 w-8 animate-spin" />
-                               <p>Generating your masterpiece... this can take a moment.</p>
+                               <p>Tab tom tsim koj daim duab... Nov yuav siv sijhawm me ntsis.</p>
                            </div>
                        ) : generatedImageUrl ? (
                            <Image src={generatedImageUrl} alt={form.getValues('prompt')} width={512} height={512} className="rounded-lg" />
@@ -213,7 +213,7 @@ export default function GenerateImagePage() {
                         <CardFooter>
                            <Button onClick={handleDownload} className="w-full">
                                 <Download className="mr-2 h-4 w-4" />
-                                Download Image
+                                Download Duab
                             </Button>
                         </CardFooter>
                     )}
@@ -221,7 +221,7 @@ export default function GenerateImagePage() {
             )}
 
             <div className="space-y-4">
-                <h2 className="text-2xl font-bold tracking-tight">Your Gallery</h2>
+                <h2 className="text-2xl font-bold tracking-tight">Koj Cov Duab</h2>
                  {isImagesLoading ? (
                     <ImageGallerySkeleton />
                 ) : images && images.length > 0 ? (
@@ -245,9 +245,9 @@ export default function GenerateImagePage() {
                 ) : (
                     <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
                         <ImageIcon className="mx-auto h-12 w-12 text-muted-foreground" />
-                        <h3 className="mt-4 text-lg font-semibold">No images yet</h3>
+                        <h3 className="mt-4 text-lg font-semibold">Tseem Tsis Tau Muaj Duab Li</h3>
                         <p className="mt-2 text-sm text-muted-foreground">
-                        Your generated images will appear here.
+                        Koj cov duab yuav tshwm rau hauv qab no.
                         </p>
                     </div>
                 )}

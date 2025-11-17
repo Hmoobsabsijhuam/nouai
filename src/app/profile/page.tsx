@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { doc, setDoc, getDoc, Timestamp } from 'firebase/firestore';
+import { doc, setDoc, Timestamp } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useFirebase, useMemoFirebase } from '@/firebase';
@@ -34,6 +34,8 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ThemeToggle } from '@/components/dashboard/theme-toggle';
 
 
 const formSchema = z.object({
@@ -49,33 +51,42 @@ function ProfileSkeleton() {
     <div className="flex min-h-screen w-full flex-col bg-background">
       <Header />
       <main className="flex flex-1 justify-center p-4 md:p-8">
-        <div className="w-full max-w-2xl">
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-8 w-48" />
-              <Skeleton className="mt-2 h-4 w-full" />
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                 <div className="flex items-center gap-4">
-                  <Skeleton className="h-20 w-20 rounded-full" />
-                  <div className="w-full space-y-2">
-                    <Skeleton className="h-4 w-20" />
-                    <Skeleton className="h-10 w-full" />
+        <div className="w-full max-w-4xl">
+           <div className="space-y-4">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-4 w-full" />
+            <div className="flex items-center gap-4 border-b pb-4">
+                <Skeleton className="h-10 w-24" />
+                <Skeleton className="h-10 w-24" />
+                <Skeleton className="h-10 w-24" />
+            </div>
+            <Card>
+                <CardHeader>
+                  <Skeleton className="h-6 w-32" />
+                  <Skeleton className="mt-2 h-4 w-3/4" />
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-4">
+                      <Skeleton className="h-20 w-20 rounded-full" />
+                      <div className="w-full space-y-2">
+                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-10 w-full" />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-10 w-full" />
+                    </div>
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-10 w-full" />
+                    </div>
+                    <Skeleton className="h-10 w-32" />
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-20" />
-                  <Skeleton className="h-10 w-full" />
-                </div>
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-20" />
-                  <Skeleton className="h-10 w-full" />
-                </div>
-                <Skeleton className="h-10 w-32" />
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+            </Card>
+          </div>
         </div>
       </main>
     </div>
@@ -121,7 +132,6 @@ export default function ProfilePage() {
     if (!isAuthLoading && !currentUser) {
       router.replace('/login');
     }
-    // Admin trying to access non-existent user or user trying to access other's profile
     if (!isAuthLoading && profileUserId && !isAdmin && profileUserId !== currentUser?.uid) {
         toast({ title: "Access Denied", description: "You can only view your own profile.", variant: 'destructive' });
         router.replace('/');
@@ -200,8 +210,8 @@ export default function ProfilePage() {
       }
 
       toast({
-        title: 'Profile Updated',
-        description: 'The profile has been successfully updated.',
+        title: 'Profile Update Lawm',
+        description: 'Koj li profile tau update lawm.',
       });
       
       setPhotoFile(null);
@@ -226,160 +236,201 @@ export default function ProfilePage() {
   return (
     <div className="flex min-h-screen w-full flex-col bg-background">
       <Header />
-      <main className="flex flex-1 justify-center p-4 md:p-8">
-        <div className="w-full max-w-2xl">
-          <Card>
-            <CardHeader>
-                <div className="flex items-start justify-between">
-                    <div>
-                        <CardTitle>{isOwnProfile ? 'My Profile' : `Editing ${profileUser?.displayName || profileUser?.email}`}</CardTitle>
-                        <CardDescription>Manage account settings and profile information.</CardDescription>
+      <main className="flex-1 p-4 md:p-8">
+        <div className="mx-auto w-full max-w-4xl space-y-6">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+            <p className="text-muted-foreground">Manage your account settings and set e-mail preferences.</p>
+          </div>
+          
+           <Tabs defaultValue="profile" className="w-full">
+            <TabsList>
+              <TabsTrigger value="profile">Profile</TabsTrigger>
+              <TabsTrigger value="account">Account</TabsTrigger>
+              <TabsTrigger value="appearance">Appearance</TabsTrigger>
+            </TabsList>
+            <TabsContent value="profile">
+               <Card>
+                <CardHeader>
+                    <CardTitle>Kuv Li Profile</CardTitle>
+                    <CardDescription>Kho koj li details ntawm koj tus profile.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                 {!profileUser && !isProfileLoading ? (
+                     <div className="text-center py-10">
+                         <p className="text-muted-foreground">User not found.</p>
                     </div>
-                     <Link href="/" passHref>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <X className="h-5 w-5" />
-                            <span className="sr-only">Close</span>
-                        </Button>
-                    </Link>
-                </div>
-            </CardHeader>
-            <CardContent>
-             {!profileUser && !isProfileLoading ? (
-                 <div className="text-center py-10">
-                     <p className="text-muted-foreground">User not found.</p>
-                </div>
-             ) : (
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                    <div className="flex items-center gap-4">
-                        <Avatar className="h-20 w-20">
-                          <AvatarImage src={photoPreview ?? undefined} alt={profileUser?.displayName ?? ''} />
-                          <AvatarFallback>
-                            {profileUser?.displayName ? (
-                              profileUser.displayName.charAt(0).toUpperCase()
-                            ) : profileUser?.email ? (
-                               profileUser.email.charAt(0).toUpperCase()
-                            ) : (
-                              <UserIcon className="h-10 w-10" />
-                            )}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="grid w-full max-w-sm items-center gap-1.5">
-                            <Label htmlFor="picture">Profile Picture</Label>
-                            <Input id="picture" type="file" accept="image/*" onChange={handlePhotoChange} className="file:text-primary file:font-semibold" />
-                             <p className="text-xs text-muted-foreground">Recommended: Square image, up to 1MB.</p>
-                        </div>
-                    </div>
-                  <FormField
-                    control={form.control}
-                    name="displayName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Display Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Your Name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input placeholder="name@example.com" {...field} disabled />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                   <FormField
-                    control={form.control}
-                    name="dateOfBirth"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>Date of birth</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant={"outline"}
-                                className={cn(
-                                  "w-[240px] pl-3 text-left font-normal",
-                                  !field.value && "text-muted-foreground"
-                                )}
-                              >
-                                {field.value ? (
-                                  format(field.value, "PPP")
+                 ) : (
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                        <div className="flex items-center gap-4">
+                            <Avatar className="h-20 w-20">
+                              <AvatarImage src={photoPreview ?? undefined} alt={profileUser?.displayName ?? ''} />
+                              <AvatarFallback>
+                                {profileUser?.displayName ? (
+                                  profileUser.displayName.charAt(0).toUpperCase()
+                                ) : profileUser?.email ? (
+                                   profileUser.email.charAt(0).toUpperCase()
                                 ) : (
-                                  <span>Pick a date</span>
+                                  <UserIcon className="h-10 w-10" />
                                 )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="grid w-full max-w-sm items-center gap-1.5">
+                                <Label htmlFor="picture">Duab Profile</Label>
+                                <Input id="picture" type="file" accept="image/*" onChange={handlePhotoChange} className="file:text-primary file:font-semibold" />
+                                 <p className="text-xs text-muted-foreground">Recommended: Duab ua plaub ceg, yam ntau kawg yog 1MB.</p>
+                            </div>
+                        </div>
+                      <FormField
+                        control={form.control}
+                        name="displayName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Koj Lub Npe</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Koj Lub Npe" {...field} />
                             </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              disabled={(date) =>
-                                date > new Date() || date < new Date("1900-01-01")
-                              }
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="status"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Marital Status</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value ?? ''}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a status" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="Single">Single</SelectItem>
-                            <SelectItem value="Married">Married</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="country"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Country</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g. United States" {...field} value={field.value ?? ''} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button type="submit" disabled={loading}>
-                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {loading ? 'Saving...' : 'Save Changes'}
-                  </Button>
-                </form>
-              </Form>
-             )}
-            </CardContent>
-          </Card>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                              <Input placeholder="kojtusemail@example.com" {...field} disabled />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                       <FormField
+                        control={form.control}
+                        name="dateOfBirth"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-col">
+                            <FormLabel>Koj lub hnub yug</FormLabel>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                      "w-[240px] pl-3 text-left font-normal",
+                                      !field.value && "text-muted-foreground"
+                                    )}
+                                  >
+                                    {field.value ? (
+                                      format(field.value, "PPP")
+                                    ) : (
+                                      <span>Tso koj lub hnub yug</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={field.value}
+                                  onSelect={field.onChange}
+                                  disabled={(date) =>
+                                    date > new Date() || date < new Date("1900-01-01")
+                                  }
+                                  initialFocus
+                                />
+                              </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="status"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Puas tau muaj neej</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value ?? ''}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="xaiv koj li status" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="Single">Tus Hluas</SelectItem>
+                                <SelectItem value="Married">Muaj Neej Lawm</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="country"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Koj lub teb chaws</FormLabel>
+                            <FormControl>
+                              <Input placeholder="e.g. United States" {...field} value={field.value ?? ''} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <Button type="submit" disabled={loading}>
+                        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        {loading ? 'Saving...' : 'Save Changes'}
+                      </Button>
+                    </form>
+                  </Form>
+                 )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+            <TabsContent value="account">
+               <Card>
+                <CardHeader>
+                    <CardTitle>Account</CardTitle>
+                    <CardDescription>Manage your account settings.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                   <div>
+                       <h3 className="font-medium">Change Password</h3>
+                       <p className="text-sm text-muted-foreground">You will be redirected to a secure page to change your password.</p>
+                        <Button variant="outline" className="mt-2">Change Password</Button>
+                   </div>
+                   <div>
+                       <h3 className="font-medium text-destructive">Delete Account</h3>
+                       <p className="text-sm text-muted-foreground">Permanently delete your account and all associated data. This action cannot be undone.</p>
+                       <Button variant="destructive" className="mt-2">Delete Account</Button>
+                   </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            <TabsContent value="appearance">
+               <Card>
+                <CardHeader>
+                    <CardTitle>Appearance</CardTitle>
+                    <CardDescription>Customize the look and feel of the application.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                   <div className="flex items-center justify-between rounded-lg border p-4">
+                        <div>
+                            <h3 className="font-medium">Theme</h3>
+                            <p className="text-sm text-muted-foreground">Select the theme for the dashboard.</p>
+                        </div>
+                        <ThemeToggle />
+                   </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
     </div>

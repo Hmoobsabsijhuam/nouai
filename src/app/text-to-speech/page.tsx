@@ -20,7 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Download, Loader2, Mic, Wand2, X } from 'lucide-react';
 
 const formSchema = z.object({
-  text: z.string().min(5, { message: 'Text must be at least 5 characters long.' }),
+  text: z.string().min(5, { message: 'Cov ntawv yam tsawg kawg yuav tsum muaj li 5 tus niam ntawv.' }),
   voice: z.enum(['Algenib', 'Achernar', 'Erinome', 'Gacrux', 'Puck']),
 });
 
@@ -130,7 +130,7 @@ export default function GenerateSpeechPage() {
                                 name="text"
                                 render={({ field }) => (
                                 <FormItem className="w-full">
-                                    <FormLabel>Text to Convert</FormLabel>
+                                    <FormLabel>Cov ntawv yuav hloov ua suab</FormLabel>
                                     <FormControl>
                                       <Textarea placeholder="Nyob zoo ntawm no kuv yog Nou AI yuav pab koj tsim koj lub suab." {...field} className="min-h-[150px]" />
                                     </FormControl>
@@ -143,7 +143,7 @@ export default function GenerateSpeechPage() {
                                 name="voice"
                                 render={({ field }) => (
                                 <FormItem className="w-full sm:w-1/2">
-                                    <FormLabel>Select a Voice</FormLabel>
+                                    <FormLabel>Xaiv ib lub suab uas koj nyiam</FormLabel>
                                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                                     <FormControl>
                                         <SelectTrigger>
@@ -188,7 +188,7 @@ export default function GenerateSpeechPage() {
                         <CardFooter>
                            <Button onClick={handleDownload} className="w-full">
                                 <Download className="mr-2 h-4 w-4" />
-                                Download Audio (.wav)
+                                Download Suab (.wav)
                             </Button>
                         </CardFooter>
                     )}
