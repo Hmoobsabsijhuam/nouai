@@ -6,7 +6,7 @@ import { useCollection, WithId } from '@/firebase/firestore/use-collection';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Users, Send, CalendarIcon, MessageSquare, Clock, LifeBuoy, Loader2 } from 'lucide-react';
+import { Users, Send, CalendarIcon, MessageSquare, Clock, LifeBuoy, Loader2, Bell } from 'lucide-react';
 import { useFirebase, useMemoFirebase } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,7 @@ import { UserListDialog } from './user-list-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 interface UserData {
   email: string;
@@ -374,6 +375,27 @@ export default function AdminDashboard({ user }: { user: any }) {
                 </CardHeader>
                 <CardContent>
                     <SupportTickets tickets={openSupportTickets} isLoading={isTicketsLoading} onTicketSelect={setSelectedTicket}/>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <Bell className="h-5 w-5" />
+                        Send Notification
+                    </CardTitle>
+                    <CardDescription>
+                        Broadcast a message to all users.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-sm text-muted-foreground mb-4">
+                        To send a new notification to all users, please go to the dedicated notifications page.
+                    </p>
+                    <Button asChild>
+                        <Link href="/notifications">
+                            <Send className="mr-2 h-4 w-4" /> Go to Notifications
+                        </Link>
+                    </Button>
                 </CardContent>
             </Card>
         </div>
