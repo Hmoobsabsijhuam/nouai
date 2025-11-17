@@ -32,16 +32,10 @@ interface SupportTicket {
     userId: string;
     userEmail: string;
     subject: string;
+    message: string;
     status: 'open' | 'closed';
     createdAt: Timestamp;
     updatedAt: Timestamp;
-}
-
-interface TicketMessage {
-    text: string;
-    senderId: string;
-    senderRole: 'user' | 'admin';
-    createdAt: Timestamp;
 }
 
 type ChartDataItem = {
@@ -129,71 +123,19 @@ function SupportTickets({ tickets, isLoading, onTicketSelect }: { tickets: WithI
 }
 
 
-function TicketConversationDialog({
-  user,
-  firestore,
+function TicketDetailsDialog({
   ticket,
   onOpenChange,
   onStatusChange,
 }: {
-  user: any;
-  firestore: any;
   ticket: WithId<SupportTicket> | null;
   onOpenChange: (open: boolean) => void;
   onStatusChange: (ticketId: string, status: 'open' | 'closed') => void;
 }) {
-  const { toast } = useToast();
-  const [reply, setReply] = useState('');
-  const [isSending, setIsSending] = useState(false);
-
-  const messagesQuery = useMemoFirebase(() => {
-    if (!firestore || !ticket) return null;
-    return query(collection(firestore, `support_tickets/${ticket.id}/messages`), orderBy('createdAt', 'asc'));
-  }, [firestore, ticket]);
-
-  const { data: messages, isLoading: messagesLoading } = useCollection<TicketMessage>(messagesQuery);
-
-  const handleReplySubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!reply.trim() || !ticket || !user) return;
-    setIsSending(true);
-
-    try {
-        const messagesCol = collection(firestore, `support_tickets/${ticket.id}/messages`);
-        await addDoc(messagesCol, {
-            text: reply,
-            senderId: user.uid,
-            senderRole: 'admin',
-            createdAt: serverTimestamp(),
-        });
-        
-        // Update ticket's updatedAt timestamp
-        const ticketRef = doc(firestore, 'support_tickets', ticket.id);
-        await updateDoc(ticketRef, { updatedAt: serverTimestamp() });
-        
-        // Send notification to user
-        const userNotifCol = collection(firestore, `users/${ticket.userId}/user_notifications`);
-        await addDoc(userNotifCol, {
-            message: `You have a new reply on your ticket: "${ticket.subject}"`,
-            createdAt: serverTimestamp(),
-            read: false,
-            link: `/support/${ticket.id}`
-        });
-
-        setReply('');
-        toast({ title: 'Reply Sent' });
-
-    } catch (error: any) {
-        console.error("Error sending reply:", error);
-        toast({ title: 'Error', description: 'Could not send reply.', variant: 'destructive' });
-    } finally {
-        setIsSending(false);
-    }
-  };
 
   return (
     <Dialog open={!!ticket} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl h-[80vh] flex flex-col">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>{ticket?.subject}</DialogTitle>
           <DialogDescription>
@@ -212,40 +154,12 @@ function TicketConversationDialog({
             </Select>
           </DialogDescription>
         </DialogHeader>
-        <ScrollArea className="flex-1 -mx-6 px-6 border-y">
-            <div className="py-4 space-y-4">
-            {messagesLoading ? <p>Loading messages...</p> :
-             messages?.map(message => (
-                <div key={message.id} className={cn(
-                    "flex items-end gap-2",
-                    message.senderRole === 'admin' ? 'justify-end' : 'justify-start'
-                )}>
-                    {message.senderRole === 'user' && <Avatar className="h-8 w-8"><AvatarFallback>U</AvatarFallback></Avatar>}
-                    <div className={cn(
-                        "max-w-xs md:max-w-md p-3 rounded-lg",
-                        message.senderRole === 'admin' ? 'bg-primary text-primary-foreground' : 'bg-muted'
-                    )}>
-                        <p className="text-sm whitespace-pre-wrap">{message.text}</p>
-                        <p className={cn("text-xs mt-1", message.senderRole === 'admin' ? 'text-primary-foreground/70' : 'text-muted-foreground')}>
-                            {message.createdAt && formatDistanceToNow(message.createdAt.toDate(), { addSuffix: true })}
-                        </p>
-                    </div>
-                </div>
-            ))}
+        <ScrollArea className="max-h-64">
+            <div className="py-4 space-y-2">
+                <p className="text-sm text-muted-foreground">Message:</p>
+                <p className="text-sm whitespace-pre-wrap p-4 bg-muted rounded-md">{ticket?.message}</p>
             </div>
         </ScrollArea>
-        <form onSubmit={handleReplySubmit} className="flex gap-2">
-            <Textarea
-              placeholder="Type your reply..."
-              value={reply}
-              onChange={(e) => setReply(e.target.value)}
-              disabled={isSending || ticket?.status === 'closed'}
-              className="min-h-[40px]"
-            />
-            <Button type="submit" disabled={isSending || !reply.trim() || ticket?.status === 'closed'}>
-              {isSending ? <Loader2 className="animate-spin" /> : <Send />}
-            </Button>
-        </form>
       </DialogContent>
     </Dialog>
   );
@@ -471,9 +385,7 @@ export default function AdminDashboard({ user }: { user: any }) {
           users={users}
           isLoading={isUsersLoading}
       />
-      <TicketConversationDialog 
-        user={user}
-        firestore={firestore}
+      <TicketDetailsDialog
         ticket={selectedTicket}
         onOpenChange={() => setSelectedTicket(null)}
         onStatusChange={handleTicketStatusChange}

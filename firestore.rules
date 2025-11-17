@@ -14,7 +14,6 @@
  *   indicates admin privileges.
  * - /notifications/{notificationId}: Stores global notifications sent by admins.
  * - /support_tickets/{ticketId}: Stores support tickets from users for admin review.
- * - /support_tickets/{ticketId}/messages/{messageId}: Stores conversation messages for a ticket.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -102,28 +101,12 @@ service cloud.firestore {
      * @description Manages support tickets submitted by users.
      * @path /support_tickets/{ticketId}
      * @allow (create) - Any signed-in user can create a support ticket for themselves.
-     * @allow (get) - The user who created the ticket or an admin can read it.
-     * @allow (list) - An admin can list all tickets; a user can list their own tickets.
-     * @allow (update) - Admins can update any ticket; users cannot update the main ticket document.
+     * @allow (get, list, update) - Admins can manage all tickets.
      */
     match /support_tickets/{ticketId} {
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow get: if isAdmin() || resource.data.userId == request.auth.uid;
-      allow list: if isAdmin() || (isSignedIn() && request.query.where.userId == request.auth.uid);
-      allow update: if isAdmin();
+      allow get, list, update: if isAdmin();
       allow delete: if false;
-
-      /**
-       * @description Manages messages within a support ticket.
-       * @path /support_tickets/{ticketId}/messages/{messageId}
-       * @allow (list, get) - The ticket owner or an admin can read messages.
-       * @allow (create) - The ticket owner or an admin can create messages.
-       */
-      match /messages/{messageId} {
-        allow list, get: if isAdmin() || get(/databases/$(database)/documents/support_tickets/$(ticketId)).data.userId == request.auth.uid;
-        allow create: if isAdmin() || get(/databases/$(database)/documents/support_tickets/$(ticketId)).data.userId == request.auth.uid;
-        allow update, delete: if false;
-      }
     }
 
     function isSignedIn() {

@@ -197,6 +197,10 @@
           "type": "string",
           "description": "The subject of the support ticket."
         },
+        "message": {
+          "type": "string",
+          "description": "The detailed message of the support ticket."
+        },
         "status": {
           "type": "string",
           "description": "The current status of the support ticket.",
@@ -217,37 +221,11 @@
         "userId",
         "userEmail",
         "subject",
+        "message",
         "status",
         "createdAt",
         "updatedAt"
       ]
-    },
-    "TicketMessage": {
-       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Ticket Message",
-      "type": "object",
-      "description": "A message within a support ticket conversation.",
-      "properties": {
-        "text": {
-          "type": "string",
-          "description": "The content of the message."
-        },
-        "senderId": {
-          "type": "string",
-          "description": "The UID of the user who sent the message."
-        },
-         "senderRole": {
-          "type": "string",
-          "enum": ["user", "admin"],
-          "description": "The role of the sender."
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "The timestamp when the message was sent."
-        }
-      },
-      "required": ["text", "senderId", "senderRole", "createdAt"]
     }
   },
   "auth": {
@@ -327,22 +305,10 @@
           "schema": {
             "$ref": "#/backend/entities/SupportTicket"
           },
-          "description": "Stores support tickets submitted by users. Allows users to create tickets and admins to manage them.",
-           "subcollections": [
-            {
-              "path": "messages/{messageId}",
-              "definition": {
-                "entityName": "TicketMessage",
-                "schema": {
-                  "$ref": "#/backend/entities/TicketMessage"
-                },
-                "description": "Stores the conversation messages for a support ticket."
-              }
-            }
-          ]
+          "description": "Stores support tickets submitted by users. Allows users to create tickets and admins to manage them."
         }
       }
     ],
-    "reasoning": "The Firestore structure is designed to securely manage user authentication and admin roles, ensuring authorization independence and supporting secure list operations (QAPs). We achieve this by separating user data and admin role definitions into distinct collections. The structure prioritizes simplicity and leverages path-based ownership for user data. Admin roles are determined by the *existence* of a document in a dedicated `/roles_admin/{uid}` collection, enabling simple presence checks in security rules without relying on complex data comparisons. This is more robust than storing the admin role within the user document itself. The path-based ownership structure `/users/{userId}` ensures secure `list` operations, as rules can easily restrict access based on the authenticated user ID. A global `notifications` collection is added for admins to broadcast messages. A `user_notifications` subcollection is added under each user to handle per-user read status, improving scalability and query efficiency. A `support_tickets` collection is added for users to submit issue reports. It includes a `messages` subcollection to enable threaded conversations between users and admins within each ticket, providing a structured and scalable way to manage support interactions."
+    "reasoning": "The Firestore structure is designed to securely manage user authentication and admin roles, ensuring authorization independence and supporting secure list operations (QAPs). We achieve this by separating user data and admin role definitions into distinct collections. The structure prioritizes simplicity and leverages path-based ownership for user data. Admin roles are determined by the *existence* of a document in a dedicated `/roles_admin/{uid}` collection, enabling simple presence checks in security rules without relying on complex data comparisons. This is more robust than storing the admin role within the user document itself. The path-based ownership structure `/users/{userId}` ensures secure `list` operations, as rules can easily restrict access based on the authenticated user ID. A global `notifications` collection is added for admins to broadcast messages. A `user_notifications` subcollection is added under each user to handle per-user read status, improving scalability and query efficiency. A `support_tickets` collection is added for users to submit issue reports."
   }
 }

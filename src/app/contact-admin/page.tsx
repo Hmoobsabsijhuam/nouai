@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { addDoc, collection, serverTimestamp, writeBatch, doc } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { useFirebase } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -51,35 +51,22 @@ export default function ContactAdminPage() {
 
     setIsSubmitting(true);
     try {
-      const batch = writeBatch(firestore);
-
-      // Create main ticket document
-      const ticketRef = doc(collection(firestore, 'support_tickets'));
-      batch.set(ticketRef, {
+      await addDoc(collection(firestore, 'support_tickets'), {
         userId: user.uid,
         userEmail: user.email,
         subject: values.subject,
+        message: values.message,
         status: 'open',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
 
-      // Create the first message in the subcollection
-      const messageRef = doc(collection(firestore, 'support_tickets', ticketRef.id, 'messages'));
-      batch.set(messageRef, {
-        text: values.message,
-        senderId: user.uid,
-        senderRole: 'user',
-        createdAt: serverTimestamp(),
-      });
-      
-      await batch.commit();
-
       toast({
         title: 'Support Ticket Submitted',
-        description: 'Thank you! Your ticket has been created and the admin has been notified.',
+        description: 'Thank you! Your ticket has been sent to the administrator.',
       });
-      router.push(`/support/${ticketRef.id}`);
+      form.reset();
+      router.push('/');
     } catch (error: any) {
       console.error('Error submitting support ticket:', error);
       toast({

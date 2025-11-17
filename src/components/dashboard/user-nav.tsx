@@ -66,14 +66,6 @@ export function UserNav() {
             <span>Profile</span>
           </Link>
         </DropdownMenuItem>
-        {!isAdmin && (
-            <DropdownMenuItem asChild className="cursor-pointer">
-                <Link href="/my-tickets">
-                    <LifeBuoy className="mr-2 h-4 w-4" />
-                    <span>My Tickets</span>
-                </Link>
-            </DropdownMenuItem>
-        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={handleLogout} className="cursor-pointer">
           <LogOut className="mr-2 h-4 w-4" />
