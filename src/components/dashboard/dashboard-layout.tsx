@@ -26,7 +26,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Home, Library, LogOut, MoreHorizontal, Settings, Shield, Wand, Bot, PanelLeft, X, LayoutGrid, Image as ImageIcon, VideoIcon, Mic, LifeBuoy } from 'lucide-react';
+import { Home, Library, LogOut, MoreHorizontal, Settings, Shield, Bot, PanelLeft, X, LayoutGrid, ImageIcon, VideoIcon, Mic, LifeBuoy } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Logo } from '../icons/logo';
@@ -34,6 +34,7 @@ import { signOut } from 'firebase/auth';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
 import * as React from 'react';
 import { Notifications } from './notifications';
+import { Header } from './header';
 
 
 function UserProfile() {
@@ -215,6 +216,9 @@ export function DashboardLayout({
         </Sidebar>
 
         <main className="flex flex-col flex-1">
+            <div className="hidden md:block">
+                <Header />
+            </div>
            <div className="md:hidden p-4 border-b flex items-center justify-between bg-card sticky top-0 z-10">
               <div className="flex items-center gap-2">
                 <SidebarTrigger />
