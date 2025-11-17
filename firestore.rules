@@ -36,7 +36,7 @@ service cloud.firestore {
       /**
        * @description Manages per-user notification data.
        * @path /users/{userId}/user_notifications/{notificationId}
-       * @allow (get, list, create, update) - Owner can read, create and update their own notifications. Admins can create notifications for users.
+       * @allow (get, list, update) - Owner can read, create and update their own notifications. Admins can create notifications for users.
        */
       match /user_notifications/{notificationId} {
         allow get, list, update: if isOwner(userId);
