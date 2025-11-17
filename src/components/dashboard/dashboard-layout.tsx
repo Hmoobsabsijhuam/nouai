@@ -33,6 +33,7 @@ import { Logo } from '../icons/logo';
 import { signOut } from 'firebase/auth';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
 import * as React from 'react';
+import { Notifications } from './notifications';
 
 
 function UserProfile() {
@@ -222,12 +223,15 @@ export function DashboardLayout({
                     <span className="text-md font-bold">Nou AI</span>
                 </Link>
               </div>
-              <Link href="/" passHref>
-                <Button variant="ghost" size="icon">
-                    <Home className="h-5 w-5" />
-                    <span className="sr-only">Home</span>
-                </Button>
-              </Link>
+              <div className="flex items-center gap-2">
+                <Notifications />
+                <Link href="/" passHref>
+                  <Button variant="ghost" size="icon">
+                      <Home className="h-5 w-5" />
+                      <span className="sr-only">Home</span>
+                  </Button>
+                </Link>
+              </div>
            </div>
           <div className="flex-1 p-4 overflow-y-auto">
             {children}

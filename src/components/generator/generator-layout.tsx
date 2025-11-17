@@ -34,6 +34,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { signOut } from 'firebase/auth';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
 import * as React from 'react';
+import { Notifications } from '../dashboard/notifications';
 
 function UserProfile() {
   const { user, auth } = useFirebase();
@@ -236,6 +237,7 @@ export function GeneratorLayout({
                 </Link>
               </div>
               <div className='flex items-center gap-2'>
+                <Notifications />
                 <Link href="/" passHref>
                   <Button variant="ghost" size="icon">
                       <Home className="h-5 w-5" />
