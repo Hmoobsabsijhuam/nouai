@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -20,10 +21,10 @@ import { Download, Loader2, Mic, Wand2, X } from 'lucide-react';
 
 const formSchema = z.object({
   text: z.string().min(5, { message: 'Text must be at least 5 characters long.' }),
-  voice: z.enum(['Algenib', 'Achernar', 'Antares', 'Capella', 'Sirius']),
+  voice: z.enum(['Algenib', 'Achernar', 'Erinome', 'Gacrux', 'Puck']),
 });
 
-const voices = ['Algenib', 'Achernar', 'Antares', 'Capella', 'Sirius'] as const;
+const voices = ['Algenib', 'Achernar', 'Erinome', 'Gacrux', 'Puck'] as const;
 
 export default function GenerateSpeechPage() {
   const { user, isUserLoading } = useFirebase();
@@ -72,7 +73,10 @@ export default function GenerateSpeechPage() {
             description = 'You have exceeded the free usage limit for audio generation. Please try again later.';
         } else if (error.message.toLowerCase().includes('billing')) {
             description = 'This feature is only available on a paid plan. Please enable billing for your project to generate audio.';
-        } else {
+        } else if (error.message.toLowerCase().includes('voice name')) {
+            description = 'An invalid voice was selected. Please choose a different voice and try again.';
+        }
+        else {
             description = error.message;
         }
       }

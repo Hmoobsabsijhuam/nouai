@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A text-to-speech generation flow.
@@ -14,7 +15,7 @@ import wav from 'wav';
 
 const GenerateSpeechInputSchema = z.object({
   text: z.string().describe('The text to convert to speech.'),
-  voice: z.enum(['Algenib', 'Achernar', 'Antares', 'Capella', 'Sirius']).describe('The voice to use for the speech.'),
+  voice: z.enum(['Algenib', 'Achernar', 'Erinome', 'Gacrux', 'Puck']).describe('The voice to use for the speech.'),
 });
 export type GenerateSpeechInput = z.infer<typeof GenerateSpeechInputSchema>;
 
