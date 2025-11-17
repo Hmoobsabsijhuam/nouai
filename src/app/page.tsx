@@ -179,71 +179,38 @@ function UserDashboard() {
                 </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Bell className="h-5 w-5" />
-                Cov kev tshaj tawm tshiab
-              </CardTitle>
-              <CardDescription>
-                 {unreadNotifications.length > 0 
-                  ? `You have ${unreadNotifications.length} unread message(s).`
-                  : 'Tsis tau muaj kev tshaj tawm tshiab li.'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {isNotificationsLoading ? (
-                    <p>Loading notifications...</p>
-                ) : unreadNotifications.length > 0 ? (
-                  unreadNotifications.slice(0, 3).map(notif => (
-                    <div key={notif.id} className="border-l-2 border-primary pl-3">
-                      <p className="text-sm font-medium">{notif.message}</p>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted-foreground">Your notification inbox is clear.</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Sidebar */}
         <div className="grid auto-rows-max items-start gap-6 lg:col-span-1">
-          <Card className="flex flex-col">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CheckCircle2 className="h-6 w-6 text-green-500" />
-                Account Status
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex-grow">
-              <p className="text-lg font-medium text-green-600">
-                Koj twb nkag los tau lawm.
-              </p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Your session is active. You have full access to your dashboard.
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-                <CardTitle>Get Started</CardTitle>
+            <Card>
+                <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <Bell className="h-5 w-5" />
+                    Cov kev tshaj tawm tshiab
+                </CardTitle>
                 <CardDescription>
-                    Explore your account and manage your settings.
+                    {unreadNotifications.length > 0 
+                    ? `You have ${unreadNotifications.length} unread message(s).`
+                    : 'Tsis tau muaj kev tshaj tawm tshiab li.'}
                 </CardDescription>
-            </CardHeader>
-            <CardContent>
-                 <Button asChild className="w-full justify-between">
-                    <Link href="/profile">
-                        <span>Edit Your Profile</span>
-                        <ArrowRight />
-                    </Link>
-                </Button>
-            </CardContent>
-          </Card>
+                </CardHeader>
+                <CardContent>
+                <div className="space-y-4">
+                    {isNotificationsLoading ? (
+                        <p>Loading notifications...</p>
+                    ) : unreadNotifications.length > 0 ? (
+                    unreadNotifications.slice(0, 3).map(notif => (
+                        <div key={notif.id} className="border-l-2 border-primary pl-3">
+                        <p className="text-sm font-medium">{notif.message}</p>
+                        </div>
+                    ))
+                    ) : (
+                    <p className="text-sm text-muted-foreground">Your notification inbox is clear.</p>
+                    )}
+                </div>
+                </CardContent>
+            </Card>
         </div>
       </div>
     </>
