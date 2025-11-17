@@ -15,11 +15,15 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Download, Loader2, Mic, Wand2, X } from 'lucide-react';
 
 const formSchema = z.object({
   text: z.string().min(5, { message: 'Text must be at least 5 characters long.' }),
+  voice: z.enum(['Algenib', 'Achernar', 'Antares', 'Capella', 'Sirius']),
 });
+
+const voices = ['Algenib', 'Achernar', 'Antares', 'Capella', 'Sirius'] as const;
 
 export default function GenerateSpeechPage() {
   const { user, isUserLoading } = useFirebase();
@@ -32,6 +36,7 @@ export default function GenerateSpeechPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       text: '',
+      voice: 'Algenib',
     },
   });
 
@@ -55,7 +60,7 @@ export default function GenerateSpeechPage() {
     setIsGenerating(true);
     setGeneratedAudioUrl(null);
     try {
-        const { audioUrl } = await generateSpeech({ text: values.text });
+        const { audioUrl } = await generateSpeech({ text: values.text, voice: values.voice });
         setGeneratedAudioUrl(audioUrl);
         toast({ title: 'Koj Lub Suab Tsim Tau Lawm!', description: 'Your audio has been created.' });
 
@@ -121,10 +126,32 @@ export default function GenerateSpeechPage() {
                                 name="text"
                                 render={({ field }) => (
                                 <FormItem className="w-full">
-                                    <FormLabel className="sr-only">Text</FormLabel>
+                                    <FormLabel>Text to Convert</FormLabel>
                                     <FormControl>
                                       <Textarea placeholder="Nyob zoo ntawm no kuv yog Nou AI yuav pab koj tsim koj lub suab." {...field} className="min-h-[150px]" />
                                     </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                                )}
+                            />
+                             <FormField
+                                control={form.control}
+                                name="voice"
+                                render={({ field }) => (
+                                <FormItem className="w-full sm:w-1/2">
+                                    <FormLabel>Select a Voice</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                        <SelectTrigger>
+                                        <SelectValue placeholder="Select a voice" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {voices.map(voice => (
+                                            <SelectItem key={voice} value={voice}>{voice}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                    </Select>
                                     <FormMessage />
                                 </FormItem>
                                 )}
