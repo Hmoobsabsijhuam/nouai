@@ -35,12 +35,12 @@ service cloud.firestore {
       /**
        * @description Manages per-user notification data.
        * @path /users/{userId}/user_notifications/{notificationId}
-       * @allow (get, list, update) - Owner can read and update their own notifications.
-       * @allow (create) - Admins can create (fan-out) notifications for users. A signed-in user can also notify the admin.
+       * @allow (get, list, create, update) - Owner can read, create and update their own notifications.
+       * @allow (create) - Admins can create (fan-out) notifications for users.
        */
       match /user_notifications/{notificationId} {
-        allow get, list: if isOwner(userId);
-        allow create: if isAdmin() || (isSignedIn() && isAdminId(userId));
+        allow get, list, create: if isOwner(userId);
+        allow create: if isAdmin();
         allow update: if isOwner(userId) && request.resource.data.read == true;
         allow delete: if false;
       }

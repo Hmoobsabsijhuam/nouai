@@ -7,7 +7,7 @@ import * as z from 'zod';
 import { doc, setDoc, Timestamp, deleteDoc, query, collection, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 import { updateProfile, sendPasswordResetEmail, deleteUser, reauthenticateWithCredential, EmailAuthProvider, updatePassword, signOut } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { useFirebase, useMemoFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
+import { useFirebase, useMemoFirebase } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import {
@@ -56,45 +56,6 @@ const passwordFormSchema = z.object({
     path: ['confirmPassword'],
 });
 
-async function notifyAdmin(firestore: any, message: string) {
-  try {
-    const usersRef = collection(firestore, 'users');
-    const q = query(usersRef, where('email', '==', 'admin@noukha.com'));
-    const querySnapshot = await getDocs(q);
-
-    if (querySnapshot.empty) {
-      console.warn("Admin user 'admin@noukha.com' not found. Cannot send notification.");
-      return;
-    }
-
-    const adminDoc = querySnapshot.docs[0];
-    const adminId = adminDoc.id;
-
-    const adminNotifCollection = collection(firestore, 'users', adminId, 'user_notifications');
-    const notificationData = {
-      message: message,
-      createdAt: serverTimestamp(),
-      read: false,
-    };
-
-    // Use non-blocking write with custom error handling
-    addDoc(adminNotifCollection, notificationData).catch((error) => {
-      const permissionError = new FirestorePermissionError({
-        path: adminNotifCollection.path,
-        operation: 'create',
-        requestResourceData: notificationData,
-      });
-      // Emit the contextual error instead of logging to console
-      errorEmitter.emit('permission-error', permissionError);
-    });
-
-  } catch (error) {
-    // This outer try-catch handles errors from getDocs, which is a read operation.
-    // It's less likely to fail due to permissions if the user is authenticated,
-    // but we can log it for now.
-    console.error("Failed to find admin to send notification:", error);
-  }
-}
 
 function ProfileSkeleton() {
   return (
@@ -302,10 +263,15 @@ export default function ProfilePage() {
       const credential = EmailAuthProvider.credential(currentUser.email, values.currentPassword);
       await reauthenticateWithCredential(currentUser, credential);
       await updatePassword(currentUser, values.newPassword);
+
+      // Create a notification for the user about the password change
+      const userNotifCollection = collection(firestore, 'users', currentUser.uid, 'user_notifications');
+      await addDoc(userNotifCollection, {
+        message: "Your password was successfully changed. If you did not make this change, please contact support immediately.",
+        createdAt: serverTimestamp(),
+        read: false,
+      });
       
-      if (currentUser.email !== 'admin@noukha.com') {
-        await notifyAdmin(firestore, `User ${currentUser.email} has changed their password.`);
-      }
 
       toast({
         title: 'Password Updated Successfully',
@@ -335,10 +301,6 @@ export default function ProfilePage() {
     if (!currentUser || !firestore) return;
     setIsDeleting(true);
     try {
-      if (currentUser.email !== 'admin@noukha.com') {
-        await notifyAdmin(firestore, `User ${currentUser.email} has deleted their account.`);
-      }
-      
       const userDocRef = doc(firestore, 'users', currentUser.uid);
       await deleteDoc(userDocRef);
 
@@ -602,7 +564,7 @@ export default function ProfilePage() {
                             <AlertDialogHeader>
                               <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                               <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete your account
+                                This will permanently delete your account
                                 and remove your data from our servers.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
@@ -641,5 +603,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
