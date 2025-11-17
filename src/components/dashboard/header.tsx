@@ -15,6 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
+import { ThemeToggle } from './theme-toggle';
 
 export function Header() {
   return (
@@ -31,15 +32,8 @@ export function Header() {
               <span className="sr-only">Home</span>
             </Button>
           </Link>
-          <div className="relative w-full max-w-xs">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search..."
-              className="pl-9"
-            />
-          </div>
           <Notifications />
+          <ThemeToggle />
            <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon">
