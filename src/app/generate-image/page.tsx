@@ -118,9 +118,18 @@ export default function GenerateImagePage() {
 
     } catch (error: any) {
       console.error('Image generation failed:', error);
+      let description = 'An unexpected error occurred.';
+      if (typeof error.message === 'string') {
+        if (error.message.includes('429') || error.message.toLowerCase().includes('quota')) {
+            description = 'You have exceeded the free usage limit for image generation. Please try again later or check your billing plan.';
+        } else {
+            description = error.message;
+        }
+      }
+      
       toast({
         title: 'Image Generation Failed',
-        description: error.message || 'An unexpected error occurred.',
+        description: description,
         variant: 'destructive',
       });
     } finally {
