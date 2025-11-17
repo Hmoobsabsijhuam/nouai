@@ -10,10 +10,11 @@ import {
   SidebarMenuButton,
   SidebarProvider,
   SidebarFooter,
-  SidebarMenuBadge,
   SidebarGroup,
   SidebarGroupLabel,
   SidebarTrigger,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -25,12 +26,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Home, LayoutGrid, Library, LogOut, MoreHorizontal, Settings, Shield, Wand, Bot, PanelLeft, X } from 'lucide-react';
+import { Home, LayoutGrid, Library, LogOut, MoreHorizontal, Settings, Shield, Wand, Bot, PanelLeft, X, Image as ImageIcon, VideoIcon } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Logo } from '../icons/logo';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { signOut } from 'firebase/auth';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
+import * as React from 'react';
 
 function UserProfile() {
   const { user, auth } = useFirebase();
@@ -103,6 +106,8 @@ export function GeneratorLayout({
 }) {
   const pathname = usePathname();
    const router = useRouter();
+    const [isStudioOpen, setIsStudioOpen] = React.useState(true);
+
 
   const handleTabChange = (value: string) => {
     if (value === 'image') router.push('/generate-image');
@@ -149,21 +154,38 @@ export function GeneratorLayout({
             <SidebarGroup>
               <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Studio</SidebarGroupLabel>
               <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={
-                      pathname === '/generate-image' ||
-                      pathname === '/text-to-video' ||
-                      pathname === '/image-to-video'
-                    }
-                     tooltip="Create"
-                  >
-                    <Link href="/generate-image">
-                      <Wand /> <span>Create</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                 <Collapsible open={isStudioOpen} onOpenChange={setIsStudioOpen}>
+                  <SidebarMenuItem asChild>
+                    <CollapsibleTrigger asChild>
+                       <SidebarMenuButton
+                        isActive={isStudioOpen}
+                        tooltip="Create"
+                        className="justify-start"
+                      >
+                        <Wand /> <span>Create</span>
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                  </SidebarMenuItem>
+                  <CollapsibleContent asChild>
+                     <SidebarMenuSub>
+                        <SidebarMenuItem>
+                            <SidebarMenuSubButton asChild isActive={pathname === '/generate-image'}>
+                                <Link href="/generate-image"><ImageIcon /> <span>Image Generation</span></Link>
+                            </SidebarMenuSubButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                             <SidebarMenuSubButton asChild isActive={pathname === '/text-to-video'}>
+                                <Link href="/text-to-video"><VideoIcon /> <span>Text to Video</span></Link>
+                            </SidebarMenuSubButton>
+                        </SidebarMenuItem>
+                         <SidebarMenuItem>
+                             <SidebarMenuSubButton asChild isActive={pathname === '/image-to-video'}>
+                                <Link href="/image-to-video"><VideoIcon /> <span>Image to Video</span></Link>
+                            </SidebarMenuSubButton>
+                        </SidebarMenuItem>
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </Collapsible>
                 <SidebarMenuItem>
                     <SidebarMenuButton asChild isActive={pathname === '/apps'} tooltip="Apps">
                         <Link href="#"><LayoutGrid /> <span>Apps</span></Link>
@@ -221,7 +243,7 @@ export function GeneratorLayout({
               </div>
               <Link href="/" passHref>
                   <Button variant="ghost" size="icon">
-                      <X className="h-5 w-5" />
+                       <X className="h-5 w-5" />
                       <span className="sr-only">Close</span>
                   </Button>
                 </Link>

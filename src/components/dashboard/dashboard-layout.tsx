@@ -13,6 +13,8 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarTrigger,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -24,11 +26,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Home, Library, LogOut, MoreHorizontal, Settings, Shield, Wand, Bot, PanelLeft, X, LayoutGrid } from 'lucide-react';
+import { Home, Library, LogOut, MoreHorizontal, Settings, Shield, Wand, Bot, PanelLeft, X, LayoutGrid, Image, VideoIcon } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Logo } from '../icons/logo';
 import { signOut } from 'firebase/auth';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
+import * as React from 'react';
+
 
 function UserProfile() {
   const { user, auth } = useFirebase();
@@ -95,6 +100,9 @@ export function DashboardLayout({
 }) {
   const pathname = usePathname();
   const { user } = useFirebase();
+  const [isStudioOpen, setIsStudioOpen] = React.useState(
+    pathname.startsWith('/generate') || pathname.startsWith('/text-to') || pathname.startsWith('/image-to')
+  );
 
   return (
     <SidebarProvider>
@@ -135,21 +143,39 @@ export function DashboardLayout({
             <SidebarGroup>
               <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Studio</SidebarGroupLabel>
               <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={
-                      pathname === '/generate-image' ||
-                      pathname === '/text-to-video' ||
-                      pathname === '/image-to-video'
-                    }
-                     tooltip="Create"
-                  >
-                    <Link href="/generate-image">
-                      <Wand /> <span>Create</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                 <Collapsible open={isStudioOpen} onOpenChange={setIsStudioOpen}>
+                  <SidebarMenuItem asChild>
+                    <CollapsibleTrigger asChild>
+                       <SidebarMenuButton
+                        isActive={isStudioOpen}
+                        tooltip="Create"
+                        className="justify-start"
+                      >
+                        <Wand /> <span>Create</span>
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                  </SidebarMenuItem>
+                  <CollapsibleContent asChild>
+                     <SidebarMenuSub>
+                        <SidebarMenuItem>
+                            <SidebarMenuSubButton asChild isActive={pathname === '/generate-image'}>
+                                <Link href="/generate-image"><Image /> <span>Image Generation</span></Link>
+                            </SidebarMenuSubButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                             <SidebarMenuSubButton asChild isActive={pathname === '/text-to-video'}>
+                                <Link href="/text-to-video"><VideoIcon /> <span>Text to Video</span></Link>
+                            </SidebarMenuSubButton>
+                        </SidebarMenuItem>
+                         <SidebarMenuItem>
+                             <SidebarMenuSubButton asChild isActive={pathname === '/image-to-video'}>
+                                <Link href="/image-to-video"><VideoIcon /> <span>Image to Video</span></Link>
+                            </SidebarMenuSubButton>
+                        </SidebarMenuItem>
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </Collapsible>
+
                 <SidebarMenuItem>
                     <SidebarMenuButton asChild isActive={pathname === '/apps'} tooltip="Apps">
                         <Link href="#"><LayoutGrid /> <span>Apps</span></Link>
