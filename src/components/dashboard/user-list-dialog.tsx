@@ -111,11 +111,11 @@ export function UserListDialog({ isOpen, onOpenChange, users, isLoading }: UserL
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Avatar</TableHead>
+                <TableHead className="w-[80px]">Avatar</TableHead>
                 <TableHead>Display Name</TableHead>
                 <TableHead>Email</TableHead>
-                <TableHead>Joined</TableHead>
-                <TableHead>Role</TableHead>
+                <TableHead className="hidden md:table-cell">Joined</TableHead>
+                <TableHead className="hidden sm:table-cell">Role</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -126,11 +126,11 @@ export function UserListDialog({ isOpen, onOpenChange, users, isLoading }: UserL
                     <TableCell><Skeleton className="h-10 w-10 rounded-full" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-[200px]" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
-                    <TableCell><Skeleton className="h-6 w-[70px] rounded-full" /></TableCell>
+                    <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-[100px]" /></TableCell>
+                    <TableCell className="hidden sm:table-cell"><Skeleton className="h-6 w-[70px] rounded-full" /></TableCell>
                     <TableCell className="space-x-2">
-                        <Skeleton className="h-8 w-8" />
-                        <Skeleton className="h-8 w-8" />
+                        <Skeleton className="h-8 w-8 inline-block" />
+                        <Skeleton className="h-8 w-8 inline-block" />
                     </TableCell>
                   </TableRow>
                 ))
@@ -145,12 +145,12 @@ export function UserListDialog({ isOpen, onOpenChange, users, isLoading }: UserL
                         </AvatarFallback>
                       </Avatar>
                     </TableCell>
-                    <TableCell>{u.displayName || 'N/A'}</TableCell>
-                    <TableCell className="font-medium">{u.email}</TableCell>
-                    <TableCell>
+                    <TableCell className="font-medium">{u.displayName || 'N/A'}</TableCell>
+                    <TableCell>{u.email}</TableCell>
+                    <TableCell className="hidden md:table-cell">
                       {u.createdAt ? format(u.createdAt.toDate(), 'MMM d, yyyy') : 'N/A'}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden sm:table-cell">
                       {u.email === 'admin@noukha.com' ? (
                         <Badge>Admin</Badge>
                       ) : (
