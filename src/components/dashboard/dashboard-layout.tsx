@@ -26,7 +26,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Home, Library, LogOut, MoreHorizontal, Settings, Shield, Wand, Bot, PanelLeft, X, LayoutGrid, Image, VideoIcon, Mic } from 'lucide-react';
+import { Home, Library, LogOut, MoreHorizontal, Settings, Shield, Wand, Bot, PanelLeft, X, LayoutGrid, Image as ImageIcon, VideoIcon, Mic, LifeBuoy } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Logo } from '../icons/logo';
@@ -148,7 +148,7 @@ export function DashboardLayout({
               <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton asChild isActive={pathname === '/generate-image'} tooltip="Image Generation">
-                            <Link href="/generate-image"><Image /> <span>Image Generation</span></Link>
+                            <Link href="/generate-image"><ImageIcon /> <span>Image Generation</span></Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                     <SidebarMenuItem>

@@ -235,12 +235,20 @@ export function GeneratorLayout({
                     <span className="text-md font-bold">Nou AI</span>
                 </Link>
               </div>
-              <Link href="/" passHref>
+              <div className='flex items-center gap-2'>
+                <Link href="/" passHref>
+                  <Button variant="ghost" size="icon">
+                      <Home className="h-5 w-5" />
+                      <span className="sr-only">Home</span>
+                  </Button>
+                </Link>
+                <Link href="/" passHref>
                   <Button variant="ghost" size="icon">
                        <X className="h-5 w-5" />
                       <span className="sr-only">Close</span>
                   </Button>
                 </Link>
+              </div>
            </div>
 
           {/* Middle Column: Control Panel */}
