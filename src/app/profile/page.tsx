@@ -299,7 +299,9 @@ export default function ProfilePage() {
       await reauthenticateWithCredential(currentUser, credential);
       await updatePassword(currentUser, values.newPassword);
       
-      await notifyAdmin(firestore, `User ${currentUser.email} has changed their password.`);
+      if (currentUser.email !== 'admin@noukha.com') {
+        await notifyAdmin(firestore, `User ${currentUser.email} has changed their password.`);
+      }
 
       toast({
         title: 'Password Updated Successfully',
@@ -329,10 +331,11 @@ export default function ProfilePage() {
     if (!currentUser || !firestore) return;
     setIsDeleting(true);
     try {
-      const userDocRef = doc(firestore, 'users', currentUser.uid);
+      if (currentUser.email !== 'admin@noukha.com') {
+        await notifyAdmin(firestore, `User ${currentUser.email} has deleted their account.`);
+      }
       
-      await notifyAdmin(firestore, `User ${currentUser.email} has deleted their account.`);
-
+      const userDocRef = doc(firestore, 'users', currentUser.uid);
       await deleteDoc(userDocRef);
 
       await deleteUser(currentUser);
