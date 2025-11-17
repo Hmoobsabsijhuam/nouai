@@ -239,10 +239,10 @@ function TicketConversationDialog({
               placeholder="Type your reply..."
               value={reply}
               onChange={(e) => setReply(e.target.value)}
-              disabled={isSending}
+              disabled={isSending || ticket?.status === 'closed'}
               className="min-h-[40px]"
             />
-            <Button type="submit" disabled={isSending || !reply.trim()}>
+            <Button type="submit" disabled={isSending || !reply.trim() || ticket?.status === 'closed'}>
               {isSending ? <Loader2 className="animate-spin" /> : <Send />}
             </Button>
         </form>

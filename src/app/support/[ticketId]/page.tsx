@@ -105,7 +105,7 @@ export default function TicketDetailsPage() {
 
   const handleReplySubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!reply.trim() || !ticket || !user) return;
+    if (!reply.trim() || !ticket || !user || !firestore) return;
     setIsSending(true);
 
     try {

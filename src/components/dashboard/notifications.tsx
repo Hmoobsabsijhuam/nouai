@@ -118,7 +118,7 @@ export function Notifications() {
                          )}
                          {notif.link && (
                             <Link href={notif.link} passHref>
-                                <Button variant="ghost" size="icon" className="h-6 w-6">
+                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setOpen(false)}>
                                     <ExternalLink className="h-4 w-4" />
                                 </Button>
                             </Link>
