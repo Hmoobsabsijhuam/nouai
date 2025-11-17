@@ -107,8 +107,7 @@ service cloud.firestore {
     }
     
     function isAdminId(userId) {
-      return exists(/databases/$(database)/documents/users/$(userId)) &&
-             get(/databases/$(database)/documents/users/$(userId)).data.email == 'admin@noukha.com';
+      return exists(/databases/$(database)/documents/roles_admin/$(userId));
     }
 
     function isExistingOwner(userId) {
