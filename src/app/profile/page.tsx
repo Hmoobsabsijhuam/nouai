@@ -125,7 +125,6 @@ export default function ProfilePage() {
   const [isPasswordSaving, setIsPasswordSaving] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
 
-
   const userDocRef = useMemoFirebase(
     () => (firestore && targetUserId ? doc(firestore, 'users', targetUserId) : null),
     [firestore, targetUserId]
@@ -251,6 +250,30 @@ export default function ProfilePage() {
       setLoading(false);
     }
   }
+  
+  const notifyAdmin = async (message: string) => {
+    if (!firestore) return;
+    try {
+      const q = query(collection(firestore, 'users'), where('email', '==', 'admin@noukha.com'));
+      const adminSnapshot = await getDocs(q);
+      
+      if (!adminSnapshot.empty) {
+        const adminId = adminSnapshot.docs[0].id;
+        const adminNotifCollection = collection(firestore, 'users', adminId, 'user_notifications');
+        await addDoc(adminNotifCollection, {
+          message,
+          createdAt: serverTimestamp(),
+          read: false,
+        });
+      } else {
+        console.error("Admin user 'admin@noukha.com' not found.");
+      }
+    } catch (error) {
+      // We will not show a toast here to the end user.
+      // This is a "fire and forget" for the user, but we log it for debugging.
+      console.error("Failed to send admin notification:", error);
+    }
+  };
 
   async function onPasswordSubmit(values: z.infer<typeof passwordFormSchema>) {
     if (!currentUser || !currentUser.email || !firestore || !auth) {
@@ -271,7 +294,6 @@ export default function ProfilePage() {
         createdAt: serverTimestamp(),
         read: false,
       });
-      
 
       toast({
         title: 'Password Updated Successfully',
@@ -300,7 +322,16 @@ export default function ProfilePage() {
   const handleDeleteAccount = async () => {
     if (!currentUser || !firestore) return;
     setIsDeleting(true);
+    
+    const userEmail = currentUser.email;
+
     try {
+      // Notify admin before deletion
+      if (currentUser.email !== 'admin@noukha.com') {
+         await notifyAdmin(`User ${userEmail} has deleted their account.`);
+      }
+
+      // Proceed with deletion
       const userDocRef = doc(firestore, 'users', currentUser.uid);
       await deleteDoc(userDocRef);
 
