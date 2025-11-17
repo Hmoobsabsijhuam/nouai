@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { doc, setDoc, Timestamp, deleteDoc } from 'firebase/firestore';
-import { updateProfile, sendPasswordResetEmail, deleteUser } from 'firebase/auth';
+import { updateProfile, sendPasswordResetEmail, deleteUser, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useFirebase, useMemoFirebase } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
@@ -21,7 +21,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Header } from '@/components/dashboard/header';
-import { Loader2, X, User as UserIcon, CalendarIcon } from 'lucide-react';
+import { Loader2, X, User as UserIcon, CalendarIcon, Eye, EyeOff } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
@@ -39,12 +39,21 @@ import { ThemeToggle } from '@/components/dashboard/theme-toggle';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 
-const formSchema = z.object({
+const profileFormSchema = z.object({
   displayName: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
   email: z.string().email(),
   dateOfBirth: z.date().optional(),
   status: z.enum(["Single", "Married"]).optional(),
   country: z.string().optional(),
+});
+
+const passwordFormSchema = z.object({
+    currentPassword: z.string().min(1, { message: 'Please enter your current password.' }),
+    newPassword: z.string().min(6, { message: 'New password must be at least 6 characters.' }),
+    confirmPassword: z.string(),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+    message: 'New passwords do not match.',
+    path: ['confirmPassword'],
 });
 
 function ProfileSkeleton() {
@@ -111,6 +120,9 @@ export default function ProfilePage() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const isOwnProfile = !profileUserId || profileUserId === currentUser?.uid;
+  const [showPassword, setShowPassword] = useState(false);
+  const [isPasswordSaving, setIsPasswordSaving] = useState(false);
+
 
   const userDocRef = useMemoFirebase(
     () => (firestore && targetUserId ? doc(firestore, 'users', targetUserId) : null),
@@ -119,14 +131,23 @@ export default function ProfilePage() {
   
   const { data: profileUser, isLoading: isProfileLoading } = useDoc(userDocRef);
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const profileForm = useForm<z.infer<typeof profileFormSchema>>({
+    resolver: zodResolver(profileFormSchema),
     defaultValues: {
       displayName: '',
       email: '',
       dateOfBirth: undefined,
       status: undefined,
       country: '',
+    },
+  });
+
+  const passwordForm = useForm<z.infer<typeof passwordFormSchema>>({
+    resolver: zodResolver(passwordFormSchema),
+    defaultValues: {
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
     },
   });
 
@@ -142,7 +163,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (profileUser) {
-      form.reset({
+      profileForm.reset({
         displayName: profileUser.displayName || '',
         email: profileUser.email || '',
         dateOfBirth: profileUser.dateOfBirth ? (profileUser.dateOfBirth as Timestamp).toDate() : undefined,
@@ -155,7 +176,7 @@ export default function ProfilePage() {
         setPhotoPreview(null);
       }
     }
-  }, [profileUser, form]);
+  }, [profileUser, profileForm]);
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -165,7 +186,7 @@ export default function ProfilePage() {
     }
   };
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onProfileSubmit(values: z.infer<typeof profileFormSchema>) {
     if (!firestore || !targetUserId || !auth?.currentUser || !firebaseApp ) return;
     if (!isOwnProfile && !isAdmin) {
          toast({ title: "Error", description: "You are not authorized to perform this action.", variant: 'destructive' });
@@ -229,32 +250,46 @@ export default function ProfilePage() {
     }
   }
 
-  const handleChangePassword = async () => {
-    if (!currentUser?.email || !auth) return;
-    try {
-      await sendPasswordResetEmail(auth, currentUser.email);
-      toast({
-        title: "Password Reset Email Sent",
-        description: `An email has been sent to ${currentUser.email} with instructions to reset your password.`,
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to send password reset email.",
-        variant: "destructive",
-      });
+  async function onPasswordSubmit(values: z.infer<typeof passwordFormSchema>) {
+    if (!currentUser || !currentUser.email) {
+      toast({ title: 'Error', description: 'Not authenticated.', variant: 'destructive' });
+      return;
     }
-  };
+    
+    setIsPasswordSaving(true);
+    try {
+      const credential = EmailAuthProvider.credential(currentUser.email, values.currentPassword);
+      await reauthenticateWithCredential(currentUser, credential);
+      await updatePassword(currentUser, values.newPassword);
+      
+      toast({
+        title: 'Password Updated',
+        description: 'Your password has been changed successfully.',
+      });
+      passwordForm.reset();
+    } catch (error: any) {
+      let description = 'An error occurred while changing your password.';
+      if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        description = 'The current password you entered is incorrect.';
+        passwordForm.setError('currentPassword', { type: 'manual', message: description });
+      }
+      toast({
+        title: 'Error',
+        description,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsPasswordSaving(false);
+    }
+  }
 
   const handleDeleteAccount = async () => {
     if (!currentUser || !firestore) return;
     setIsDeleting(true);
     try {
-      // First, delete the user's Firestore document
       const userDocRef = doc(firestore, 'users', currentUser.uid);
       await deleteDoc(userDocRef);
 
-      // Then, delete the user from Firebase Authentication
       await deleteUser(currentUser);
       
       toast({
@@ -308,8 +343,8 @@ export default function ProfilePage() {
                          <p className="text-muted-foreground">User not found.</p>
                     </div>
                  ) : (
-                  <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  <Form {...profileForm}>
+                    <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-6">
                         <div className="flex items-center gap-4">
                             <Avatar className="h-20 w-20">
                               <AvatarImage src={photoPreview ?? undefined} alt={profileUser?.displayName ?? ''} />
@@ -330,7 +365,7 @@ export default function ProfilePage() {
                             </div>
                         </div>
                       <FormField
-                        control={form.control}
+                        control={profileForm.control}
                         name="displayName"
                         render={({ field }) => (
                           <FormItem>
@@ -343,7 +378,7 @@ export default function ProfilePage() {
                         )}
                       />
                       <FormField
-                        control={form.control}
+                        control={profileForm.control}
                         name="email"
                         render={({ field }) => (
                           <FormItem>
@@ -356,7 +391,7 @@ export default function ProfilePage() {
                         )}
                       />
                        <FormField
-                        control={form.control}
+                        control={profileForm.control}
                         name="dateOfBirth"
                         render={({ field }) => (
                           <FormItem className="flex flex-col">
@@ -397,7 +432,7 @@ export default function ProfilePage() {
                         )}
                       />
                       <FormField
-                        control={form.control}
+                        control={profileForm.control}
                         name="status"
                         render={({ field }) => (
                           <FormItem>
@@ -418,7 +453,7 @@ export default function ProfilePage() {
                         )}
                       />
                       <FormField
-                        control={form.control}
+                        control={profileForm.control}
                         name="country"
                         render={({ field }) => (
                           <FormItem>
@@ -448,16 +483,61 @@ export default function ProfilePage() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                    <div className="p-4 border rounded-lg">
-                       <h3 className="font-medium">Change Password</h3>
-                       <p className="text-sm text-muted-foreground">You will be sent an email with a link to reset your password.</p>
-                        <Button variant="outline" className="mt-2" onClick={handleChangePassword}>Send Reset Email</Button>
+                       <h3 className="font-medium mb-2">Change Password</h3>
+                        <Form {...passwordForm}>
+                          <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
+                            <FormField
+                              control={passwordForm.control}
+                              name="currentPassword"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Current Password</FormLabel>
+                                  <FormControl>
+                                    <Input type="password" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                             <FormField
+                              control={passwordForm.control}
+                              name="newPassword"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>New Password</FormLabel>
+                                  <FormControl>
+                                    <Input type="password" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                             <FormField
+                              control={passwordForm.control}
+                              name="confirmPassword"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Confirm New Password</FormLabel>
+                                  <FormControl>
+                                    <Input type="password" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <Button type="submit" variant="outline" disabled={isPasswordSaving}>
+                                {isPasswordSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                {isPasswordSaving ? 'Saving...' : 'Save New Password'}
+                            </Button>
+                          </form>
+                        </Form>
                    </div>
                    <div className="p-4 border border-destructive/50 rounded-lg">
                        <h3 className="font-medium text-destructive">Delete Account</h3>
                        <p className="text-sm text-muted-foreground">Permanently delete your account and all associated data. This action cannot be undone.</p>
                        <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="destructive" className="mt-2">Delete Account</Button>
+                            <Button variant="destructive" className="mt-2" disabled={!isOwnProfile}>Delete Account</Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
@@ -502,3 +582,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
