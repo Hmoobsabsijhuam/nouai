@@ -4,7 +4,6 @@ import { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Header } from '@/components/dashboard/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle2, FileText, Bell, ArrowRight, ImageIcon, VideoIcon, Mic } from 'lucide-react';
 import Image from 'next/image';
@@ -16,6 +15,7 @@ import { useDoc } from '@/firebase/firestore/use-doc';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
+import { DashboardLayout } from '@/components/dashboard/dashboard-layout';
 
 
 function DashboardSkeleton() {
@@ -267,11 +267,8 @@ export default function DashboardPage() {
   const isAdmin = user.email === 'admin@noukha.com';
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-background">
-      <Header />
-      <main className="flex-1 p-4 md:p-8">
-        {isAdmin ? <AdminDashboard user={user} /> : <UserDashboard />}
-      </main>
-    </div>
+    <DashboardLayout>
+      {isAdmin ? <AdminDashboard user={user} /> : <UserDashboard />}
+    </DashboardLayout>
   );
 }
