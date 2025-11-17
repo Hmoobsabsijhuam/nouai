@@ -34,58 +34,6 @@ export function Header() {
           </Link>
           <Notifications />
           <ThemeToggle />
-           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <MoreVertical className="h-5 w-5" />
-                <span className="sr-only">More options</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-                <DropdownMenuLabel>More</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/generate-image">
-                    <ImageIcon className="mr-2 h-4 w-4" />
-                    <span>Image Generation</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/text-to-video">
-                    <Video className="mr-2 h-4 w-4" />
-                    <span>Text to Video</span>
-                  </Link>
-                </DropdownMenuItem>
-                 <DropdownMenuItem asChild>
-                  <Link href="/image-to-video">
-                    <Video className="mr-2 h-4 w-4" />
-                    <span>Image to Video</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/text-to-speech">
-                    <Mic className="mr-2 h-4 w-4" />
-                    <span>Text to Speech</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/profile">
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/contact-admin">
-                    <LifeBuoy className="mr-2 h-4 w-4" />
-                    <span>Support</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                    <HelpCircle className="mr-2 h-4 w-4" />
-                    <span>Help</span>
-                </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
           <UserNav />
         </div>
       </div>
