@@ -178,6 +178,49 @@
         "videoUrl",
         "createdAt"
       ]
+    },
+    "SupportTicket": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Support Ticket",
+      "type": "object",
+      "description": "Represents a support ticket submitted by a user.",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who submitted the ticket."
+        },
+        "userEmail": {
+          "type": "string",
+          "description": "The email of the user for easy reference.",
+          "format": "email"
+        },
+        "subject": {
+          "type": "string",
+          "description": "The subject of the support ticket."
+        },
+        "message": {
+          "type": "string",
+          "description": "The detailed message of the support ticket."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the support ticket.",
+          "enum": ["open", "closed"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the ticket was created."
+        }
+      },
+      "required": [
+        "userId",
+        "userEmail",
+        "subject",
+        "message",
+        "status",
+        "createdAt"
+      ]
     }
   },
   "auth": {
@@ -249,8 +292,18 @@
           },
           "description": "Stores global notifications sent by the admin. These are fanned out to individual user notification subcollections."
         }
+      },
+      {
+        "path": "/support_tickets/{ticketId}",
+        "definition": {
+          "entityName": "SupportTicket",
+          "schema": {
+            "$ref": "#/backend/entities/SupportTicket"
+          },
+          "description": "Stores support tickets submitted by users. Allows users to create tickets and admins to manage them."
+        }
       }
     ],
-    "reasoning": "The Firestore structure is designed to securely manage user authentication and admin roles, ensuring authorization independence and supporting secure list operations (QAPs). We achieve this by separating user data and admin role definitions into distinct collections. The structure prioritizes simplicity and leverages path-based ownership for user data. Admin roles are determined by the *existence* of a document in a dedicated `/roles_admin/{uid}` collection, enabling simple presence checks in security rules without relying on complex data comparisons. This is more robust than storing the admin role within the user document itself. The path-based ownership structure `/users/{userId}` ensures secure `list` operations, as rules can easily restrict access based on the authenticated user ID. A global `notifications` collection is added for admins to broadcast messages. A `user_notifications` subcollection is added under each user to handle per-user read status, improving scalability and query efficiency."
+    "reasoning": "The Firestore structure is designed to securely manage user authentication and admin roles, ensuring authorization independence and supporting secure list operations (QAPs). We achieve this by separating user data and admin role definitions into distinct collections. The structure prioritizes simplicity and leverages path-based ownership for user data. Admin roles are determined by the *existence* of a document in a dedicated `/roles_admin/{uid}` collection, enabling simple presence checks in security rules without relying on complex data comparisons. This is more robust than storing the admin role within the user document itself. The path-based ownership structure `/users/{userId}` ensures secure `list` operations, as rules can easily restrict access based on the authenticated user ID. A global `notifications` collection is added for admins to broadcast messages. A `user_notifications` subcollection is added under each user to handle per-user read status, improving scalability and query efficiency. A `support_tickets` collection is added for users to submit issue reports to the admin."
   }
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { collection, Timestamp, query, orderBy, limit } from 'firebase/firestore';
+import { collection, Timestamp, query, orderBy, limit, updateDoc, doc } from 'firebase/firestore';
 import { useCollection, WithId } from '@/firebase/firestore/use-collection';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -20,7 +20,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Users, Send, CalendarIcon, MessageSquare, Clock } from 'lucide-react';
+import { Users, Send, CalendarIcon, MessageSquare, Clock, LifeBuoy } from 'lucide-react';
 import { useFirebase, useMemoFirebase } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -29,6 +29,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { format, formatDistanceToNow } from 'date-fns';
 import { UserListDialog } from './user-list-dialog';
+import { useToast } from '@/hooks/use-toast';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 
 interface UserData {
   email: string;
@@ -41,6 +43,15 @@ interface UserData {
 interface NotificationData {
   message: string;
   createdAt: Timestamp;
+}
+
+interface SupportTicket {
+    userId: string;
+    userEmail: string;
+    subject: string;
+    message: string;
+    status: 'open' | 'closed';
+    createdAt: Timestamp;
 }
 
 type ChartDataItem = {
@@ -126,9 +137,76 @@ function NotificationHistory({ notifications, isLoading }: { notifications: With
   );
 }
 
+function SupportTickets({ tickets, isLoading, onStatusChange }: { tickets: WithId<SupportTicket>[] | null; isLoading: boolean, onStatusChange: (ticketId: string, status: 'open' | 'closed') => void; }) {
+  const [selectedTicket, setSelectedTicket] = useState<WithId<SupportTicket> | null>(null);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        {Array.from({ length: 2 }).map((_, i) => (
+            <div key={i} className="flex flex-col gap-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-3 w-1/4" />
+            </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (!tickets || tickets.length === 0) {
+    return <p className="text-sm text-muted-foreground">No open support tickets.</p>;
+  }
+
+  return (
+    <>
+    <div className="space-y-3">
+      {tickets.map((ticket) => (
+        <button key={ticket.id} onClick={() => setSelectedTicket(ticket)} className="w-full text-left p-3 rounded-lg hover:bg-accent transition-colors border">
+            <div className="flex justify-between items-start">
+                 <p className="font-medium truncate pr-4">{ticket.subject}</p>
+                 <Badge variant={ticket.status === 'open' ? 'destructive' : 'secondary'}>{ticket.status}</Badge>
+            </div>
+            <p className="text-xs text-muted-foreground truncate">{ticket.userEmail}</p>
+        </button>
+      ))}
+    </div>
+
+    <Dialog open={!!selectedTicket} onOpenChange={() => setSelectedTicket(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{selectedTicket?.subject}</DialogTitle>
+            <DialogDescription>
+              From: {selectedTicket?.userEmail} | {selectedTicket && formatDistanceToNow(selectedTicket.createdAt.toDate(), { addSuffix: true })}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[50vh] overflow-y-auto py-4">
+            <p className="text-sm whitespace-pre-wrap">{selectedTicket?.message}</p>
+          </div>
+          <div className="flex items-center gap-4">
+              <span className="text-sm font-medium">Status:</span>
+              <Select
+                value={selectedTicket?.status}
+                onValueChange={(value: 'open' | 'closed') => selectedTicket && onStatusChange(selectedTicket.id, value)}
+              >
+                  <SelectTrigger className="w-[120px]">
+                      <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                      <SelectItem value="open">Open</SelectItem>
+                      <SelectItem value="closed">Closed</SelectItem>
+                  </SelectContent>
+              </Select>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
 
 export default function AdminDashboard({ user }: { user: any }) {
   const { firestore } = useFirebase();
+  const { toast } = useToast();
   const [selectedDay, setSelectedDay] = useState<ChartDataItem | null>(null);
   const [isUserListOpen, setIsUserListOpen] = useState(false);
 
@@ -150,6 +228,12 @@ export default function AdminDashboard({ user }: { user: any }) {
     [firestore]
   );
   const { data: notifications, isLoading: isNotificationsLoading } = useCollection<NotificationData>(notificationsQuery);
+  
+  const supportTicketsQuery = useMemoFirebase(
+    () => (firestore ? query(collection(firestore, 'support_tickets'), orderBy('createdAt', 'desc')) : null),
+    [firestore]
+  );
+  const { data: supportTickets, isLoading: isTicketsLoading } = useCollection<SupportTicket>(supportTicketsQuery);
 
 
   const { chartData, totalUsers } = useMemo(() => {
@@ -180,6 +264,29 @@ export default function AdminDashboard({ user }: { user: any }) {
   const handleBarClick = (data: ChartDataItem) => {
     setSelectedDay(data);
   };
+  
+  const openSupportTickets = useMemo(() => {
+    return supportTickets?.filter(t => t.status === 'open') ?? [];
+  }, [supportTickets]);
+
+  const handleTicketStatusChange = async (ticketId: string, status: 'open' | 'closed') => {
+    if (!firestore) return;
+    try {
+        const ticketRef = doc(firestore, 'support_tickets', ticketId);
+        await updateDoc(ticketRef, { status });
+        toast({
+            title: 'Ticket Updated',
+            description: `Ticket status changed to ${status}.`
+        });
+    } catch (error) {
+        toast({
+            title: 'Error',
+            description: 'Failed to update ticket status.',
+            variant: 'destructive',
+        });
+    }
+  }
+
 
   return (
     <div>
@@ -212,19 +319,21 @@ export default function AdminDashboard({ user }: { user: any }) {
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Send Notifications
+              Open Support Tickets
             </CardTitle>
-            <Send className="h-4 w-4 text-muted-foreground" />
+            <LifeBuoy className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-             <p className="text-xs text-muted-foreground mb-4">
-              Broadcast a message to all users.
+            {isTicketsLoading ? (
+                 <Skeleton className="h-8 w-1/4" />
+            ) : (
+                <div className="text-2xl font-bold">{openSupportTickets.length}</div>
+            )}
+            <p className="text-xs text-muted-foreground">
+              New issues reported by users.
             </p>
-            <Button asChild>
-              <Link href="/notifications">Send a notification</Link>
-            </Button>
           </CardContent>
         </Card>
          <Card className="sm:col-span-2 lg:col-span-1">
@@ -298,13 +407,13 @@ export default function AdminDashboard({ user }: { user: any }) {
              <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                        <MessageSquare className="h-5 w-5" />
-                        Notification History
+                        <LifeBuoy className="h-5 w-5" />
+                        Open Support Tickets
                     </CardTitle>
-                    <CardDescription>The last 3 notifications sent.</CardDescription>
+                    <CardDescription>The most recent open tickets.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <NotificationHistory notifications={notifications} isLoading={isNotificationsLoading} />
+                    <SupportTickets tickets={openSupportTickets} isLoading={isTicketsLoading} onStatusChange={handleTicketStatusChange}/>
                 </CardContent>
             </Card>
         </div>

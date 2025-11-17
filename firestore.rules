@@ -13,6 +13,7 @@
  * - /roles_admin/{userId}: Stores admin role assignments; the existence of a document
  *   indicates admin privileges.
  * - /notifications/{notificationId}: Stores global notifications sent by admins.
+ * - /support_tickets/{ticketId}: Stores support tickets from users for admin review.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -95,6 +96,18 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    /**
+     * @description Manages support tickets submitted by users.
+     * @path /support_tickets/{ticketId}
+     * @allow (create) - Any signed-in user can create a support ticket.
+     * @allow (list, get, update) - Only admins can manage support tickets.
+     */
+    match /support_tickets/{ticketId} {
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow list, get, update: if isAdmin();
+      allow delete: if false;
+    }
+
     function isSignedIn() {
       return request.auth != null;
     }
@@ -117,5 +130,3 @@ service cloud.firestore {
     }
   }
 }
-
-    

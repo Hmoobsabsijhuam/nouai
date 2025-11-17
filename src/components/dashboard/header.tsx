@@ -68,9 +68,11 @@ export function Header() {
                     <span>Settings</span>
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/contact-admin">
                     <LifeBuoy className="mr-2 h-4 w-4" />
                     <span>Support</span>
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                     <HelpCircle className="mr-2 h-4 w-4" />
