@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { doc, setDoc, Timestamp, deleteDoc } from 'firebase/firestore';
+import { doc, setDoc, Timestamp, deleteDoc, query, collection, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 import { updateProfile, sendPasswordResetEmail, deleteUser, reauthenticateWithCredential, EmailAuthProvider, updatePassword } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useFirebase, useMemoFirebase } from '@/firebase';
@@ -55,6 +55,34 @@ const passwordFormSchema = z.object({
     message: 'New passwords do not match.',
     path: ['confirmPassword'],
 });
+
+async function notifyAdmin(firestore: any, message: string) {
+  try {
+    // 1. Find the admin's user ID
+    const usersRef = collection(firestore, 'users');
+    const q = query(usersRef, where('email', '==', 'admin@noukha.com'));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      console.warn("Admin user 'admin@noukha.com' not found. Cannot send notification.");
+      return;
+    }
+
+    const adminDoc = querySnapshot.docs[0];
+    const adminId = adminDoc.id;
+
+    // 2. Create a notification for the admin
+    const adminNotifCollection = collection(firestore, 'users', adminId, 'user_notifications');
+    await addDoc(adminNotifCollection, {
+      message: message,
+      createdAt: serverTimestamp(),
+      read: false,
+    });
+  } catch (error) {
+    console.error("Failed to send admin notification:", error);
+    // We don't show a toast here because this is a background task.
+  }
+}
 
 function ProfileSkeleton() {
   return (
@@ -252,7 +280,7 @@ export default function ProfilePage() {
   }
 
   async function onPasswordSubmit(values: z.infer<typeof passwordFormSchema>) {
-    if (!currentUser || !currentUser.email) {
+    if (!currentUser || !currentUser.email || !firestore) {
       toast({ title: 'Error', description: 'Not authenticated.', variant: 'destructive' });
       return;
     }
@@ -263,6 +291,8 @@ export default function ProfilePage() {
       await reauthenticateWithCredential(currentUser, credential);
       await updatePassword(currentUser, values.newPassword);
       
+      await notifyAdmin(firestore, `User ${currentUser.email} has changed their password.`);
+
       toast({
         title: 'Password Updated',
         description: 'Your password has been changed successfully.',
@@ -290,6 +320,9 @@ export default function ProfilePage() {
     setIsDeleting(true);
     try {
       const userDocRef = doc(firestore, 'users', currentUser.uid);
+      
+      await notifyAdmin(firestore, `User ${currentUser.email} has deleted their account.`);
+
       await deleteDoc(userDocRef);
 
       await deleteUser(currentUser);

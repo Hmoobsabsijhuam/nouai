@@ -36,11 +36,11 @@ service cloud.firestore {
        * @description Manages per-user notification data.
        * @path /users/{userId}/user_notifications/{notificationId}
        * @allow (get, list, update) - Owner can read and update their own notifications.
-       * @allow (create) - Admins can create (fan-out) notifications for users.
+       * @allow (create) - Admins can create (fan-out) notifications for users. A signed-in user can also notify the admin.
        */
       match /user_notifications/{notificationId} {
         allow get, list: if isOwner(userId);
-        allow create: if isAdmin();
+        allow create: if isAdmin() || (isSignedIn() && isAdminId(userId));
         allow update: if isOwner(userId) && request.resource.data.read == true;
         allow delete: if false;
       }
@@ -104,6 +104,11 @@ service cloud.firestore {
 
     function isOwner(userId) {
       return request.auth.uid == userId;
+    }
+    
+    function isAdminId(userId) {
+      return exists(/databases/$(database)/documents/users/$(userId)) &&
+             get(/databases/$(database)/documents/users/$(userId)).data.email == 'admin@noukha.com';
     }
 
     function isExistingOwner(userId) {
