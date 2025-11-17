@@ -250,30 +250,6 @@ export default function ProfilePage() {
       setLoading(false);
     }
   }
-  
-  const notifyAdmin = async (message: string) => {
-    if (!firestore) return;
-    try {
-      const q = query(collection(firestore, 'users'), where('email', '==', 'admin@noukha.com'));
-      const adminSnapshot = await getDocs(q);
-      
-      if (!adminSnapshot.empty) {
-        const adminId = adminSnapshot.docs[0].id;
-        const adminNotifCollection = collection(firestore, 'users', adminId, 'user_notifications');
-        await addDoc(adminNotifCollection, {
-          message,
-          createdAt: serverTimestamp(),
-          read: false,
-        });
-      } else {
-        console.error("Admin user 'admin@noukha.com' not found.");
-      }
-    } catch (error) {
-      // We will not show a toast here to the end user.
-      // This is a "fire and forget" for the user, but we log it for debugging.
-      console.error("Failed to send admin notification:", error);
-    }
-  };
 
   async function onPasswordSubmit(values: z.infer<typeof passwordFormSchema>) {
     if (!currentUser || !currentUser.email || !firestore || !auth) {
@@ -287,7 +263,6 @@ export default function ProfilePage() {
       await reauthenticateWithCredential(currentUser, credential);
       await updatePassword(currentUser, values.newPassword);
 
-      // Create a notification for the user about the password change
       const userNotifCollection = collection(firestore, 'users', currentUser.uid, 'user_notifications');
       await addDoc(userNotifCollection, {
         message: "Your password was successfully changed. If you did not make this change, please contact support immediately.",
@@ -322,16 +297,8 @@ export default function ProfilePage() {
   const handleDeleteAccount = async () => {
     if (!currentUser || !firestore) return;
     setIsDeleting(true);
-    
-    const userEmail = currentUser.email;
 
     try {
-      // Notify admin before deletion
-      if (currentUser.email !== 'admin@noukha.com') {
-         await notifyAdmin(`User ${userEmail} has deleted their account.`);
-      }
-
-      // Proceed with deletion
       const userDocRef = doc(firestore, 'users', currentUser.uid);
       await deleteDoc(userDocRef);
 
@@ -341,7 +308,6 @@ export default function ProfilePage() {
         title: "Account Deleted",
         description: "Your account has been permanently deleted.",
       });
-      // User will be automatically signed out, and onAuthStateChanged will trigger redirect
     } catch (error: any) {
       console.error("Delete account error:", error);
       toast({
@@ -634,3 +600,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
