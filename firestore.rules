@@ -14,6 +14,7 @@
  *   indicates admin privileges.
  * - /notifications/{notificationId}: Stores global notifications sent by admins.
  * - /support_tickets/{ticketId}: Stores support tickets from users for admin review.
+ * - /support_tickets/{ticketId}/messages/{messageId}: Stores conversation messages for a ticket.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -25,21 +26,22 @@ service cloud.firestore {
      * @allow (create) - Any user can create a profile.
      * @allow (list) - Admin can list all users.
      * @allow (get, update) - The owner or an admin can get and update a user's profile.
-     * @allow (delete) - The owner or an admin can delete profiles.
+     * @allow (delete) - The owner can delete their own profile.
      */
     match /users/{userId} {
       allow get, update: if isOwner(userId) || isAdmin();
       allow list: if isAdmin();
       allow create: if true;
-      allow delete: if isOwner(userId) || isAdmin();
+      allow delete: if isOwner(userId);
 
       /**
        * @description Manages per-user notification data.
        * @path /users/{userId}/user_notifications/{notificationId}
-       * @allow (get, list, create, update) - Owner can read, create and update their own notifications.
+       * @allow (get, list, create, update) - Owner can read, create and update their own notifications. Admins can create notifications for users.
        */
       match /user_notifications/{notificationId} {
-        allow get, list, create, update: if isOwner(userId);
+        allow get, list, update: if isOwner(userId);
+        allow create: if isOwner(userId) || isAdmin();
         allow delete: if false;
       }
       
@@ -99,13 +101,29 @@ service cloud.firestore {
     /**
      * @description Manages support tickets submitted by users.
      * @path /support_tickets/{ticketId}
-     * @allow (create) - Any signed-in user can create a support ticket.
-     * @allow (list, get, update) - Only admins can manage support tickets.
+     * @allow (create) - Any signed-in user can create a support ticket for themselves.
+     * @allow (get) - The user who created the ticket or an admin can read it.
+     * @allow (list) - An admin can list all tickets; a user can list their own tickets.
+     * @allow (update) - Admins can update any ticket; users cannot update the main ticket document.
      */
     match /support_tickets/{ticketId} {
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow list, get, update: if isAdmin();
+      allow get: if isAdmin() || resource.data.userId == request.auth.uid;
+      allow list: if isAdmin() || (isSignedIn() && request.query.where.userId == request.auth.uid);
+      allow update: if isAdmin();
       allow delete: if false;
+
+      /**
+       * @description Manages messages within a support ticket.
+       * @path /support_tickets/{ticketId}/messages/{messageId}
+       * @allow (list, get) - The ticket owner or an admin can read messages.
+       * @allow (create) - The ticket owner or an admin can create messages.
+       */
+      match /messages/{messageId} {
+        allow list, get: if isAdmin() || get(/databases/$(database)/documents/support_tickets/$(ticketId)).data.userId == request.auth.uid;
+        allow create: if isAdmin() || get(/databases/$(database)/documents/support_tickets/$(ticketId)).data.userId == request.auth.uid;
+        allow update, delete: if false;
+      }
     }
 
     function isSignedIn() {
@@ -114,15 +132,6 @@ service cloud.firestore {
 
     function isOwner(userId) {
       return request.auth.uid == userId;
-    }
-    
-    function isAdminId(userId) {
-      return exists(/databases/$(database)/documents/users/$(userId)) &&
-             get(/databases/$(database)/documents/users/$(userId)).data.email == 'admin@noukha.com';
-    }
-
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
     }
 
     function isAdmin() {

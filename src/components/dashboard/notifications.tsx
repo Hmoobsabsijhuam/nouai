@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Bell } from 'lucide-react';
+import { Bell, ExternalLink } from 'lucide-react';
 import { collection, query, orderBy, limit, writeBatch, doc } from 'firebase/firestore';
 import { useCollection, WithId } from '@/firebase/firestore/use-collection';
 import { useFirebase, useMemoFirebase } from '@/firebase';
@@ -14,11 +14,13 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '../ui/skeleton';
+import Link from 'next/link';
 
 interface UserNotification {
   message: string;
   createdAt: any; // Firestore Timestamp
   read: boolean;
+  link?: string;
 }
 
 export function Notifications() {
@@ -107,12 +109,21 @@ export function Notifications() {
                   >
                     <span className={`flex h-2 w-2 translate-y-1 rounded-full ${!notif.read ? 'bg-primary' : 'bg-muted'}`} />
                     <div className="grid gap-1">
-                      <p className="text-sm font-medium">{notif.message}</p>
-                      {notif.createdAt?.toDate && (
-                        <p className="text-sm text-muted-foreground">
-                          {formatDistanceToNow(notif.createdAt.toDate(), { addSuffix: true })}
-                        </p>
-                      )}
+                       <p className="text-sm font-medium">{notif.message}</p>
+                       <div className="flex items-center justify-between">
+                         {notif.createdAt?.toDate && (
+                           <p className="text-sm text-muted-foreground">
+                             {formatDistanceToNow(notif.createdAt.toDate(), { addSuffix: true })}
+                           </p>
+                         )}
+                         {notif.link && (
+                            <Link href={notif.link} passHref>
+                                <Button variant="ghost" size="icon" className="h-6 w-6">
+                                    <ExternalLink className="h-4 w-4" />
+                                </Button>
+                            </Link>
+                         )}
+                       </div>
                     </div>
                   </div>
                 ))

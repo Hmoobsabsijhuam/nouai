@@ -1,36 +1,24 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { collection, Timestamp, query, orderBy, limit, updateDoc, doc } from 'firebase/firestore';
+import { useState, useMemo, FormEvent } from 'react';
+import { collection, Timestamp, query, orderBy, limit, updateDoc, doc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useCollection, WithId } from '@/firebase/firestore/use-collection';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
-} from '@/components/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Users, Send, CalendarIcon, MessageSquare, Clock, LifeBuoy } from 'lucide-react';
+import { Users, Send, CalendarIcon, MessageSquare, Clock, LifeBuoy, Loader2 } from 'lucide-react';
 import { useFirebase, useMemoFirebase } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
+import { Textarea } from '@/components/ui/textarea';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { format, formatDistanceToNow } from 'date-fns';
 import { UserListDialog } from './user-list-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
 interface UserData {
   email: string;
@@ -40,17 +28,19 @@ interface UserData {
   createdAt?: Timestamp;
 }
 
-interface NotificationData {
-  message: string;
-  createdAt: Timestamp;
-}
-
 interface SupportTicket {
     userId: string;
     userEmail: string;
     subject: string;
-    message: string;
     status: 'open' | 'closed';
+    createdAt: Timestamp;
+    updatedAt: Timestamp;
+}
+
+interface TicketMessage {
+    text: string;
+    senderId: string;
+    senderRole: 'user' | 'admin';
     createdAt: Timestamp;
 }
 
@@ -104,41 +94,7 @@ function RecentUsersTable({ users, isLoading }: { users: WithId<UserData>[] | nu
   );
 }
 
-
-function NotificationHistory({ notifications, isLoading }: { notifications: WithId<NotificationData>[] | null; isLoading: boolean }) {
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        {Array.from({ length: 2 }).map((_, i) => (
-            <div key={i} className="flex flex-col gap-2">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-3 w-1/4" />
-            </div>
-        ))}
-      </div>
-    );
-  }
-
-  if (!notifications || notifications.length === 0) {
-    return <p className="text-sm text-muted-foreground">No notifications sent yet.</p>;
-  }
-
-  return (
-    <div className="space-y-4">
-      {notifications.map((notif) => (
-        <div key={notif.id} className="flex flex-col gap-1 border-l-2 pl-3">
-          <p className="text-sm font-medium leading-snug">{notif.message}</p>
-          <p className="text-xs text-muted-foreground">
-            {format(notif.createdAt.toDate(), "MMM d, yyyy 'at' h:mm a")}
-          </p>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function SupportTickets({ tickets, isLoading, onStatusChange }: { tickets: WithId<SupportTicket>[] | null; isLoading: boolean, onStatusChange: (ticketId: string, status: 'open' | 'closed') => void; }) {
-  const [selectedTicket, setSelectedTicket] = useState<WithId<SupportTicket> | null>(null);
+function SupportTickets({ tickets, isLoading, onTicketSelect }: { tickets: WithId<SupportTicket>[] | null; isLoading: boolean, onTicketSelect: (ticket: WithId<SupportTicket>) => void; }) {
 
   if (isLoading) {
     return (
@@ -158,10 +114,9 @@ function SupportTickets({ tickets, isLoading, onStatusChange }: { tickets: WithI
   }
 
   return (
-    <>
     <div className="space-y-3">
       {tickets.map((ticket) => (
-        <button key={ticket.id} onClick={() => setSelectedTicket(ticket)} className="w-full text-left p-3 rounded-lg hover:bg-accent transition-colors border">
+        <button key={ticket.id} onClick={() => onTicketSelect(ticket)} className="w-full text-left p-3 rounded-lg hover:bg-accent transition-colors border">
             <div className="flex justify-between items-start">
                  <p className="font-medium truncate pr-4">{ticket.subject}</p>
                  <Badge variant={ticket.status === 'open' ? 'destructive' : 'secondary'}>{ticket.status}</Badge>
@@ -170,36 +125,129 @@ function SupportTickets({ tickets, isLoading, onStatusChange }: { tickets: WithI
         </button>
       ))}
     </div>
+  );
+}
 
-    <Dialog open={!!selectedTicket} onOpenChange={() => setSelectedTicket(null)}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>{selectedTicket?.subject}</DialogTitle>
-            <DialogDescription>
-              From: {selectedTicket?.userEmail} | {selectedTicket && formatDistanceToNow(selectedTicket.createdAt.toDate(), { addSuffix: true })}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="max-h-[50vh] overflow-y-auto py-4">
-            <p className="text-sm whitespace-pre-wrap">{selectedTicket?.message}</p>
-          </div>
-          <div className="flex items-center gap-4">
-              <span className="text-sm font-medium">Status:</span>
-              <Select
-                value={selectedTicket?.status}
-                onValueChange={(value: 'open' | 'closed') => selectedTicket && onStatusChange(selectedTicket.id, value)}
-              >
-                  <SelectTrigger className="w-[120px]">
-                      <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                      <SelectItem value="open">Open</SelectItem>
-                      <SelectItem value="closed">Closed</SelectItem>
-                  </SelectContent>
-              </Select>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </>
+
+function TicketConversationDialog({
+  user,
+  firestore,
+  ticket,
+  onOpenChange,
+  onStatusChange,
+}: {
+  user: any;
+  firestore: any;
+  ticket: WithId<SupportTicket> | null;
+  onOpenChange: (open: boolean) => void;
+  onStatusChange: (ticketId: string, status: 'open' | 'closed') => void;
+}) {
+  const { toast } = useToast();
+  const [reply, setReply] = useState('');
+  const [isSending, setIsSending] = useState(false);
+
+  const messagesQuery = useMemoFirebase(() => {
+    if (!firestore || !ticket) return null;
+    return query(collection(firestore, `support_tickets/${ticket.id}/messages`), orderBy('createdAt', 'asc'));
+  }, [firestore, ticket]);
+
+  const { data: messages, isLoading: messagesLoading } = useCollection<TicketMessage>(messagesQuery);
+
+  const handleReplySubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!reply.trim() || !ticket || !user) return;
+    setIsSending(true);
+
+    try {
+        const messagesCol = collection(firestore, `support_tickets/${ticket.id}/messages`);
+        await addDoc(messagesCol, {
+            text: reply,
+            senderId: user.uid,
+            senderRole: 'admin',
+            createdAt: serverTimestamp(),
+        });
+        
+        // Update ticket's updatedAt timestamp
+        const ticketRef = doc(firestore, 'support_tickets', ticket.id);
+        await updateDoc(ticketRef, { updatedAt: serverTimestamp() });
+        
+        // Send notification to user
+        const userNotifCol = collection(firestore, `users/${ticket.userId}/user_notifications`);
+        await addDoc(userNotifCol, {
+            message: `You have a new reply on your ticket: "${ticket.subject}"`,
+            createdAt: serverTimestamp(),
+            read: false,
+            link: `/support/${ticket.id}`
+        });
+
+        setReply('');
+        toast({ title: 'Reply Sent' });
+
+    } catch (error: any) {
+        console.error("Error sending reply:", error);
+        toast({ title: 'Error', description: 'Could not send reply.', variant: 'destructive' });
+    } finally {
+        setIsSending(false);
+    }
+  };
+
+  return (
+    <Dialog open={!!ticket} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl h-[80vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle>{ticket?.subject}</DialogTitle>
+          <DialogDescription>
+            From: {ticket?.userEmail} | Status:
+            <Select
+              value={ticket?.status}
+              onValueChange={(value: 'open' | 'closed') => ticket && onStatusChange(ticket.id, value)}
+            >
+              <SelectTrigger className="inline-flex w-auto h-auto p-1 text-xs ml-2">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="open">Open</SelectItem>
+                <SelectItem value="closed">Closed</SelectItem>
+              </SelectContent>
+            </Select>
+          </DialogDescription>
+        </DialogHeader>
+        <ScrollArea className="flex-1 -mx-6 px-6 border-y">
+            <div className="py-4 space-y-4">
+            {messagesLoading ? <p>Loading messages...</p> :
+             messages?.map(message => (
+                <div key={message.id} className={cn(
+                    "flex items-end gap-2",
+                    message.senderRole === 'admin' ? 'justify-end' : 'justify-start'
+                )}>
+                    {message.senderRole === 'user' && <Avatar className="h-8 w-8"><AvatarFallback>U</AvatarFallback></Avatar>}
+                    <div className={cn(
+                        "max-w-xs md:max-w-md p-3 rounded-lg",
+                        message.senderRole === 'admin' ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                    )}>
+                        <p className="text-sm whitespace-pre-wrap">{message.text}</p>
+                        <p className={cn("text-xs mt-1", message.senderRole === 'admin' ? 'text-primary-foreground/70' : 'text-muted-foreground')}>
+                            {message.createdAt && formatDistanceToNow(message.createdAt.toDate(), { addSuffix: true })}
+                        </p>
+                    </div>
+                </div>
+            ))}
+            </div>
+        </ScrollArea>
+        <form onSubmit={handleReplySubmit} className="flex gap-2">
+            <Textarea
+              placeholder="Type your reply..."
+              value={reply}
+              onChange={(e) => setReply(e.target.value)}
+              disabled={isSending}
+              className="min-h-[40px]"
+            />
+            <Button type="submit" disabled={isSending || !reply.trim()}>
+              {isSending ? <Loader2 className="animate-spin" /> : <Send />}
+            </Button>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -208,6 +256,7 @@ export default function AdminDashboard({ user }: { user: any }) {
   const { firestore } = useFirebase();
   const { toast } = useToast();
   const [selectedDay, setSelectedDay] = useState<ChartDataItem | null>(null);
+  const [selectedTicket, setSelectedTicket] = useState<WithId<SupportTicket> | null>(null);
   const [isUserListOpen, setIsUserListOpen] = useState(false);
 
   const usersCollection = useMemoFirebase(
@@ -223,14 +272,8 @@ export default function AdminDashboard({ user }: { user: any }) {
   );
   const { data: recentUsers, isLoading: isRecentUsersLoading } = useCollection<UserData>(recentUsersQuery);
   
-  const notificationsQuery = useMemoFirebase(
-    () => (firestore ? query(collection(firestore, 'notifications'), orderBy('createdAt', 'desc'), limit(3)) : null),
-    [firestore]
-  );
-  const { data: notifications, isLoading: isNotificationsLoading } = useCollection<NotificationData>(notificationsQuery);
-  
   const supportTicketsQuery = useMemoFirebase(
-    () => (firestore ? query(collection(firestore, 'support_tickets'), orderBy('createdAt', 'desc')) : null),
+    () => (firestore ? query(collection(firestore, 'support_tickets'), orderBy('updatedAt', 'desc')) : null),
     [firestore]
   );
   const { data: supportTickets, isLoading: isTicketsLoading } = useCollection<SupportTicket>(supportTicketsQuery);
@@ -273,11 +316,14 @@ export default function AdminDashboard({ user }: { user: any }) {
     if (!firestore) return;
     try {
         const ticketRef = doc(firestore, 'support_tickets', ticketId);
-        await updateDoc(ticketRef, { status });
+        await updateDoc(ticketRef, { status, updatedAt: serverTimestamp() });
         toast({
             title: 'Ticket Updated',
             description: `Ticket status changed to ${status}.`
         });
+        if (selectedTicket?.id === ticketId) {
+            setSelectedTicket(prev => prev ? {...prev, status} : null);
+        }
     } catch (error) {
         toast({
             title: 'Error',
@@ -413,58 +459,25 @@ export default function AdminDashboard({ user }: { user: any }) {
                     <CardDescription>The most recent open tickets.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <SupportTickets tickets={openSupportTickets} isLoading={isTicketsLoading} onStatusChange={handleTicketStatusChange}/>
+                    <SupportTickets tickets={openSupportTickets} isLoading={isTicketsLoading} onTicketSelect={setSelectedTicket}/>
                 </CardContent>
             </Card>
         </div>
       </div>
       
-
-      <Dialog open={!!selectedDay} onOpenChange={() => setSelectedDay(null)}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              Users Registered on {selectedDay ? format(new Date(selectedDay.date), 'MMMM d, yyyy') : ''}
-            </DialogTitle>
-            <DialogDescription>
-              {selectedDay?.count} user(s) registered on this day.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="max-h-[60vh] overflow-y-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Avatar</TableHead>
-                  <TableHead>Display Name</TableHead>
-                  <TableHead>Email</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {selectedDay?.users.map((u) => (
-                  <TableRow key={u.id}>
-                    <TableCell>
-                      <Avatar>
-                        <AvatarImage src={u.photoURL ?? undefined} alt={u.displayName || ''} />
-                        <AvatarFallback>
-                          {u.displayName ? u.displayName.charAt(0).toUpperCase() : u.email.charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                    </TableCell>
-                    <TableCell>{u.displayName || 'N/A'}</TableCell>
-                    <TableCell>{u.email}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </DialogContent>
-      </Dialog>
       <UserListDialog 
           isOpen={isUserListOpen} 
           onOpenChange={setIsUserListOpen}
           users={users}
           isLoading={isUsersLoading}
-        />
+      />
+      <TicketConversationDialog 
+        user={user}
+        firestore={firestore}
+        ticket={selectedTicket}
+        onOpenChange={() => setSelectedTicket(null)}
+        onStatusChange={handleTicketStatusChange}
+      />
     </div>
   );
 }

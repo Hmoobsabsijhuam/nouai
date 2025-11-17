@@ -1,6 +1,6 @@
 'use client';
 
-import { LogOut, User as UserIcon, Settings } from 'lucide-react';
+import { LogOut, User as UserIcon, Settings, LifeBuoy } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { useFirebase } from '@/firebase';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -27,6 +27,8 @@ export function UserNav() {
   if (!user) {
     return null;
   }
+  
+  const isAdmin = user.email === 'admin@noukha.com';
 
   return (
     <DropdownMenu>
@@ -64,6 +66,14 @@ export function UserNav() {
             <span>Profile</span>
           </Link>
         </DropdownMenuItem>
+        {!isAdmin && (
+            <DropdownMenuItem asChild className="cursor-pointer">
+                <Link href="/my-tickets">
+                    <LifeBuoy className="mr-2 h-4 w-4" />
+                    <span>My Tickets</span>
+                </Link>
+            </DropdownMenuItem>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={handleLogout} className="cursor-pointer">
           <LogOut className="mr-2 h-4 w-4" />
