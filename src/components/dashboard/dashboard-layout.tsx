@@ -198,7 +198,7 @@ export function DashboardLayout({
         </Sidebar>
 
         <main className="flex flex-col flex-1">
-           <div className="md:hidden p-4 border-b flex items-center justify-between bg-card">
+           <div className="md:hidden p-4 border-b flex items-center justify-between bg-card sticky top-0 z-10">
               <div className="flex items-center gap-2">
                 <SidebarTrigger />
                 <Link href="/" className="flex items-center gap-2">

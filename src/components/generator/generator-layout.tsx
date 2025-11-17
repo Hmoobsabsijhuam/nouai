@@ -211,7 +211,7 @@ export function GeneratorLayout({
         </Sidebar>
 
         <main className="flex flex-col md:flex-row flex-1">
-           <div className="md:hidden p-4 border-b flex items-center justify-between bg-card">
+           <div className="md:hidden p-4 border-b flex items-center justify-between bg-card sticky top-0 z-10">
               <div className="flex items-center gap-2">
                 <SidebarTrigger />
                 <Link href="/" className="flex items-center gap-2">
@@ -220,11 +220,11 @@ export function GeneratorLayout({
                 </Link>
               </div>
               <Link href="/" passHref>
-                <Button variant="ghost" size="icon">
-                    <X className="h-5 w-5" />
-                    <span className="sr-only">Close</span>
-                </Button>
-              </Link>
+                  <Button variant="ghost" size="icon">
+                      <X className="h-5 w-5" />
+                      <span className="sr-only">Close</span>
+                  </Button>
+                </Link>
            </div>
 
           {/* Middle Column: Control Panel */}
