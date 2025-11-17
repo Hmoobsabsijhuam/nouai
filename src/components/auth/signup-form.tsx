@@ -184,7 +184,7 @@ export function SignupForm() {
           </Button>
         </form>
       </Form>
-      <div className="mt-6 text-center text-sm">
+      <div className="mt-6 text-center text-sm text-foreground">
         Yog muaj account lawm ces rov mus ?{' '}
         <Link href="/login" className="font-semibold text-primary hover:underline">
           Nkag Mus
