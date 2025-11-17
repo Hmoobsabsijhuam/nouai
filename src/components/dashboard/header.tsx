@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Logo } from '@/components/icons/logo';
 import { UserNav } from './user-nav';
 import { Notifications } from './notifications';
-import { Home, Search, MoreVertical, LifeBuoy, HelpCircle, Settings, Image as ImageIcon, Video } from 'lucide-react';
+import { Home, Search, MoreVertical, LifeBuoy, HelpCircle, Settings, Image as ImageIcon, Video, Mic } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -60,6 +60,12 @@ export function Header() {
                   <Link href="/text-to-video">
                     <Video className="mr-2 h-4 w-4" />
                     <span>Video Generation</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/text-to-speech">
+                    <Mic className="mr-2 h-4 w-4" />
+                    <span>Text to Speech</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
