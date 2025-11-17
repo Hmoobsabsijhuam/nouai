@@ -189,7 +189,7 @@ export default function AdminDashboard({ user }: { user: any }) {
       <p className="mb-6 text-muted-foreground">Welcome, {user.email}!</p>
       
       {/* Top Cards */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-6">
+      <div className="mb-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -239,7 +239,7 @@ export default function AdminDashboard({ user }: { user: any }) {
       </div>
 
       {/* Main content grid */}
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
           <div className="lg:col-span-2">
             <Card>
                 <CardHeader>
@@ -294,7 +294,7 @@ export default function AdminDashboard({ user }: { user: any }) {
             </Card>
           </div>
 
-        <div className="space-y-6">
+        <div className="space-y-6 lg:space-y-8">
              <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
