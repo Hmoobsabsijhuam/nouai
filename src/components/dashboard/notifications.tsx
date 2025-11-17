@@ -24,6 +24,7 @@ interface UserNotification {
 export function Notifications() {
   const { firestore, user } = useFirebase();
   const [open, setOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const notificationsQuery = useMemoFirebase(
     () =>
@@ -41,7 +42,12 @@ export function Notifications() {
     notificationsQuery
   );
 
-  const unreadCount = notifications?.filter(n => !n.read).length || 0;
+  useEffect(() => {
+    if (notifications) {
+      setUnreadCount(notifications.filter(n => !n.read).length);
+    }
+  }, [notifications]);
+
 
   useEffect(() => {
     if (open && user && firestore && notifications) {
@@ -102,9 +108,11 @@ export function Notifications() {
                     <span className={`flex h-2 w-2 translate-y-1 rounded-full ${!notif.read ? 'bg-primary' : 'bg-muted'}`} />
                     <div className="grid gap-1">
                       <p className="text-sm font-medium">{notif.message}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {notif.createdAt?.toDate && formatDistanceToNow(notif.createdAt.toDate(), { addSuffix: true })}
-                      </p>
+                      {notif.createdAt?.toDate && (
+                        <p className="text-sm text-muted-foreground">
+                          {formatDistanceToNow(notif.createdAt.toDate(), { addSuffix: true })}
+                        </p>
+                      )}
                     </div>
                   </div>
                 ))

@@ -57,7 +57,7 @@ export default function GenerateSpeechPage() {
     try {
         const { audioUrl } = await generateSpeech({ text: values.text });
         setGeneratedAudioUrl(audioUrl);
-        toast({ title: 'Audio Generated!', description: 'Your audio has been created.' });
+        toast({ title: 'Koj Lub Suab Tsim Tau Lawm!', description: 'Your audio has been created.' });
 
     } catch (error: any) {
       console.error('Audio generation failed:', error);
@@ -73,7 +73,7 @@ export default function GenerateSpeechPage() {
       }
       
       toast({
-        title: 'Audio Generation Failed',
+        title: 'Koj Lub Suab Tsim Tsis Tau',
         description: description,
         variant: 'destructive',
       });
@@ -101,9 +101,9 @@ export default function GenerateSpeechPage() {
                         <div>
                             <CardTitle className="flex items-center gap-2">
                                 <Mic />
-                                Text-to-Speech Generation
+                                Sau Ntawv Kom Tsim Suab
                             </CardTitle>
-                            <CardDescription>Enter the text you want to convert to speech.</CardDescription>
+                            <CardDescription>Sau koj kab ntawv Nou AI mam li tsim lub suab rau koj.</CardDescription>
                         </div>
                         <Link href="/" passHref>
                             <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -123,7 +123,7 @@ export default function GenerateSpeechPage() {
                                 <FormItem className="w-full">
                                     <FormLabel className="sr-only">Text</FormLabel>
                                     <FormControl>
-                                      <Textarea placeholder="e.g., Hello, world! This is a test of the text to speech system." {...field} className="min-h-[150px]" />
+                                      <Textarea placeholder="Nyob zoo ntawm no kuv yog Nou AI yuav pab koj tsim koj lub suab." {...field} className="min-h-[150px]" />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -131,7 +131,7 @@ export default function GenerateSpeechPage() {
                             />
                             <Button type="submit" disabled={isGenerating} className="w-full sm:w-auto">
                                 {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-                                {isGenerating ? 'Generating...' : 'Generate Audio'}
+                                {isGenerating ? 'Tab Tom Tsim Suab...' : 'Tsim Suab'}
                             </Button>
                         </form>
                     </Form>
@@ -141,13 +141,13 @@ export default function GenerateSpeechPage() {
             {(isGenerating || generatedAudioUrl) && (
                 <Card className="mb-8">
                     <CardHeader>
-                        <CardTitle>Result</CardTitle>
+                        <CardTitle>Thaum Tawm Los</CardTitle>
                     </CardHeader>
                     <CardContent className="flex items-center justify-center p-6">
                        {isGenerating ? (
                            <div className="flex flex-col items-center gap-4 p-8 text-muted-foreground">
                                <Loader2 className="h-8 w-8 animate-spin" />
-                               <p>Generating your audio...</p>
+                               <p>Tab Tom Tsim Koj Lub Suab...</p>
                            </div>
                        ) : generatedAudioUrl ? (
                            <audio src={generatedAudioUrl} controls className="w-full"></audio>
