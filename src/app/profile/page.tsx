@@ -185,7 +185,7 @@ export default function ProfilePage() {
       const dataToSave: any = {};
       Object.keys(values).forEach(key => {
         const value = (values as any)[key];
-        if (value !== undefined && value !== '') {
+        if (value !== undefined) {
           dataToSave[key] = value;
         }
       });
