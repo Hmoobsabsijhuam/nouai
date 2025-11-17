@@ -131,7 +131,7 @@ function UserDashboard() {
               <CardDescription>Select a category to start creating.</CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
                     <Link href="/generate-image" className="group">
                         <Card className="h-full transition-all duration-300 group-hover:border-primary group-hover:shadow-lg">
                             <CardHeader className="items-center text-center">
@@ -147,10 +147,21 @@ function UserDashboard() {
                          <Card className="h-full transition-all duration-300 group-hover:border-primary group-hover:shadow-lg">
                             <CardHeader className="items-center text-center">
                                 <VideoIcon className="h-10 w-10 text-primary mb-2" />
-                                <CardTitle className="text-lg">Video Generation</CardTitle>
+                                <CardTitle className="text-lg">Text to Video</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <p className="text-sm text-muted-foreground text-center">Bring your ideas to life with AI-powered video creation.</p>
+                            </CardContent>
+                        </Card>
+                    </Link>
+                     <Link href="/image-to-video" className="group">
+                         <Card className="h-full transition-all duration-300 group-hover:border-primary group-hover:shadow-lg">
+                            <CardHeader className="items-center text-center">
+                                <VideoIcon className="h-10 w-10 text-primary mb-2" />
+                                <CardTitle className="text-lg">Image to Video</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-sm text-muted-foreground text-center">Animate an image with a text prompt.</p>
                             </CardContent>
                         </Card>
                     </Link>

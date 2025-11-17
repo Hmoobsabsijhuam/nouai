@@ -53,7 +53,13 @@ export function Header() {
                 <DropdownMenuItem asChild>
                   <Link href="/text-to-video">
                     <Video className="mr-2 h-4 w-4" />
-                    <span>Video Generation</span>
+                    <span>Text to Video</span>
+                  </Link>
+                </DropdownMenuItem>
+                 <DropdownMenuItem asChild>
+                  <Link href="/image-to-video">
+                    <Video className="mr-2 h-4 w-4" />
+                    <span>Image to Video</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
