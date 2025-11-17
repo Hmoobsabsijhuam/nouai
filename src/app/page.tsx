@@ -131,8 +131,8 @@ function UserDashboard() {
               <CardDescription>A summary of your recent activity.</CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={chartData}>
+              <ChartContainer config={chartConfig} className="min-h-[250px] w-full">
+                <BarChart accessibilityLayer data={chartData}>
                   <CartesianGrid vertical={false} strokeDasharray="3 3" />
                   <XAxis
                     dataKey="month"
@@ -147,7 +147,7 @@ function UserDashboard() {
                   />
                   <Bar dataKey="desktop" fill="var(--color-desktop)" radius={8} />
                 </BarChart>
-              </ResponsiveContainer>
+              </ChartContainer>
             </CardContent>
           </Card>
           <Card>
