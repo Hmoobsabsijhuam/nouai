@@ -26,7 +26,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Home, Library, LogOut, MoreHorizontal, Settings, Shield, Wand, Bot, PanelLeft, X, LayoutGrid, Image, VideoIcon } from 'lucide-react';
+import { Home, Library, LogOut, MoreHorizontal, Settings, Shield, Wand, Bot, PanelLeft, X, LayoutGrid, Image, VideoIcon, Mic } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Logo } from '../icons/logo';
@@ -82,6 +82,12 @@ function UserProfile() {
                 </Link>
             </DropdownMenuItem>
           )}
+           <DropdownMenuItem asChild>
+                <Link href="/contact-admin">
+                    <LifeBuoy className="mr-2 h-4 w-4" />
+                    <span>Support</span>
+                </Link>
+            </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout}>
             <LogOut className="mr-2 h-4 w-4" />
@@ -100,9 +106,6 @@ export function DashboardLayout({
 }) {
   const pathname = usePathname();
   const { user } = useFirebase();
-  const [isStudioOpen, setIsStudioOpen] = React.useState(
-    pathname.startsWith('/generate') || pathname.startsWith('/text-to') || pathname.startsWith('/image-to')
-  );
 
   return (
     <SidebarProvider>
@@ -143,39 +146,26 @@ export function DashboardLayout({
             <SidebarGroup>
               <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Studio</SidebarGroupLabel>
               <SidebarMenu>
-                 <Collapsible open={isStudioOpen} onOpenChange={setIsStudioOpen}>
-                  <SidebarMenuItem asChild>
-                    <CollapsibleTrigger asChild>
-                       <SidebarMenuButton
-                        isActive={isStudioOpen}
-                        tooltip="Create"
-                        className="justify-start"
-                      >
-                        <Wand /> <span>Create</span>
-                      </SidebarMenuButton>
-                    </CollapsibleTrigger>
-                  </SidebarMenuItem>
-                  <CollapsibleContent asChild>
-                     <SidebarMenuSub>
-                        <SidebarMenuItem>
-                            <SidebarMenuSubButton asChild isActive={pathname === '/generate-image'}>
-                                <Link href="/generate-image"><Image /> <span>Image Generation</span></Link>
-                            </SidebarMenuSubButton>
-                        </SidebarMenuItem>
-                        <SidebarMenuItem>
-                             <SidebarMenuSubButton asChild isActive={pathname === '/text-to-video'}>
-                                <Link href="/text-to-video"><VideoIcon /> <span>Text to Video</span></Link>
-                            </SidebarMenuSubButton>
-                        </SidebarMenuItem>
-                         <SidebarMenuItem>
-                             <SidebarMenuSubButton asChild isActive={pathname === '/image-to-video'}>
-                                <Link href="/image-to-video"><VideoIcon /> <span>Image to Video</span></Link>
-                            </SidebarMenuSubButton>
-                        </SidebarMenuItem>
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </Collapsible>
-
+                    <SidebarMenuItem>
+                        <SidebarMenuButton asChild isActive={pathname === '/generate-image'} tooltip="Image Generation">
+                            <Link href="/generate-image"><Image /> <span>Image Generation</span></Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton asChild isActive={pathname === '/text-to-video'} tooltip="Text to Video">
+                            <Link href="/text-to-video"><VideoIcon /> <span>Text to Video</span></Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton asChild isActive={pathname === '/image-to-video'} tooltip="Image to Video">
+                            <Link href="/image-to-video"><VideoIcon /> <span>Image to Video</span></Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton asChild isActive={pathname === '/text-to-speech'} tooltip="Text to Speech">
+                            <Link href="/text-to-speech"><Mic /> <span>Text to Speech</span></Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
                 <SidebarMenuItem>
                     <SidebarMenuButton asChild isActive={pathname === '/apps'} tooltip="Apps">
                         <Link href="#"><LayoutGrid /> <span>Apps</span></Link>

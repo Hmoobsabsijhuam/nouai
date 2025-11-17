@@ -26,7 +26,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Home, LayoutGrid, Library, LogOut, MoreHorizontal, Settings, Shield, Wand, Bot, PanelLeft, X, Image as ImageIcon, VideoIcon } from 'lucide-react';
+import { Home, LayoutGrid, Library, LogOut, MoreHorizontal, Settings, Shield, Wand, Bot, PanelLeft, X, Image as ImageIcon, VideoIcon, Mic, LifeBuoy } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Logo } from '../icons/logo';
@@ -82,6 +82,12 @@ function UserProfile() {
                 </Link>
             </DropdownMenuItem>
           )}
+          <DropdownMenuItem asChild>
+                <Link href="/contact-admin">
+                    <LifeBuoy className="mr-2 h-4 w-4" />
+                    <span>Support</span>
+                </Link>
+            </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout}>
             <LogOut className="mr-2 h-4 w-4" />
@@ -100,19 +106,18 @@ export function GeneratorLayout({
   contentPanel,
 }: {
   children?: React.ReactNode;
-  activeTab: 'image' | 'video' | 'animate';
+  activeTab: 'image' | 'video' | 'animate' | 'speech';
   controlPanel: React.ReactNode;
   contentPanel: React.ReactNode;
 }) {
   const pathname = usePathname();
    const router = useRouter();
-    const [isStudioOpen, setIsStudioOpen] = React.useState(true);
-
 
   const handleTabChange = (value: string) => {
     if (value === 'image') router.push('/generate-image');
     if (value === 'video') router.push('/text-to-video');
     if (value === 'animate') router.push('/image-to-video');
+    if (value === 'speech') router.push('/text-to-speech');
   };
 
   return (
@@ -154,38 +159,26 @@ export function GeneratorLayout({
             <SidebarGroup>
               <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Studio</SidebarGroupLabel>
               <SidebarMenu>
-                 <Collapsible open={isStudioOpen} onOpenChange={setIsStudioOpen}>
-                  <SidebarMenuItem asChild>
-                    <CollapsibleTrigger asChild>
-                       <SidebarMenuButton
-                        isActive={isStudioOpen}
-                        tooltip="Create"
-                        className="justify-start"
-                      >
-                        <Wand /> <span>Create</span>
-                      </SidebarMenuButton>
-                    </CollapsibleTrigger>
-                  </SidebarMenuItem>
-                  <CollapsibleContent asChild>
-                     <SidebarMenuSub>
-                        <SidebarMenuItem>
-                            <SidebarMenuSubButton asChild isActive={pathname === '/generate-image'}>
-                                <Link href="/generate-image"><ImageIcon /> <span>Image Generation</span></Link>
-                            </SidebarMenuSubButton>
-                        </SidebarMenuItem>
-                        <SidebarMenuItem>
-                             <SidebarMenuSubButton asChild isActive={pathname === '/text-to-video'}>
-                                <Link href="/text-to-video"><VideoIcon /> <span>Text to Video</span></Link>
-                            </SidebarMenuSubButton>
-                        </SidebarMenuItem>
-                         <SidebarMenuItem>
-                             <SidebarMenuSubButton asChild isActive={pathname === '/image-to-video'}>
-                                <Link href="/image-to-video"><VideoIcon /> <span>Image to Video</span></Link>
-                            </SidebarMenuSubButton>
-                        </SidebarMenuItem>
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </Collapsible>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton asChild isActive={pathname === '/generate-image'} tooltip="Image Generation">
+                            <Link href="/generate-image"><ImageIcon /> <span>Image Generation</span></Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton asChild isActive={pathname === '/text-to-video'} tooltip="Text to Video">
+                            <Link href="/text-to-video"><VideoIcon /> <span>Text to Video</span></Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton asChild isActive={pathname === '/image-to-video'} tooltip="Image to Video">
+                            <Link href="/image-to-video"><VideoIcon /> <span>Image to Video</span></Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                     <SidebarMenuItem>
+                        <SidebarMenuButton asChild isActive={pathname === '/text-to-speech'} tooltip="Text to Speech">
+                            <Link href="/text-to-speech"><Mic /> <span>Text to Speech</span></Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
                 <SidebarMenuItem>
                     <SidebarMenuButton asChild isActive={pathname === '/apps'} tooltip="Apps">
                         <Link href="#"><LayoutGrid /> <span>Apps</span></Link>
@@ -219,7 +212,8 @@ export function GeneratorLayout({
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" side="right" className="w-56">
-                        {/* ... same as UserProfile dropdown ... */}
+                         <DropdownMenuLabel>{useFirebase().user?.displayName || useFirebase().user?.email}</DropdownMenuLabel>
+                         <DropdownMenuSeparator />
                          <DropdownMenuItem asChild>
                             <Link href="/profile">
                             <Settings className="mr-2 h-4 w-4" />
@@ -252,10 +246,11 @@ export function GeneratorLayout({
           {/* Middle Column: Control Panel */}
           <div className="w-full md:w-[400px] bg-background p-4 border-b md:border-b-0 md:border-r flex flex-col">
             <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-4">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="image">Image</TabsTrigger>
                 <TabsTrigger value="video">Video</TabsTrigger>
                 <TabsTrigger value="animate">Animate</TabsTrigger>
+                <TabsTrigger value="speech">Speech</TabsTrigger>
               </TabsList>
             </Tabs>
             <div className="flex-1 overflow-y-auto">
