@@ -1,12 +1,11 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import Link from 'next/link';
 import { addDoc, collection, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { useFirebase, useMemoFirebase } from '@/firebase';
@@ -14,17 +13,23 @@ import { useCollection, WithId } from '@/firebase/firestore/use-collection';
 import { generateImage } from '@/ai/flows/generate-image-flow';
 import { useToast } from '@/hooks/use-toast';
 
-import { Header } from '@/components/dashboard/header';
+import { GeneratorLayout } from '@/components/generator/generator-layout';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Download, ImageIcon, Loader2, Wand2, X } from 'lucide-react';
+import { Download, ImageIcon, Loader2, Sparkles } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
+
 
 const formSchema = z.object({
   prompt: z.string().min(5, { message: 'Prompt yuav tsum muaj yam tsawg kawg yog 5 tus niam ntawv.' }),
+  aspectRatio: z.string().default("1:1"),
+  imageCount: z.number().min(1).max(4).default(1),
 });
 
 interface GeneratedImage {
@@ -35,12 +40,12 @@ interface GeneratedImage {
 
 function ImageGallerySkeleton() {
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {Array.from({ length: 4 }).map((_, i) => (
-                 <Card key={i} className="overflow-hidden">
+                 <Card key={i} className="overflow-hidden bg-muted border-none">
                     <Skeleton className="h-48 w-full" />
-                    <CardContent className="p-4">
-                        <Skeleton className="h-4 w-3/4 mb-2" />
+                    <CardContent className="p-3">
+                        <Skeleton className="h-3 w-3/4 mb-2" />
                         <Skeleton className="h-3 w-1/2" />
                     </CardContent>
                  </Card>
@@ -49,12 +54,134 @@ function ImageGallerySkeleton() {
     )
 }
 
+function ImageFeed({ images, isLoading }: { images: WithId<GeneratedImage>[] | null, isLoading: boolean }) {
+  if (isLoading) {
+    return <ImageGallerySkeleton />;
+  }
+  
+  if (!images || images.length === 0) {
+    return (
+       <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center h-full">
+            <ImageIcon className="mx-auto h-12 w-12 text-muted-foreground" />
+            <h3 className="mt-4 text-lg font-semibold">Tseem Tsis Tau Muaj Duab Li</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+            Koj cov duab yuav tshwm rau hauv qab no.
+            </p>
+        </div>
+    )
+  }
+  
+  return (
+     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {images.map(image => (
+             <Card key={image.id} className="overflow-hidden group bg-muted border-none">
+                <div className="relative aspect-square w-full">
+                    <Image src={image.imageUrl} alt={image.prompt} layout="fill" objectFit="cover" />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                         <a href={image.imageUrl} download={`generated-image-${image.id}.png`} target="_blank" rel="noopener noreferrer">
+                            <Button variant="outline" size="icon">
+                                <Download className="h-4 w-4" />
+                            </Button>
+                         </a>
+                    </div>
+                </div>
+                <CardContent className="p-3">
+                    <p className="text-xs font-medium truncate" title={image.prompt}>{image.prompt}</p>
+                    {image.createdAt?.toDate && (
+                        <p className="text-xs text-muted-foreground">
+                            {formatDistanceToNow(image.createdAt.toDate(), { addSuffix: true })}
+                        </p>
+                    )}
+                </CardContent>
+            </Card>
+        ))}
+    </div>
+  )
+}
+
+function ImageGeneratorControls({ form, isGenerating }: { form: any, isGenerating: boolean }) {
+     return (
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(form.onSubmit)} className="space-y-6 flex flex-col h-full">
+                <div className="flex-1 space-y-6">
+                    <FormField
+                        control={form.control}
+                        name="prompt"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Prompt</FormLabel>
+                                <FormControl>
+                                    <Textarea 
+                                        placeholder="Piv txwv: Ib tug hluas nkauj hmoob zoo zoo nkauj tab tom ntsis plaub hau" 
+                                        {...field} 
+                                        className="min-h-[120px] bg-secondary border-none"
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="aspectRatio"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Aspect Ratio</FormLabel>
+                                <FormControl>
+                                   <ToggleGroup 
+                                        type="single" 
+                                        defaultValue="1:1" 
+                                        className="justify-start"
+                                        onValueChange={field.onChange}
+                                        value={field.value}
+                                    >
+                                        <ToggleGroupItem value="1:1" aria-label="1:1">1:1</ToggleGroupItem>
+                                        <ToggleGroupItem value="9:16" aria-label="9:16">9:16</ToggleGroupItem>
+                                        <ToggleGroupItem value="16:9" aria-label="16:9">16:9</ToggleGroupItem>
+                                    </ToggleGroup>
+                                </FormControl>
+                            </FormItem>
+                        )}
+                    />
+                    
+                     <FormField
+                        control={form.control}
+                        name="imageCount"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Images per batch: {field.value}</FormLabel>
+                            <FormControl>
+                                <Slider
+                                    min={1}
+                                    max={4}
+                                    step={1}
+                                    value={[field.value]}
+                                    onValueChange={(value) => field.onChange(value[0])}
+                                />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                </div>
+
+                <div className="space-y-2">
+                    <Button type="submit" disabled={isGenerating} size="lg" className="w-full">
+                        {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                        {isGenerating ? 'Tab tom tsim duab...' : 'Generate'}
+                    </Button>
+                    <p className="text-xs text-muted-foreground text-center">Click Generate to create your image.</p>
+                </div>
+            </form>
+        </Form>
+    );
+}
+
 export default function GenerateImagePage() {
   const { user, firestore, firebaseApp, isUserLoading } = useFirebase();
   const router = useRouter();
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -73,19 +200,10 @@ export default function GenerateImagePage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       prompt: '',
+      aspectRatio: "1:1",
+      imageCount: 1,
     },
   });
-
-  const handleDownload = () => {
-    if (generatedImageUrl) {
-        const link = document.createElement('a');
-        link.href = generatedImageUrl;
-        link.download = `generated-image-${Date.now()}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-  };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!user || !firestore || !firebaseApp) {
@@ -94,10 +212,10 @@ export default function GenerateImagePage() {
     }
     
     setIsGenerating(true);
-    setGeneratedImageUrl(null);
     try {
+        // This is a placeholder for the multi-image generation logic
+        // For now, we generate one image at a time
         const { imageUrl: imageDataUri } = await generateImage({ prompt: values.prompt });
-        setGeneratedImageUrl(imageDataUri);
 
         // Upload to Firebase Storage
         const storage = getStorage(firebaseApp);
@@ -137,6 +255,9 @@ export default function GenerateImagePage() {
       setIsGenerating(false);
     }
   }
+
+  // Attach onSubmit to the form object so it can be accessed in the child component
+  (form as any).onSubmit = onSubmit;
   
   if (isUserLoading || !user) {
     return (
@@ -147,113 +268,10 @@ export default function GenerateImagePage() {
   }
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-background">
-      <Header />
-      <main className="flex-1 p-4 md:p-8">
-        <div className="mx-auto max-w-4xl">
-            <Card className="mb-8">
-                <CardHeader>
-                    <div className="flex items-start justify-between">
-                        <div>
-                            <CardTitle className="flex items-center gap-2">
-                                <Wand2 />
-                                Sau Prompt Tsim Duab
-                            </CardTitle>
-                            <CardDescription>Sau Koj li prompt rau Nou AI mam li tsim duab rau koj raws li qhov koj xav tau.</CardDescription>
-                        </div>
-                        <Link href="/" passHref>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <X className="h-5 w-5" />
-                                <span className="sr-only">Close</span>
-                            </Button>
-                        </Link>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col sm:flex-row items-start gap-4">
-                            <FormField
-                                control={form.control}
-                                name="prompt"
-                                render={({ field }) => (
-                                <FormItem className="w-full">
-                                    <FormLabel className="sr-only">Prompt</FormLabel>
-                                    <FormControl>
-                                    <Input placeholder="Piv txwv: Ib tug hluas nkauj hmoob zoo zoo nkauj tab tom ntsis plaub hau" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                                )}
-                            />
-                            <Button type="submit" disabled={isGenerating} className="w-full sm:w-auto">
-                                {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-                                {isGenerating ? 'Tab tom tsim duab...' : 'Tsim Duab'}
-                            </Button>
-                        </form>
-                    </Form>
-                </CardContent>
-            </Card>
-
-            {(isGenerating || generatedImageUrl) && (
-                <Card className="mb-8">
-                    <CardHeader>
-                        <CardTitle>Thaum Tsim Tau Lawm</CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex items-center justify-center">
-                       {isGenerating ? (
-                           <div className="flex flex-col items-center gap-4 p-8 text-muted-foreground">
-                               <Loader2 className="h-8 w-8 animate-spin" />
-                               <p>Tab tom tsim koj daim duab... Nov yuav siv sijhawm me ntsis.</p>
-                           </div>
-                       ) : generatedImageUrl ? (
-                           <Image src={generatedImageUrl} alt={form.getValues('prompt')} width={512} height={512} className="rounded-lg" />
-                       ) : null}
-                    </CardContent>
-                    {generatedImageUrl && (
-                        <CardFooter>
-                           <Button onClick={handleDownload} className="w-full">
-                                <Download className="mr-2 h-4 w-4" />
-                                Download Duab
-                            </Button>
-                        </CardFooter>
-                    )}
-                </Card>
-            )}
-
-            <div className="space-y-4">
-                <h2 className="text-2xl font-bold tracking-tight">Koj Cov Duab</h2>
-                 {isImagesLoading ? (
-                    <ImageGallerySkeleton />
-                ) : images && images.length > 0 ? (
-                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {images.map(image => (
-                             <Card key={image.id} className="overflow-hidden group">
-                                <div className="relative h-48 w-full">
-                                    <Image src={image.imageUrl} alt={image.prompt} layout="fill" objectFit="cover" />
-                                </div>
-                                <CardContent className="p-4">
-                                    <p className="text-sm font-medium truncate" title={image.prompt}>{image.prompt}</p>
-                                    {image.createdAt?.toDate && (
-                                        <p className="text-xs text-muted-foreground">
-                                            {formatDistanceToNow(image.createdAt.toDate(), { addSuffix: true })}
-                                        </p>
-                                    )}
-                                </CardContent>
-                            </Card>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-                        <ImageIcon className="mx-auto h-12 w-12 text-muted-foreground" />
-                        <h3 className="mt-4 text-lg font-semibold">Tseem Tsis Tau Muaj Duab Li</h3>
-                        <p className="mt-2 text-sm text-muted-foreground">
-                        Koj cov duab yuav tshwm rau hauv qab no.
-                        </p>
-                    </div>
-                )}
-            </div>
-        </div>
-      </main>
-    </div>
+    <GeneratorLayout
+      activeTab="image"
+      controlPanel={<ImageGeneratorControls form={form} isGenerating={isGenerating} />}
+      contentPanel={<ImageFeed images={images} isLoading={isImagesLoading} />}
+    />
   );
 }
