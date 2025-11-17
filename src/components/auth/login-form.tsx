@@ -24,8 +24,8 @@ import { AuthCard } from './auth-card';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
 
 const formSchema = z.object({
-  email: z.string().email({ message: 'Please enter a valid email.' }),
-  password: z.string().min(1, { message: 'Password is required.' }),
+  email: z.string().email({ message: 'Ntaus koj tus email kom raug.' }),
+  password: z.string().min(1, { message: 'Yuav tau rau koj tus password.' }),
 });
 
 export function LoginForm() {
@@ -51,10 +51,10 @@ export function LoginForm() {
       router.push('/');
     } catch (error: any) {
       toast({
-        title: 'Login Failed',
+        title: 'Nkag mus tsis tau vim',
         description:
           error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential'
-            ? 'Invalid email or password.'
+            ? 'Email los yog Password tsis raug lawm, Yog koj tsis tau muaj account ces mus Sau koj lub npe rau hauv qab qhov Sau Npe'
             : 'An unexpected error occurred. Please try again.',
         variant: 'destructive',
       });
@@ -65,8 +65,8 @@ export function LoginForm() {
 
   return (
     <AuthCard
-      title="Nou AI Login"
-      description="Enter your credentials to access your account"
+      title="Nou AI"
+      description="Tso koj tus email & Password txhawm yog nkag mus rau hauv Nou AI"
     >
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -78,7 +78,7 @@ export function LoginForm() {
                 <FormLabel>Email</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="name@example.com"
+                    placeholder="Kojtusemail@example.com"
                     {...field}
                     autoComplete="email"
                   />
@@ -98,7 +98,7 @@ export function LoginForm() {
                     href="/forgot-password"
                     className="text-sm text-primary hover:underline"
                   >
-                    Forgot password?
+                    Hnov Qab Password?
                   </Link>
                 </div>
                 <div className="relative">
@@ -129,15 +129,15 @@ export function LoginForm() {
             )}
           />
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? 'Signing in...' : 'Nkag Mus'}
             <LogIn className="ml-2 h-4 w-4" />
           </Button>
         </form>
       </Form>
       <div className="mt-6 text-center text-sm">
-        Don&apos;t have an account?{' '}
+        tsis muaj account lob?{' '}
         <Link href="/signup" className="font-semibold text-primary hover:underline">
-          Sign up
+          Sau Npe
         </Link>
       </div>
     </AuthCard>

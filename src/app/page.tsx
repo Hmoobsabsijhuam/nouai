@@ -6,7 +6,7 @@ import { useAuth } from '@/context/auth-context';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Header } from '@/components/dashboard/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle2, FileText, Bell } from 'lucide-react';
+import { CheckCircle2, FileText, Bell, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 import AdminDashboard from '@/components/dashboard/admin-dashboard';
 import {
@@ -14,11 +14,13 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
-import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
+import { Bar, BarChart, CartesianGrid, XAxis, ResponsiveContainer } from "recharts"
 import { useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, query, where, doc } from 'firebase/firestore';
-import { useCollection } from '@/firebase/firestore/use-collection';
+import { collection, query, where, doc, orderBy, limit } from 'firebase/firestore';
+import { useCollection, WithId } from '@/firebase/firestore/use-collection';
 import { useDoc } from '@/firebase/firestore/use-doc';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 const chartData = [
   { month: "January", desktop: 186 },
@@ -50,23 +52,24 @@ function DashboardSkeleton() {
       </header>
       <main className="flex-1 p-4 md:p-8">
         <Skeleton className="mb-4 h-8 w-64" />
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <Card className="lg:col-span-2">
             <CardHeader>
               <Skeleton className="h-6 w-40" />
               <Skeleton className="mt-2 h-4 w-full" />
             </CardHeader>
             <CardContent>
-              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-48 w-full" />
             </CardContent>
           </Card>
           <Card>
             <CardHeader>
               <Skeleton className="h-6 w-40" />
-              <Skeleton className="mt-2 h-4 w-full" />
             </CardHeader>
-            <CardContent>
-              <Skeleton className="h-32 w-full" />
+            <CardContent className="space-y-4">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
             </CardContent>
           </Card>
         </div>
@@ -75,11 +78,16 @@ function DashboardSkeleton() {
   );
 }
 
+interface UserNotification {
+  message: string;
+  createdAt: any; 
+  read: boolean;
+}
+
 function UserDashboard() {
-  const { user: authUser } = useAuth(); // Live auth user from context
+  const { user: authUser } = useAuth(); 
   const { firestore } = useFirebase();
 
-  // Create a real-time listener for the user's profile document in Firestore
   const userDocRef = useMemoFirebase(() => {
     if (!firestore || !authUser) return null;
     return doc(firestore, 'users', authUser.uid);
@@ -87,43 +95,45 @@ function UserDashboard() {
 
   const { data: userProfile, isLoading: isProfileLoading } = useDoc(userDocRef);
 
-  // Use the Firestore profile data for display, but fall back to auth data
   const displayName = userProfile?.displayName || authUser?.displayName || authUser?.email;
 
   const userNotificationsQuery = useMemoFirebase(() => {
     if (!firestore || !authUser) return null;
     return query(
       collection(firestore, 'users', authUser.uid, 'user_notifications'),
-      where('read', '==', false)
+      orderBy('createdAt', 'desc'),
+      limit(5) // Fetch latest 5
     );
   }, [firestore, authUser]);
 
-  const { data: notifications } = useCollection(userNotificationsQuery);
+  const { data: notifications, isLoading: isNotificationsLoading } = useCollection<UserNotification>(userNotificationsQuery);
+  const unreadNotifications = notifications?.filter(n => !n.read) ?? [];
 
   if (isProfileLoading) {
     return <DashboardSkeleton />;
   }
   
   if (!authUser) {
-    return null; // Should not happen if logic in DashboardPage is correct
+    return null;
   }
 
   return (
     <>
-      <h1 className="mb-4 text-3xl font-bold tracking-tight">
-        Welcome, {displayName}!
+      <h1 className="mb-6 text-3xl font-bold tracking-tight">
+        Zoo siab txais tos koj os, {displayName}!
       </h1>
-      <div className="grid gap-8 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {/* Main content */}
+        <div className="grid auto-rows-max items-start gap-6 lg:col-span-2">
            <Card>
             <CardHeader>
               <CardTitle>Activity Overview</CardTitle>
               <CardDescription>A summary of your recent activity.</CardDescription>
             </CardHeader>
             <CardContent>
-              <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
-                <BarChart accessibilityLayer data={chartData}>
-                  <CartesianGrid vertical={false} />
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={chartData}>
+                  <CartesianGrid vertical={false} strokeDasharray="3 3" />
                   <XAxis
                     dataKey="month"
                     tickLine={false}
@@ -137,70 +147,73 @@ function UserDashboard() {
                   />
                   <Bar dataKey="desktop" fill="var(--color-desktop)" radius={8} />
                 </BarChart>
-              </ChartContainer>
+              </ResponsiveContainer>
             </CardContent>
           </Card>
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Bell className="h-5 w-5" />
-                Recent Notifications
+                Cov kev tshaj tawm tshiab
               </CardTitle>
+              <CardDescription>
+                 {unreadNotifications.length > 0 
+                  ? `You have ${unreadNotifications.length} unread message(s).`
+                  : 'Tsis tau muaj kev tshaj tawm tshiab li.'}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {notifications && notifications.length > 0 ? (
-                   <p className="text-muted-foreground">You have {notifications.length} unread notifications.</p>
+                {isNotificationsLoading ? (
+                    <p>Loading notifications...</p>
+                ) : unreadNotifications.length > 0 ? (
+                  unreadNotifications.slice(0, 3).map(notif => (
+                    <div key={notif.id} className="border-l-2 border-primary pl-3">
+                      <p className="text-sm font-medium">{notif.message}</p>
+                    </div>
+                  ))
                 ) : (
-                  <p className="text-muted-foreground">No new notifications.</p>
+                  <p className="text-sm text-muted-foreground">Your notification inbox is clear.</p>
                 )}
               </div>
             </CardContent>
           </Card>
         </div>
 
-        <div className="space-y-6">
+        {/* Sidebar */}
+        <div className="grid auto-rows-max items-start gap-6 lg:col-span-1">
           <Card className="flex flex-col">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CheckCircle2 className="h-6 w-6 text-green-500" />
-                Authentication
+                Account Status
               </CardTitle>
             </CardHeader>
             <CardContent className="flex-grow">
               <p className="text-lg font-medium text-green-600">
-                You are logged in.
+                Koj twb nkag los tau lawm.
               </p>
               <p className="mt-2 text-sm text-muted-foreground">
-                Your session is secure and managed by Firebase.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="flex flex-col">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Session Details
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex-grow">
-              <p className="text-sm text-muted-foreground">
-                Your session is persistent. You will remain logged in until you explicitly log out.
+                Your session is active. You have full access to your dashboard.
               </p>
             </CardContent>
           </Card>
           
-          <Card className="overflow-hidden">
-            <div className="relative h-full min-h-[150px]">
-             <Image
-                src="https://picsum.photos/seed/1/600/400"
-                alt="Abstract art representing security"
-                fill
-                className="object-cover"
-                data-ai-hint="security abstract"
-              />
-            </div>
+          <Card>
+            <CardHeader>
+                <CardTitle>Get Started</CardTitle>
+                <CardDescription>
+                    Explore your account and manage your settings.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                 <Button asChild className="w-full justify-between">
+                    <Link href="/profile">
+                        <span>Edit Your Profile</span>
+                        <ArrowRight />
+                    </Link>
+                </Button>
+            </CardContent>
           </Card>
         </div>
       </div>

@@ -23,7 +23,7 @@ import { AuthCard } from './auth-card';
 import { KeyRound } from 'lucide-react';
 
 const formSchema = z.object({
-  email: z.string().email({ message: 'Please enter a valid email.' }),
+  email: z.string().email({ message: 'Ntaus koj tus email kom raug' }),
 });
 
 export function ForgotPasswordForm() {
@@ -84,8 +84,8 @@ export function ForgotPasswordForm() {
 
   return (
     <AuthCard
-      title="Forgot Password?"
-      description="No worries, we'll send you reset instructions."
+      title="Hnov Qab Password?"
+      description="Txhob txhawj, Peb mam li xa ib tug link rau koj tus email."
     >
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -103,14 +103,14 @@ export function ForgotPasswordForm() {
             )}
           />
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Sending...' : 'Send Reset Link'}
+            {loading ? 'Sending...' : 'Xa tus Password Reset Link'}
             <KeyRound className="ml-2 h-4 w-4" />
           </Button>
         </form>
       </Form>
       <div className="mt-6 text-center text-sm">
         <Link href="/login" className="font-semibold text-primary hover:underline">
-          Back to login
+          Rov qab mus rau Login
         </Link>
       </div>
     </AuthCard>
