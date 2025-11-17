@@ -122,6 +122,7 @@ export default function ProfilePage() {
   const isOwnProfile = !profileUserId || profileUserId === currentUser?.uid;
   const [showPassword, setShowPassword] = useState(false);
   const [isPasswordSaving, setIsPasswordSaving] = useState(false);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
 
 
   const userDocRef = useMemoFirebase(
@@ -267,6 +268,7 @@ export default function ProfilePage() {
         description: 'Your password has been changed successfully.',
       });
       passwordForm.reset();
+      setShowPasswordForm(false);
     } catch (error: any) {
       let description = 'An error occurred while changing your password.';
       if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
@@ -484,53 +486,60 @@ export default function ProfilePage() {
                 <CardContent className="space-y-6">
                    <div className="p-4 border rounded-lg">
                        <h3 className="font-medium mb-2">Change Password</h3>
-                        <Form {...passwordForm}>
-                          <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
-                            <FormField
-                              control={passwordForm.control}
-                              name="currentPassword"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Current Password</FormLabel>
-                                  <FormControl>
-                                    <Input type="password" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                             <FormField
-                              control={passwordForm.control}
-                              name="newPassword"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>New Password</FormLabel>
-                                  <FormControl>
-                                    <Input type="password" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                             <FormField
-                              control={passwordForm.control}
-                              name="confirmPassword"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Confirm New Password</FormLabel>
-                                  <FormControl>
-                                    <Input type="password" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <Button type="submit" variant="outline" disabled={isPasswordSaving}>
-                                {isPasswordSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                {isPasswordSaving ? 'Saving...' : 'Save New Password'}
-                            </Button>
-                          </form>
-                        </Form>
+                       {!showPasswordForm ? (
+                            <Button variant="outline" onClick={() => setShowPasswordForm(true)}>Change Password</Button>
+                       ) : (
+                            <Form {...passwordForm}>
+                              <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
+                                <FormField
+                                  control={passwordForm.control}
+                                  name="currentPassword"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Current Password</FormLabel>
+                                      <FormControl>
+                                        <Input type="password" {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                 <FormField
+                                  control={passwordForm.control}
+                                  name="newPassword"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>New Password</FormLabel>
+                                      <FormControl>
+                                        <Input type="password" {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                 <FormField
+                                  control={passwordForm.control}
+                                  name="confirmPassword"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Confirm New Password</FormLabel>
+                                      <FormControl>
+                                        <Input type="password" {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <div className="flex gap-2">
+                                    <Button type="submit" disabled={isPasswordSaving}>
+                                        {isPasswordSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                        {isPasswordSaving ? 'Saving...' : 'Save New Password'}
+                                    </Button>
+                                     <Button variant="ghost" onClick={() => setShowPasswordForm(false)}>Cancel</Button>
+                                </div>
+                              </form>
+                            </Form>
+                       )}
                    </div>
                    <div className="p-4 border border-destructive/50 rounded-lg">
                        <h3 className="font-medium text-destructive">Delete Account</h3>
@@ -582,5 +591,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
