@@ -280,6 +280,24 @@ export default function AdminDashboard({ user }: { user: any }) {
           </CardContent>
         </Card>
         <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                    Send Notification
+                </CardTitle>
+                <Bell className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <p className="text-xs text-muted-foreground mb-4">
+                    Broadcast a message to all users.
+                </p>
+                <Button asChild size="sm">
+                    <Link href="/notifications">
+                        <Send className="mr-2 h-4 w-4" /> Go to Notifications
+                    </Link>
+                </Button>
+            </CardContent>
+        </Card>
+         <Card>
            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Open Support Tickets
@@ -296,15 +314,6 @@ export default function AdminDashboard({ user }: { user: any }) {
               New issues reported by users.
             </p>
           </CardContent>
-        </Card>
-         <Card className="sm:col-span-2 lg:col-span-1">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Recent Registrations</CardTitle>
-                <Clock className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-                <RecentUsersTable users={recentUsers} isLoading={isRecentUsersLoading} />
-            </CardContent>
         </Card>
       </div>
 
@@ -365,6 +374,15 @@ export default function AdminDashboard({ user }: { user: any }) {
           </div>
 
         <div className="space-y-6 lg:space-y-8">
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Recent Registrations</CardTitle>
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <RecentUsersTable users={recentUsers} isLoading={isRecentUsersLoading} />
+                </CardContent>
+            </Card>
              <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -375,27 +393,6 @@ export default function AdminDashboard({ user }: { user: any }) {
                 </CardHeader>
                 <CardContent>
                     <SupportTickets tickets={openSupportTickets} isLoading={isTicketsLoading} onTicketSelect={setSelectedTicket}/>
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Bell className="h-5 w-5" />
-                        Send Notification
-                    </CardTitle>
-                    <CardDescription>
-                        Broadcast a message to all users.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <p className="text-sm text-muted-foreground mb-4">
-                        To send a new notification to all users, please go to the dedicated notifications page.
-                    </p>
-                    <Button asChild>
-                        <Link href="/notifications">
-                            <Send className="mr-2 h-4 w-4" /> Go to Notifications
-                        </Link>
-                    </Button>
                 </CardContent>
             </Card>
         </div>
