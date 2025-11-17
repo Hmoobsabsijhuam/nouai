@@ -12,6 +12,8 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { formatDistanceToNow } from 'date-fns';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '../ui/skeleton';
 
 interface UserNotification {
   message: string;
@@ -29,7 +31,7 @@ export function Notifications() {
         ? query(
             collection(firestore, 'users', user.uid, 'user_notifications'),
             orderBy('createdAt', 'desc'),
-            limit(10)
+            limit(20) // Fetch more notifications
           )
         : null,
     [firestore, user]
@@ -69,36 +71,48 @@ export function Notifications() {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80">
-        <div className="grid gap-4">
-          <div className="space-y-2">
+      <PopoverContent className="w-80 sm:w-96">
+        <div className="flex flex-col">
+          <div className="space-y-2 mb-4">
             <h4 className="font-medium leading-none">Notifications</h4>
             <p className="text-sm text-muted-foreground">
               Recent updates from the admin.
             </p>
           </div>
-          <div className="grid gap-2">
-            {isLoading ? (
-              <p>Loading...</p>
-            ) : notifications && notifications.length > 0 ? (
-              notifications.map((notif) => (
-                <div
-                  key={notif.id}
-                  className="grid grid-cols-[25px_1fr] items-start pb-4 last:mb-0 last:pb-0"
-                >
-                  <span className={`flex h-2 w-2 translate-y-1 rounded-full ${!notif.read ? 'bg-primary' : 'bg-muted'}`} />
-                  <div className="grid gap-1">
-                    <p className="text-sm font-medium">{notif.message}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {notif.createdAt?.toDate && formatDistanceToNow(notif.createdAt.toDate(), { addSuffix: true })}
-                    </p>
-                  </div>
+          <ScrollArea className="max-h-72 w-full">
+            <div className="grid gap-2 pr-4">
+              {isLoading ? (
+                 <div className="space-y-4">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="grid grid-cols-[25px_1fr] items-start">
+                       <Skeleton className="h-2 w-2 rounded-full translate-y-1" />
+                       <div className="grid gap-1">
+                          <Skeleton className="h-4 w-full" />
+                          <Skeleton className="h-3 w-1/2" />
+                       </div>
+                    </div>
+                  ))}
                 </div>
-              ))
-            ) : (
-              <p className="text-sm text-muted-foreground">No new notifications.</p>
-            )}
-          </div>
+              ) : notifications && notifications.length > 0 ? (
+                notifications.map((notif) => (
+                  <div
+                    key={notif.id}
+                    className="grid grid-cols-[25px_1fr] items-start pb-4 last:mb-0 last:pb-0"
+                  >
+                    <span className={`flex h-2 w-2 translate-y-1 rounded-full ${!notif.read ? 'bg-primary' : 'bg-muted'}`} />
+                    <div className="grid gap-1">
+                      <p className="text-sm font-medium">{notif.message}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {notif.createdAt?.toDate && formatDistanceToNow(notif.createdAt.toDate(), { addSuffix: true })}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">No new notifications.</p>
+              )}
+            </div>
+          </ScrollArea>
         </div>
       </PopoverContent>
     </Popover>
