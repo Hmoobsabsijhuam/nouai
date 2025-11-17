@@ -162,7 +162,7 @@ export default function ProfilePage() {
 
     setLoading(true);
     try {
-      let photoURL = profileUser?.photoURL;
+      let photoURL = profileUser?.photoURL || null;
 
       if (photoFile) {
         const storage = getStorage(firebaseApp);
@@ -171,8 +171,6 @@ export default function ProfilePage() {
         photoURL = await getDownloadURL(uploadResult.ref);
       }
       
-      // If admin is editing someone else's profile, they can't update the Auth object directly
-      // Only update the user's own auth profile if they are editing themselves
       if (isOwnProfile && auth.currentUser) {
         await updateProfile(auth.currentUser, {
           displayName: values.displayName,
@@ -182,22 +180,17 @@ export default function ProfilePage() {
 
       const userDocRef = doc(firestore, 'users', targetUserId);
       
-      const dataToSave: any = {};
-      Object.keys(values).forEach(key => {
-        const value = (values as any)[key];
-        if (value !== undefined) {
-          dataToSave[key] = value;
-        }
-      });
-
-
-      await setDoc(userDocRef, {
-        ...dataToSave,
+      const dataToSave = {
+        displayName: values.displayName,
+        email: values.email,
+        dateOfBirth: values.dateOfBirth,
+        status: values.status,
+        country: values.country,
         photoURL: photoURL,
-      }, { merge: true });
+      };
+
+      await setDoc(userDocRef, dataToSave, { merge: true });
       
-      // If the current user updated their own profile, reload their auth state
-      // to get the latest data (displayName, photoURL) and update the app's context.
       if(isOwnProfile && auth.currentUser) {
         await auth.currentUser.reload();
         const freshUser = auth.currentUser;
