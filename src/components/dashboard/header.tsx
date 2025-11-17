@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Logo } from '@/components/icons/logo';
 import { UserNav } from './user-nav';
 import { Notifications } from './notifications';
-import { Home, Search, MoreVertical, LifeBuoy, HelpCircle, Settings, Image as ImageIcon } from 'lucide-react';
+import { Home, Search, MoreVertical, LifeBuoy, HelpCircle, Settings, Image as ImageIcon, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -54,6 +54,12 @@ export function Header() {
                   <Link href="/generate-image">
                     <ImageIcon className="mr-2 h-4 w-4" />
                     <span>Image Generation</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/text-to-video">
+                    <Video className="mr-2 h-4 w-4" />
+                    <span>Video Generation</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
