@@ -71,16 +71,16 @@ export function Notifications() {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 sm:w-96">
+      <PopoverContent className="w-80 sm:w-96 p-0">
         <div className="flex flex-col">
-          <div className="space-y-2 mb-4">
+          <div className="space-y-1.5 p-4">
             <h4 className="font-medium leading-none">Notifications</h4>
             <p className="text-sm text-muted-foreground">
               Recent updates from the admin.
             </p>
           </div>
-          <ScrollArea className="max-h-72 w-full">
-            <div className="grid gap-2 pr-4">
+          <ScrollArea className="h-72 w-full">
+            <div className="p-4 pt-0">
               {isLoading ? (
                  <div className="space-y-4">
                   {Array.from({ length: 3 }).map((_, i) => (
