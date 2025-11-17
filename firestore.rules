@@ -24,13 +24,13 @@ service cloud.firestore {
      * @allow (create) - Any user can create a profile.
      * @allow (list) - Admin can list all users.
      * @allow (get, update) - The owner or an admin can get and update a user's profile.
-     * @allow (delete) - Only an admin can delete profiles.
+     * @allow (delete) - The owner or an admin can delete profiles.
      */
     match /users/{userId} {
       allow get, update: if isOwner(userId) || isAdmin();
       allow list: if isAdmin();
       allow create: if true;
-      allow delete: if isAdmin();
+      allow delete: if isOwner(userId) || isAdmin();
 
       /**
        * @description Manages per-user notification data.

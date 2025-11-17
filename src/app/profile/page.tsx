@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { doc, setDoc, Timestamp } from 'firebase/firestore';
-import { updateProfile } from 'firebase/auth';
+import { doc, setDoc, Timestamp, deleteDoc } from 'firebase/firestore';
+import { updateProfile, sendPasswordResetEmail, deleteUser } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useFirebase, useMemoFirebase } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
@@ -36,6 +36,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ThemeToggle } from '@/components/dashboard/theme-toggle';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 
 const formSchema = z.object({
@@ -108,6 +109,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const isOwnProfile = !profileUserId || profileUserId === currentUser?.uid;
 
   const userDocRef = useMemoFirebase(
@@ -226,7 +228,52 @@ export default function ProfilePage() {
       setLoading(false);
     }
   }
-  
+
+  const handleChangePassword = async () => {
+    if (!currentUser?.email || !auth) return;
+    try {
+      await sendPasswordResetEmail(auth, currentUser.email);
+      toast({
+        title: "Password Reset Email Sent",
+        description: `An email has been sent to ${currentUser.email} with instructions to reset your password.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send password reset email.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!currentUser || !firestore) return;
+    setIsDeleting(true);
+    try {
+      // First, delete the user's Firestore document
+      const userDocRef = doc(firestore, 'users', currentUser.uid);
+      await deleteDoc(userDocRef);
+
+      // Then, delete the user from Firebase Authentication
+      await deleteUser(currentUser);
+      
+      toast({
+        title: "Account Deleted",
+        description: "Your account has been permanently deleted.",
+      });
+      // User will be automatically signed out, and onAuthStateChanged will trigger redirect
+    } catch (error: any) {
+      console.error("Delete account error:", error);
+      toast({
+        title: "Error Deleting Account",
+        description: error.message || "An error occurred. You may need to sign in again to complete this action.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const isLoading = isAuthLoading || isProfileLoading;
 
   if (isLoading || !currentUser) {
@@ -278,7 +325,7 @@ export default function ProfilePage() {
                             </Avatar>
                             <div className="grid w-full max-w-sm items-center gap-1.5">
                                 <Label htmlFor="picture">Duab Profile</Label>
-                                <Input id="picture" type="file" accept="image/*" onChange={handlePhotoChange} className="file:text-primary file:font-semibold" />
+                                <Input id="picture" type="file" accept="image/*" onChange={handlePhotoChange} className="file:text-primary file:font-semibold" disabled={!isOwnProfile}/>
                                  <p className="text-xs text-muted-foreground">Recommended: Duab ua plaub ceg, yam ntau kawg yog 1MB.</p>
                             </div>
                         </div>
@@ -399,16 +446,35 @@ export default function ProfilePage() {
                     <CardTitle>Account</CardTitle>
                     <CardDescription>Manage your account settings.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                   <div>
+                <CardContent className="space-y-6">
+                   <div className="p-4 border rounded-lg">
                        <h3 className="font-medium">Change Password</h3>
-                       <p className="text-sm text-muted-foreground">You will be redirected to a secure page to change your password.</p>
-                        <Button variant="outline" className="mt-2">Change Password</Button>
+                       <p className="text-sm text-muted-foreground">You will be sent an email with a link to reset your password.</p>
+                        <Button variant="outline" className="mt-2" onClick={handleChangePassword}>Send Reset Email</Button>
                    </div>
-                   <div>
+                   <div className="p-4 border border-destructive/50 rounded-lg">
                        <h3 className="font-medium text-destructive">Delete Account</h3>
                        <p className="text-sm text-muted-foreground">Permanently delete your account and all associated data. This action cannot be undone.</p>
-                       <Button variant="destructive" className="mt-2">Delete Account</Button>
+                       <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="destructive" className="mt-2">Delete Account</Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete your account
+                                and remove your data from our servers.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={handleDeleteAccount} disabled={isDeleting}>
+                                {isDeleting ? "Deleting..." : "Continue"}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                    </div>
                 </CardContent>
               </Card>
