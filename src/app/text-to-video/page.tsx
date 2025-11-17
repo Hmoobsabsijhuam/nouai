@@ -65,6 +65,8 @@ export default function GenerateVideoPage() {
        if (typeof error.message === 'string') {
         if (error.message.includes('429') || error.message.toLowerCase().includes('quota')) {
             description = 'You have exceeded the free usage limit for video generation. Please try again later.';
+        } else if (error.message.toLowerCase().includes('billing')) {
+            description = 'This feature is only available on a paid plan. Please enable billing for your project to generate videos.';
         } else {
             description = error.message;
         }
