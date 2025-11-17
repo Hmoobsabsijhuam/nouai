@@ -122,16 +122,15 @@ function UserDashboard() {
       <h1 className="mb-6 text-3xl font-bold tracking-tight">
         Zoo siab txais tos koj os, {displayName}!
       </h1>
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {/* Main content */}
-        <div className="grid auto-rows-max items-start gap-6 lg:col-span-2">
+      <div className="grid gap-6">
+        <div className="grid auto-rows-max items-start gap-6">
            <Card>
             <CardHeader>
               <CardTitle>Creation Categories</CardTitle>
               <CardDescription>Select a category to start creating.</CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <Link href="/generate-image" className="group">
                         <Card className="h-full transition-all duration-300 group-hover:border-primary group-hover:shadow-lg">
                             <CardHeader className="items-center text-center">
@@ -181,8 +180,7 @@ function UserDashboard() {
           </Card>
         </div>
 
-        {/* Sidebar */}
-        <div className="grid auto-rows-max items-start gap-6 lg:col-span-1">
+        <div className="grid auto-rows-max items-start gap-6">
             <Card>
                 <CardHeader>
                 <CardTitle className="flex items-center gap-2">
