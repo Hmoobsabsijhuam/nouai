@@ -13,6 +13,7 @@ import {
   SidebarMenuBadge,
   SidebarGroup,
   SidebarGroupLabel,
+  SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -24,7 +25,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Home, LayoutGrid, Library, LogOut, MoreHorizontal, Settings, Shield, Wand, Bot } from 'lucide-react';
+import { Home, LayoutGrid, Library, LogOut, MoreHorizontal, Settings, Shield, Wand, Bot, PanelLeft } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Logo } from '../icons/logo';
@@ -115,38 +116,38 @@ export function GeneratorLayout({
         <Sidebar
           side="left"
           variant="sidebar"
-          collapsible="none"
-          className="w-64 bg-sidebar border-r border-sidebar-border"
+          collapsible="icon"
+          className="w-64 bg-sidebar border-r border-sidebar-border hidden md:flex"
         >
           <SidebarHeader className="p-4">
             <Link href="/" className="flex items-center gap-2">
               <Logo className="h-8 w-8 text-primary" />
-              <span className="text-lg font-bold">Nou AI</span>
+              <span className="text-lg font-bold group-data-[collapsible=icon]:hidden">Nou AI</span>
             </Link>
           </SidebarHeader>
           <SidebarContent className="p-4 pt-0">
             <SidebarGroup>
-                <SidebarGroupLabel>Community</SidebarGroupLabel>
+                <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Community</SidebarGroupLabel>
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton asChild isActive={pathname === '/feed'}>
-                            <Link href="#"><Library /> Feed</Link>
+                        <SidebarMenuButton asChild isActive={pathname === '/feed'} tooltip="Feed">
+                            <Link href="#"><Library /> <span>Feed</span></Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                     <SidebarMenuItem>
-                        <SidebarMenuButton asChild isActive={pathname === '/challenges'}>
-                            <Link href="#"><Bot /> Challenge</Link>
+                        <SidebarMenuButton asChild isActive={pathname === '/challenges'} tooltip="Challenge">
+                            <Link href="#"><Bot /> <span>Challenge</span></Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                      <SidebarMenuItem>
-                        <SidebarMenuButton asChild isActive={pathname === '/profile'}>
-                            <Link href="/profile"><Home /> Profile</Link>
+                        <SidebarMenuButton asChild isActive={pathname === '/'} tooltip="Profile">
+                            <Link href="/"><Home /> <span>Profile</span></Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarGroup>
             <SidebarGroup>
-              <SidebarGroupLabel>Studio</SidebarGroupLabel>
+              <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Studio</SidebarGroupLabel>
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton
@@ -156,38 +157,70 @@ export function GeneratorLayout({
                       pathname === '/text-to-video' ||
                       pathname === '/image-to-video'
                     }
+                     tooltip="Create"
                   >
                     <Link href="/generate-image">
-                      <Wand /> Create
+                      <Wand /> <span>Create</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname === '/apps'}>
-                        <Link href="#"><LayoutGrid /> Apps</Link>
+                    <SidebarMenuButton asChild isActive={pathname === '/apps'} tooltip="Apps">
+                        <Link href="#"><LayoutGrid /> <span>Apps</span></Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroup>
              <SidebarGroup>
-                <SidebarGroupLabel>Library</SidebarGroupLabel>
+                <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Library</SidebarGroupLabel>
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton asChild isActive={pathname === '/gallery'}>
-                            <Link href="#"><Library /> Gallery</Link>
+                        <SidebarMenuButton asChild isActive={pathname === '/gallery'} tooltip="Gallery">
+                            <Link href="#"><Library /> <span>Gallery</span></Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarGroup>
           </SidebarContent>
-          <SidebarFooter className="p-4">
-            <UserProfile />
+          <SidebarFooter className="p-4 group-data-[collapsible=icon]:p-2">
+            <div className="group-data-[collapsible=icon]:hidden">
+                <UserProfile />
+            </div>
+             <div className="hidden group-data-[collapsible=icon]:block">
+                 <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Avatar className="h-8 w-8">
+                                <AvatarImage src={useFirebase().user?.photoURL ?? ''} />
+                                <AvatarFallback>{useFirebase().user?.displayName?.charAt(0).toUpperCase()}</AvatarFallback>
+                            </Avatar>
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" side="right" className="w-56">
+                        {/* ... same as UserProfile dropdown ... */}
+                         <DropdownMenuItem asChild>
+                            <Link href="/profile">
+                            <Settings className="mr-2 h-4 w-4" />
+                            <span>Settings</span>
+                            </Link>
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
           </SidebarFooter>
         </Sidebar>
 
-        <main className="flex flex-1">
+        <main className="flex flex-col md:flex-row flex-1">
+           <div className="md:hidden p-4 border-b flex items-center justify-between bg-card">
+              <Link href="/" className="flex items-center gap-2">
+                <Logo className="h-7 w-7 text-primary" />
+                <span className="text-md font-bold">Nou AI</span>
+              </Link>
+              <SidebarTrigger />
+           </div>
+
           {/* Middle Column: Control Panel */}
-          <div className="w-[400px] bg-background p-4 border-r flex flex-col">
+          <div className="w-full md:w-[400px] bg-background p-4 border-b md:border-b-0 md:border-r flex flex-col">
             <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-4">
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="image">Image</TabsTrigger>
