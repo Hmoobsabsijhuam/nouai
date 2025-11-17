@@ -207,9 +207,9 @@ const Sidebar = React.forwardRef<
             }
             side={side}
           >
-             <SheetHeader className="hidden">
+            <SheetHeader className="hidden">
               <SheetTitle>Navigation Menu</SheetTitle>
-             </SheetHeader>
+            </SheetHeader>
             <div className="flex h-full w-full flex-col">{children}</div>
           </SheetContent>
         </Sheet>
@@ -504,15 +504,18 @@ SidebarMenu.displayName = "SidebarMenu"
 
 const SidebarMenuItem = React.forwardRef<
   HTMLLIElement,
-  React.ComponentProps<"li">
->(({ className, ...props }, ref) => (
-  <li
-    ref={ref}
-    data-sidebar="menu-item"
-    className={cn("group/menu-item relative", className)}
-    {...props}
-  />
-))
+  React.ComponentProps<"li"> & { asChild?: boolean }
+>(({ className, asChild, ...props }, ref) => {
+  const Comp = asChild ? Slot : 'li';
+  return (
+    <Comp
+      ref={ref}
+      data-sidebar="menu-item"
+      className={cn("group/menu-item relative", className)}
+      {...props}
+    />
+  );
+});
 SidebarMenuItem.displayName = "SidebarMenuItem"
 
 const sidebarMenuButtonVariants = cva(
