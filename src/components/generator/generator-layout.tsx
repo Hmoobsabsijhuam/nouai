@@ -25,7 +25,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Home, LayoutGrid, Library, LogOut, MoreHorizontal, Settings, Shield, Wand, Bot, PanelLeft } from 'lucide-react';
+import { Home, LayoutGrid, Library, LogOut, MoreHorizontal, Settings, Shield, Wand, Bot, PanelLeft, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Logo } from '../icons/logo';
@@ -127,8 +127,13 @@ export function GeneratorLayout({
           </SidebarHeader>
           <SidebarContent className="p-4 pt-0">
             <SidebarGroup>
-                <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Community</SidebarGroupLabel>
+                <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Navigation</SidebarGroupLabel>
                 <SidebarMenu>
+                     <SidebarMenuItem>
+                        <SidebarMenuButton asChild isActive={pathname === '/'} tooltip="Home">
+                            <Link href="/"><Home /> <span>Home</span></Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
                     <SidebarMenuItem>
                         <SidebarMenuButton asChild isActive={pathname === '/feed'} tooltip="Feed">
                             <Link href="#"><Library /> <span>Feed</span></Link>
@@ -137,11 +142,6 @@ export function GeneratorLayout({
                     <SidebarMenuItem>
                         <SidebarMenuButton asChild isActive={pathname === '/challenges'} tooltip="Challenge">
                             <Link href="#"><Bot /> <span>Challenge</span></Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                     <SidebarMenuItem>
-                        <SidebarMenuButton asChild isActive={pathname === '/'} tooltip="Profile">
-                            <Link href="/"><Home /> <span>Profile</span></Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
@@ -212,11 +212,19 @@ export function GeneratorLayout({
 
         <main className="flex flex-col md:flex-row flex-1">
            <div className="md:hidden p-4 border-b flex items-center justify-between bg-card">
-              <Link href="/" className="flex items-center gap-2">
-                <Logo className="h-7 w-7 text-primary" />
-                <span className="text-md font-bold">Nou AI</span>
+              <div className="flex items-center gap-2">
+                <SidebarTrigger />
+                <Link href="/" className="flex items-center gap-2">
+                    <Logo className="h-7 w-7 text-primary" />
+                    <span className="text-md font-bold">Nou AI</span>
+                </Link>
+              </div>
+              <Link href="/" passHref>
+                <Button variant="ghost" size="icon">
+                    <X className="h-5 w-5" />
+                    <span className="sr-only">Close</span>
+                </Button>
               </Link>
-              <SidebarTrigger />
            </div>
 
           {/* Middle Column: Control Panel */}
