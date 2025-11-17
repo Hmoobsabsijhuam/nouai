@@ -1,42 +1,22 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Header } from '@/components/dashboard/header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle2, FileText, Bell, ArrowRight } from 'lucide-react';
+import { CheckCircle2, FileText, Bell, ArrowRight, ImageIcon, VideoIcon } from 'lucide-react';
 import Image from 'next/image';
 import AdminDashboard from '@/components/dashboard/admin-dashboard';
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart"
-import { Bar, BarChart, CartesianGrid, XAxis, ResponsiveContainer } from "recharts"
 import { useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, query, where, doc, orderBy, limit } from 'firebase/firestore';
+import { collection, query, orderBy, limit, Timestamp } from 'firebase/firestore';
 import { useCollection, WithId } from '@/firebase/firestore/use-collection';
 import { useDoc } from '@/firebase/firestore/use-doc';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { formatDistanceToNow } from 'date-fns';
 
-const chartData = [
-  { month: "January", desktop: 186 },
-  { month: "February", desktop: 305 },
-  { month: "March", desktop: 237 },
-  { month: "April", desktop: 73 },
-  { month: "May", desktop: 209 },
-  { month: "June", desktop: 214 },
-]
-
-const chartConfig = {
-  desktop: {
-    label: "Desktop",
-    color: "hsl(var(--primary))",
-  },
-}
 
 function DashboardSkeleton() {
   return (
@@ -59,7 +39,10 @@ function DashboardSkeleton() {
               <Skeleton className="mt-2 h-4 w-full" />
             </CardHeader>
             <CardContent>
-              <Skeleton className="h-48 w-full" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Skeleton className="h-48 w-full" />
+                <Skeleton className="h-48 w-full" />
+              </div>
             </CardContent>
           </Card>
           <Card>
@@ -84,6 +67,23 @@ interface UserNotification {
   read: boolean;
 }
 
+interface GeneratedImage {
+    prompt: string;
+    imageUrl: string;
+    createdAt: Timestamp;
+}
+
+interface GeneratedVideo {
+    prompt: string;
+    videoUrl: string;
+    createdAt: Timestamp;
+}
+
+type ActivityItem = 
+    | (WithId<GeneratedImage> & { type: 'image' })
+    | (WithId<GeneratedVideo> & { type: 'video' });
+
+
 function UserDashboard() {
   const { user: authUser } = useAuth(); 
   const { firestore } = useFirebase();
@@ -97,17 +97,42 @@ function UserDashboard() {
 
   const displayName = userProfile?.displayName || authUser?.displayName || authUser?.email;
 
+  // Fetch recent images
+  const imagesQuery = useMemoFirebase(() => {
+    if (!firestore || !authUser) return null;
+    return query(collection(firestore, 'users', authUser.uid, 'generated_images'), orderBy('createdAt', 'desc'), limit(4));
+  }, [firestore, authUser]);
+  const { data: images, isLoading: isImagesLoading } = useCollection<GeneratedImage>(imagesQuery);
+
+  // Fetch recent videos
+  const videosQuery = useMemoFirebase(() => {
+    if (!firestore || !authUser) return null;
+    return query(collection(firestore, 'users', authUser.uid, 'generated_videos'), orderBy('createdAt', 'desc'), limit(4));
+  }, [firestore, authUser]);
+  const { data: videos, isLoading: isVideosLoading } = useCollection<GeneratedVideo>(videosQuery);
+
+
   const userNotificationsQuery = useMemoFirebase(() => {
     if (!firestore || !authUser) return null;
     return query(
       collection(firestore, 'users', authUser.uid, 'user_notifications'),
       orderBy('createdAt', 'desc'),
-      limit(5) // Fetch latest 5
+      limit(5)
     );
   }, [firestore, authUser]);
 
   const { data: notifications, isLoading: isNotificationsLoading } = useCollection<UserNotification>(userNotificationsQuery);
   const unreadNotifications = notifications?.filter(n => !n.read) ?? [];
+
+  const activityFeed = useMemo((): ActivityItem[] => {
+    const typedImages: ActivityItem[] = images ? images.map(i => ({...i, type: 'image'})) : [];
+    const typedVideos: ActivityItem[] = videos ? videos.map(v => ({...v, type: 'video'})) : [];
+    
+    return [...typedImages, ...typedVideos]
+        .sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis())
+        .slice(0, 4); // Take the most recent 4 items overall
+  }, [images, videos]);
+
 
   if (isProfileLoading) {
     return <DashboardSkeleton />;
@@ -116,6 +141,8 @@ function UserDashboard() {
   if (!authUser) {
     return null;
   }
+
+  const isLoadingFeed = isImagesLoading || isVideosLoading;
 
   return (
     <>
@@ -127,27 +154,49 @@ function UserDashboard() {
         <div className="grid auto-rows-max items-start gap-6 lg:col-span-2">
            <Card>
             <CardHeader>
-              <CardTitle>Activity Overview</CardTitle>
-              <CardDescription>A summary of your recent activity.</CardDescription>
+              <CardTitle>Recent Creations</CardTitle>
+              <CardDescription>Your latest generated images and videos.</CardDescription>
             </CardHeader>
             <CardContent>
-              <ChartContainer config={chartConfig} className="min-h-[250px] w-full">
-                <BarChart accessibilityLayer data={chartData}>
-                  <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                  <XAxis
-                    dataKey="month"
-                    tickLine={false}
-                    tickMargin={10}
-                    axisLine={false}
-                    tickFormatter={(value) => value.slice(0, 3)}
-                  />
-                  <ChartTooltip
-                    cursor={false}
-                    content={<ChartTooltipContent hideLabel />}
-                  />
-                  <Bar dataKey="desktop" fill="var(--color-desktop)" radius={8} />
-                </BarChart>
-              </ChartContainer>
+                {isLoadingFeed ? (
+                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <Skeleton className="h-48 w-full rounded-lg" />
+                        <Skeleton className="h-48 w-full rounded-lg" />
+                    </div>
+                ) : activityFeed.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {activityFeed.map(item => (
+                            <div key={item.id} className="group relative overflow-hidden rounded-lg">
+                                {item.type === 'image' ? (
+                                     <Image src={item.imageUrl} alt={item.prompt} width={300} height={300} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                                ) : (
+                                    <video src={item.videoUrl} muted loop playsInline className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                                )}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                                <div className="absolute bottom-0 left-0 p-4">
+                                    <p className="text-sm font-medium text-white truncate">{item.prompt}</p>
+                                    <p className="text-xs text-white/80">{formatDistanceToNow(item.createdAt.toDate(), { addSuffix: true })}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12 text-center">
+                        <div className="flex items-center gap-4 text-muted-foreground">
+                             <ImageIcon className="h-8 w-8" />
+                             <VideoIcon className="h-8 w-8" />
+                        </div>
+                        <h3 className="mt-4 text-lg font-semibold">No Creations Yet</h3>
+                        <p className="mt-2 text-sm text-muted-foreground">
+                            Generate images or videos to see them here.
+                        </p>
+                         <Button asChild size="sm" className="mt-4">
+                            <Link href="/generate-image">
+                                Create an Image
+                            </Link>
+                        </Button>
+                    </div>
+                )}
             </CardContent>
           </Card>
           <Card>

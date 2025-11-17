@@ -6,6 +6,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { useFirebase } from '@/firebase';
 import { generateVideo } from '@/ai/flows/generate-video-flow';
 import { useToast } from '@/hooks/use-toast';
@@ -22,7 +24,7 @@ const formSchema = z.object({
 });
 
 export default function GenerateVideoPage() {
-  const { user, isUserLoading } = useFirebase();
+  const { user, firestore, firebaseApp, isUserLoading } = useFirebase();
   const router = useRouter();
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
@@ -47,7 +49,7 @@ export default function GenerateVideoPage() {
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user) {
+    if (!user || !firestore || !firebaseApp) {
         toast({ title: 'Error', description: 'You must be logged in to generate videos.', variant: 'destructive'});
         return;
     }
@@ -55,9 +57,26 @@ export default function GenerateVideoPage() {
     setIsGenerating(true);
     setGeneratedVideoUrl(null);
     try {
-        const { videoUrl } = await generateVideo({ prompt: values.prompt });
-        setGeneratedVideoUrl(videoUrl);
-        toast({ title: 'Video Generated!', description: 'Your video has been created.' });
+        const { videoUrl: videoDataUri } = await generateVideo({ prompt: values.prompt });
+        setGeneratedVideoUrl(videoDataUri);
+
+        // Upload to Firebase Storage
+        const storage = getStorage(firebaseApp);
+        const videoId = `${Date.now()}`;
+        const storageRef = ref(storage, `generated-videos/${user.uid}/${videoId}.mp4`);
+        
+        const uploadResult = await uploadString(storageRef, videoDataUri, 'data_url');
+        const downloadUrl = await getDownloadURL(uploadResult.ref);
+
+        // Save to Firestore
+        const videosCollection = collection(firestore, 'users', user.uid, 'generated_videos');
+        await addDoc(videosCollection, {
+            prompt: values.prompt,
+            videoUrl: downloadUrl,
+            createdAt: serverTimestamp(),
+        });
+
+        toast({ title: 'Video Generated!', description: 'Your video has been created and saved.' });
 
     } catch (error: any) {
       console.error('Video generation failed:', error);
