@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 import { addDoc, collection, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { useFirebase, useMemoFirebase } from '@/firebase';
@@ -19,7 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Download, ImageIcon, Loader2, Wand2 } from 'lucide-react';
+import { Download, ImageIcon, Loader2, Wand2, X } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 const formSchema = z.object({
@@ -152,11 +153,21 @@ export default function GenerateImagePage() {
         <div className="mx-auto max-w-4xl">
             <Card className="mb-8">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Wand2 />
-                        Text-to-Image Generation
-                    </CardTitle>
-                    <CardDescription>Describe the image you want to create. Be as specific as you can!</CardDescription>
+                    <div className="flex items-start justify-between">
+                        <div>
+                            <CardTitle className="flex items-center gap-2">
+                                <Wand2 />
+                                Text-to-Image Generation
+                            </CardTitle>
+                            <CardDescription>Describe the image you want to create. Be as specific as you can!</CardDescription>
+                        </div>
+                        <Link href="/" passHref>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <X className="h-5 w-5" />
+                                <span className="sr-only">Close</span>
+                            </Button>
+                        </Link>
+                    </div>
                 </CardHeader>
                 <CardContent>
                     <Form {...form}>
