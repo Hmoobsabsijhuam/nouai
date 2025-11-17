@@ -77,17 +77,21 @@ async function notifyAdmin(firestore: any, message: string) {
       read: false,
     };
 
+    // Use non-blocking write with custom error handling
     addDoc(adminNotifCollection, notificationData).catch((error) => {
       const permissionError = new FirestorePermissionError({
         path: adminNotifCollection.path,
         operation: 'create',
         requestResourceData: notificationData,
       });
+      // Emit the contextual error instead of logging to console
       errorEmitter.emit('permission-error', permissionError);
     });
 
   } catch (error) {
-    // This outer try-catch handles errors from getDocs, not the addDoc.
+    // This outer try-catch handles errors from getDocs, which is a read operation.
+    // It's less likely to fail due to permissions if the user is authenticated,
+    // but we can log it for now.
     console.error("Failed to find admin to send notification:", error);
   }
 }
@@ -637,3 +641,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
