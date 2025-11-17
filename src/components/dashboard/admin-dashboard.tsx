@@ -78,12 +78,12 @@ function RecentUsersTable({ users, isLoading }: { users: WithId<UserData>[] | nu
             <AvatarImage src={user.photoURL ?? undefined} />
             <AvatarFallback>{user.displayName?.charAt(0) ?? user.email.charAt(0)}</AvatarFallback>
           </Avatar>
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <p className="font-medium truncate">{user.displayName || 'N/A'}</p>
             <p className="text-sm text-muted-foreground truncate">{user.email}</p>
           </div>
           {user.createdAt && (
-            <p className="text-xs text-muted-foreground whitespace-nowrap">
+            <p className="text-xs text-muted-foreground whitespace-nowrap hidden sm:block">
               {formatDistanceToNow(user.createdAt.toDate(), { addSuffix: true })}
             </p>
           )}
@@ -227,7 +227,7 @@ export default function AdminDashboard({ user }: { user: any }) {
             </Button>
           </CardContent>
         </Card>
-         <Card>
+         <Card className="sm:col-span-2 lg:col-span-1">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Recent Registrations</CardTitle>
                 <Clock className="h-4 w-4 text-muted-foreground" />
