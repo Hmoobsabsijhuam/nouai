@@ -227,7 +227,7 @@ export function GeneratorLayout({
           </SidebarFooter>
         </Sidebar>
 
-        <main className="flex flex-col md:flex-row flex-1">
+        <main className="flex flex-col flex-1">
            <div className="md:hidden p-4 border-b flex items-center justify-between bg-card sticky top-0 z-10">
               <div className="flex items-center gap-2">
                 <SidebarTrigger />
@@ -252,25 +252,27 @@ export function GeneratorLayout({
                 </Link>
               </div>
            </div>
-
-          {/* Middle Column: Control Panel */}
-          <div className="w-full md:w-[400px] bg-background p-4 border-b md:border-b-0 md:border-r flex flex-col">
-            <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-4">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="image">Image</TabsTrigger>
-                <TabsTrigger value="video">Video</TabsTrigger>
-                <TabsTrigger value="animate">Animate</TabsTrigger>
-                <TabsTrigger value="speech">Speech</TabsTrigger>
-              </TabsList>
-            </Tabs>
-            <div className="flex-1 overflow-y-auto">
-                {controlPanel}
-            </div>
-          </div>
-
-          {/* Right Column: Content Feed */}
-          <div className="flex-1 bg-secondary p-4 overflow-y-auto">
-            {contentPanel}
+          
+          <div className="flex-1 flex flex-col md:grid md:grid-cols-[400px_1fr]">
+              {/* Middle Column: Control Panel */}
+              <div className="w-full bg-background p-4 border-b md:border-b-0 md:border-r flex flex-col">
+                <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-4">
+                  <TabsList className="grid w-full grid-cols-4">
+                    <TabsTrigger value="image">Image</TabsTrigger>
+                    <TabsTrigger value="video">Video</TabsTrigger>
+                    <TabsTrigger value="animate">Animate</TabsTrigger>
+                    <TabsTrigger value="speech">Speech</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+                <div className="flex-1 overflow-y-auto">
+                    {controlPanel}
+                </div>
+              </div>
+    
+              {/* Right Column: Content Feed */}
+              <div className="flex-1 bg-secondary p-4 overflow-y-auto">
+                {contentPanel}
+              </div>
           </div>
         </main>
       </div>
