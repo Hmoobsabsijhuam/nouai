@@ -253,7 +253,7 @@ export function GeneratorLayout({
               </div>
            </div>
           
-          <div className="flex-1 flex flex-col md:grid md:grid-cols-[400px_1fr]">
+          <div className="flex-1 flex flex-col md:grid md:grid-cols-[1fr_2fr]">
               {/* Middle Column: Control Panel */}
               <div className="w-full bg-background p-4 border-b md:border-b-0 md:border-r flex flex-col">
                 <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-4">

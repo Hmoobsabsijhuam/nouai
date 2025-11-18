@@ -40,8 +40,8 @@ interface GeneratedImage {
 
 function ImageGallerySkeleton() {
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {Array.from({ length: 4 }).map((_, i) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Array.from({ length: 3 }).map((_, i) => (
                  <Card key={i} className="overflow-hidden bg-muted border-none">
                     <Skeleton className="h-48 w-full" />
                     <CardContent className="p-3">
@@ -61,7 +61,7 @@ function ImageFeed({ images, isLoading }: { images: WithId<GeneratedImage>[] | n
   
   if (!images || images.length === 0) {
     return (
-       <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-6 md:p-12 text-center h-full">
+       <div className="flex flex-col items-center justify-center rounded-lg border border-dashed text-center h-full p-6 md:p-12">
             <ImageIcon className="mx-auto h-12 w-12 text-muted-foreground" />
             <h3 className="mt-4 text-lg font-semibold">Tseem Tsis Tau Muaj Duab Li</h3>
             <p className="mt-2 text-sm text-muted-foreground">
@@ -72,7 +72,7 @@ function ImageFeed({ images, isLoading }: { images: WithId<GeneratedImage>[] | n
   }
   
   return (
-     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {images.map(image => (
              <Card key={image.id} className="overflow-hidden group bg-muted border-none">
                 <div className="relative aspect-square w-full">
