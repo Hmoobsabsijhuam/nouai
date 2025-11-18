@@ -449,7 +449,7 @@ export default function AdminDashboard({ user }: { user: any }) {
                         <ScrollArea className="h-48">
                             <div className="space-y-2 pr-4">
                                 {adminNotifications.map(notif => (
-                                    <Link href={notif.link ?? '#'} key={notif.id} onClick={() => !notif.read && handleMarkAsRead(notif.id)} className={cn("block p-3 rounded-lg hover:bg-accent transition-colors border", !notif.read && "border-primary bg-primary/10")}>
+                                    <Link href={`/admin/payments/${notif.id}`} key={notif.id} onClick={() => !notif.read && handleMarkAsRead(notif.id)} className={cn("block p-3 rounded-lg hover:bg-accent transition-colors border", !notif.read && "border-primary bg-primary/10")}>
                                         <p className="font-medium text-sm">{notif.message}</p>
                                         <p className="text-xs text-muted-foreground">{formatDistanceToNow(notif.createdAt.toDate(), { addSuffix: true })}</p>
                                     </Link>
@@ -490,7 +490,3 @@ export default function AdminDashboard({ user }: { user: any }) {
     </div>
   );
 }
-
-    
-
-    

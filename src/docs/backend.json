@@ -308,6 +308,11 @@
             "type": "string",
             "format": "uri",
             "description": "A relevant link, e.g., to the user's profile."
+        },
+        "paymentStatus": {
+          "type": "string",
+          "description": "The status of the payment for the credit purchase.",
+          "enum": ["pending", "paid", "rejected"]
         }
       },
       "required": [
@@ -315,7 +320,8 @@
         "userEmail",
         "message",
         "createdAt",
-        "read"
+        "read",
+        "paymentStatus"
       ]
     }
   },
@@ -423,5 +429,3 @@
     "reasoning": "The Firestore structure is designed to securely manage user authentication and admin roles, ensuring authorization independence and supporting secure list operations (QAPs). We achieve this by separating user data and admin role definitions into distinct collections. The structure prioritizes simplicity and leverages path-based ownership for user data. Admin roles are determined by the *existence* of a document in a dedicated `/roles_admin/{uid}` collection, enabling simple presence checks in security rules without relying on complex data comparisons. This is more robust than storing the admin role within the user document itself. The path-based ownership structure `/users/{userId}` ensures secure `list` operations, as rules can easily restrict access based on the authenticated user ID. A global `notifications` collection is added for admins to broadcast messages. A `user_notifications` subcollection is added under each user to handle per-user read status, improving scalability and query efficiency. A `support_tickets` collection is added for users to submit issue reports. A `public_images` collection is added to store copies of user-generated images that are explicitly made public, allowing for efficient and secure public feed queries without exposing user-private data. An `admin_notifications` collection is added to log events for admin review, such as credit purchases."
   }
 }
-
-    

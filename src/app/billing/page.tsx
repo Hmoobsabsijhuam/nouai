@@ -53,45 +53,37 @@ export default function BillingPage() {
 
       // 2. Create a notification for the admin
       const adminNotifCollection = collection(firestore, 'admin_notifications');
-      const notificationData = {
-          userId: user.uid,
-          userEmail: user.email,
-          message: `${user.displayName || user.email} purchased ${amount} credits.`,
-          createdAt: serverTimestamp(),
-          read: false,
-          link: `/profile?userId=${user.uid}`
-      };
-
-      // Use a .catch for the notification to avoid blocking the user and to handle permissions
-      addDoc(adminNotifCollection, notificationData).catch((error) => {
-          console.error("Failed to create admin notification:", error);
-          // Optional: You could log this to a specific monitoring service
-          // For now, we will just log it to the console as the user's purchase was successful.
-          // We can also emit a specialized error if we need to debug this flow.
-          const contextualError = new FirestorePermissionError({
-              operation: 'create',
-              path: adminNotifCollection.path,
-              requestResourceData: notificationData
-          });
-          errorEmitter.emit('permission-error', contextualError);
+      await addDoc(adminNotifCollection, {
+        userId: user.uid,
+        userEmail: user.email,
+        message: `${user.displayName || user.email} purchased ${amount} credits.`,
+        createdAt: serverTimestamp(),
+        read: false,
+        paymentStatus: 'pending'
       });
 
       toast({
         title: "Purchase Successful!",
-        description: `Added ${amount} credits to your account.`,
+        description: `Added ${amount} credits to your account. Admin has been notified.`,
       });
     } catch (error: any) {
-        // This primarily catches errors from the user's credit update.
         console.error("Error purchasing credits:", error);
+        
+        let pathForError = `users/${user.uid}`;
+        if (error.message.includes('admin_notifications')) {
+            pathForError = 'admin_notifications';
+        }
+
         const contextualError = new FirestorePermissionError({
             operation: 'update',
-            path: `users/${user.uid}`,
+            path: pathForError,
             requestResourceData: { credits: `increment(${amount})` }
         });
         errorEmitter.emit('permission-error', contextualError);
+        
         toast({
             title: "Purchase Failed",
-            description: "Could not update your credit balance. Please try again.",
+            description: "Could not complete your purchase. Please try again.",
             variant: "destructive"
         });
     } finally {
