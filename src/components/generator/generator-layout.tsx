@@ -222,7 +222,7 @@ export function GeneratorLayout({
           </SidebarFooter>
         </Sidebar>
 
-        <div className="flex-1 flex flex-col min-h-screen">
+        <div className="flex-1 flex flex-col h-screen">
           <Header />
           <div className="grid flex-1 md:grid-cols-[400px_1fr] overflow-hidden">
             {/* Control Panel */}
