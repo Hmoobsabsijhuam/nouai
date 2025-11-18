@@ -105,7 +105,7 @@ export default function NotificationsPage() {
     <div className="flex min-h-screen w-full flex-col bg-background">
       <Header />
       <main className="flex flex-1 justify-center p-4 md:p-8">
-        <div className="w-full max-w-2xl">
+        <div className="w-full">
           <Card>
             <CardHeader>
               <div className="flex items-start justify-between">

@@ -101,7 +101,7 @@ export default function GenerateSpeechPage() {
 
   return (
     <DashboardLayout>
-      <div className="mx-auto max-w-4xl">
+      <div className="mx-auto w-full">
           <Card className="mb-8">
               <CardHeader>
                   <div className="flex items-start justify-between">

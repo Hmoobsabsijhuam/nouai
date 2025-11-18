@@ -89,7 +89,7 @@ export default function ContactAdminPage() {
 
   return (
     <DashboardLayout>
-      <div className="mx-auto max-w-2xl">
+      <div className="mx-auto w-full">
         <Card>
           <CardHeader>
             <div className="flex items-start justify-between">

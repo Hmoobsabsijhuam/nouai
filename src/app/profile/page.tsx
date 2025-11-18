@@ -60,7 +60,7 @@ const passwordFormSchema = z.object({
 function ProfileSkeleton() {
   return (
     <DashboardLayout>
-      <div className="w-full max-w-4xl mx-auto">
+      <div className="w-full mx-auto">
          <div className="space-y-4">
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-4 w-full" />
@@ -325,7 +325,7 @@ export default function ProfilePage() {
 
   return (
     <DashboardLayout>
-      <div className="mx-auto w-full max-w-4xl space-y-6">
+      <div className="mx-auto w-full space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
           <p className="text-muted-foreground">Manage your account settings and set e-mail preferences.</p>

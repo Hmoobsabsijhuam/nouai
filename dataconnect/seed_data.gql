@@ -1,0 +1,50 @@
+mutation CreateDemoData @transaction @auth(level: PUBLIC, insecureReason: "This operation is used to seed data and is safe to expose to the public.") {
+  user_insertMany(data: [
+    {
+      id: "550e8400-e29b-41d4-a716-446655440000",
+      displayName: "demouser1",
+      createdAt: "2024-01-01T00:00:00Z"
+    },
+    {
+      id: "550e8400-e29b-41d4-a716-446655440001",
+      displayName: "demouser2",
+      createdAt: "2024-01-01T00:00:00Z"
+    }
+  ])
+  generation_insertMany(data: [
+    {
+      id: "650e8400-e29b-41d4-a716-446655440000",
+      userId: "550e8400-e29b-41d4-a716-446655440000",
+      prompt: "Example prompt 1",
+      url: "http://example.com/image1.jpg",
+      type: "image",
+      createdAt: "2024-01-02T00:00:00Z",
+      isPublic: true
+    },
+    {
+      id: "650e8400-e29b-41d4-a716-446655440001",
+      userId: "550e8400-e29b-41d4-a716-446655440001",
+      prompt: "Example prompt 2",
+      url: "http://example.com/image2.jpg",
+      type: "image",
+      createdAt: "2024-01-02T00:00:00Z",
+      isPublic: false
+    }
+  ])
+  comment_insertMany(data: [
+    {
+      id: "750e8400-e29b-41d4-a716-446655440000",
+      generationId: "650e8400-e29b-41d4-a716-446655440000",
+      userId: "550e8400-e29b-41d4-a716-446655440000",
+      content: "Example comment from demouser1",
+      createdAt: "2024-01-03T00:00:00Z"
+    },
+    {
+      id: "750e8400-e29b-41d4-a716-446655440001",
+      generationId: "650e8400-e29b-41d4-a716-446655440001",
+      userId: "550e8400-e29b-41d4-a716-446655440001",
+      content: "Example comment from demouser2",
+      createdAt: "2024-01-03T00:00:00Z"
+    }
+  ])
+}
