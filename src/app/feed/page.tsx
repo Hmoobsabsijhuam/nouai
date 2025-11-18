@@ -77,7 +77,7 @@ export default function FeedPage() {
             </div>
 
             {publicImages && publicImages.length === 0 ? (
-                 <div className="flex flex-col items-center justify-center rounded-lg border border-dashed text-center p-12 h-80">
+                 <div className="flex flex-col items-center justify-center rounded-lg border border-dashed text-center p-12 h-full">
                     <ImageIcon className="mx-auto h-12 w-12 text-muted-foreground" />
                     <h3 className="mt-4 text-lg font-semibold">The Feed is Empty</h3>
                     <p className="mt-2 mb-4 text-sm text-muted-foreground">

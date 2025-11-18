@@ -215,7 +215,7 @@ export function DashboardLayout({
           </SidebarFooter>
         </Sidebar>
 
-        <main className="flex flex-col flex-1">
+        <div className="flex flex-col flex-1">
             <div className="hidden md:block">
                 <Header />
             </div>
@@ -237,10 +237,10 @@ export function DashboardLayout({
                 </Link>
               </div>
            </div>
-          <div className="flex-1 p-4 overflow-y-auto">
+          <main className="flex-1 p-4 overflow-y-auto">
             {children}
-          </div>
-        </main>
+          </main>
+        </div>
       </div>
     </SidebarProvider>
   );
