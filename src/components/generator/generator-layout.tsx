@@ -13,8 +13,6 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarTrigger,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -26,15 +24,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Home, LayoutGrid, Library, LogOut, MoreHorizontal, Settings, Shield, Wand, Bot, PanelLeft, X, Image as ImageIcon, VideoIcon, Mic, LifeBuoy } from 'lucide-react';
+import { Home, Library, LogOut, MoreHorizontal, Settings, Shield, Bot, LayoutGrid, ImageIcon, VideoIcon, Mic, LifeBuoy } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Logo } from '../icons/logo';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { signOut } from 'firebase/auth';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
-import * as React from 'react';
-import { Notifications } from '../dashboard/notifications';
+import { Header } from '../dashboard/header';
+
 
 function UserProfile() {
   const { user, auth } = useFirebase();
@@ -111,6 +108,7 @@ export function GeneratorLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { user } = useFirebase();
 
   const handleTabChange = (value: string) => {
     if (value === 'image') router.push('/generate-image');
@@ -121,8 +119,7 @@ export function GeneratorLayout({
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full">
-        {/* First Column: Main Sidebar */}
+      <div className="flex min-h-screen w-full bg-background">
         <Sidebar
           side="left"
           variant="sidebar"
@@ -146,7 +143,7 @@ export function GeneratorLayout({
                     </SidebarMenuItem>
                     <SidebarMenuItem>
                         <SidebarMenuButton asChild isActive={pathname === '/feed'} tooltip="Feed">
-                            <Link href="#"><Library /> <span>Feed</span></Link>
+                            <Link href="/feed"><Library /> <span>Feed</span></Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                     <SidebarMenuItem>
@@ -174,7 +171,7 @@ export function GeneratorLayout({
                             <Link href="/image-to-video"><VideoIcon /> <span>Image to Video</span></Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
-                     <SidebarMenuItem>
+                    <SidebarMenuItem>
                         <SidebarMenuButton asChild isActive={pathname === '/text-to-speech'} tooltip="Text to Speech">
                             <Link href="/text-to-speech"><Mic /> <span>Text to Speech</span></Link>
                         </SidebarMenuButton>
@@ -206,14 +203,14 @@ export function GeneratorLayout({
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-8 w-8">
                             <Avatar className="h-8 w-8">
-                                <AvatarImage src={useFirebase().user?.photoURL ?? ''} />
-                                <AvatarFallback>{useFirebase().user?.displayName?.charAt(0).toUpperCase()}</AvatarFallback>
+                                <AvatarImage src={user?.photoURL ?? ''} />
+                                <AvatarFallback>{user?.displayName?.charAt(0).toUpperCase()}</AvatarFallback>
                             </Avatar>
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" side="right" className="w-56">
-                         <DropdownMenuLabel>{useFirebase().user?.displayName || useFirebase().user?.email}</DropdownMenuLabel>
-                         <DropdownMenuSeparator />
+                         <DropdownMenuLabel>{user?.displayName || user?.email}</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
                          <DropdownMenuItem asChild>
                             <Link href="/profile">
                             <Settings className="mr-2 h-4 w-4" />
@@ -226,46 +223,29 @@ export function GeneratorLayout({
           </SidebarFooter>
         </Sidebar>
 
-        <div className="flex flex-1 flex-col md:flex-row min-h-screen">
-          {/* Mobile Header */}
-          <div className="md:hidden p-4 border-b flex items-center justify-between bg-card sticky top-0 z-10">
-            <div className="flex items-center gap-2">
-              <SidebarTrigger />
-              <Link href="/" className="flex items-center gap-2">
-                  <Logo className="h-7 w-7 text-primary" />
-                  <span className="text-md font-bold">Nou AI</span>
-              </Link>
+        <div className="flex flex-1 flex-col min-w-0">
+          <Header />
+          <div className="grid flex-1 md:grid-cols-[400px_1fr]">
+            {/* Control Panel */}
+            <div className="w-full bg-background p-4 border-b md:border-b-0 md:border-r flex flex-col">
+              <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-4">
+                <TabsList className="grid w-full grid-cols-4">
+                  <TabsTrigger value="image">Image</TabsTrigger>
+                  <TabsTrigger value="video">Video</TabsTrigger>
+                  <TabsTrigger value="animate">Animate</TabsTrigger>
+                  <TabsTrigger value="speech">Speech</TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <div className="overflow-y-auto">
+                  {controlPanel}
+              </div>
             </div>
-            <div className='flex items-center gap-2'>
-              <Notifications />
-              <Link href="/" passHref>
-                <Button variant="ghost" size="icon">
-                     <X className="h-5 w-5" />
-                    <span className="sr-only">Close</span>
-                </Button>
-              </Link>
-            </div>
+            
+            {/* Content Feed */}
+            <main className="bg-secondary p-4 overflow-y-auto">
+              {contentPanel}
+            </main>
           </div>
-
-          {/* Second Column: Control Panel */}
-          <div className="w-full md:w-[400px] bg-background p-4 border-b md:border-b-0 md:border-r flex flex-col">
-            <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-4">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="image">Image</TabsTrigger>
-                <TabsTrigger value="video">Video</TabsTrigger>
-                <TabsTrigger value="animate">Animate</TabsTrigger>
-                <TabsTrigger value="speech">Speech</TabsTrigger>
-              </TabsList>
-            </Tabs>
-            <div className="overflow-y-auto">
-                {controlPanel}
-            </div>
-          </div>
-
-          {/* Third Column: Content Feed */}
-          <main className="flex-1 bg-secondary p-4 overflow-y-auto">
-            {contentPanel}
-          </main>
         </div>
       </div>
     </SidebarProvider>
