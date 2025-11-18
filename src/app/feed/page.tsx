@@ -27,7 +27,10 @@ function FeedSkeleton() {
             {Array.from({ length: 12 }).map((_, i) => (
                 <Card key={i} className="overflow-hidden bg-muted border-none">
                     <Skeleton className="aspect-square w-full" />
-                    <Skeleton className="h-4 w-3/4 m-3" />
+                    <div className="p-3">
+                        <Skeleton className="h-4 w-3/4 mb-2" />
+                        <Skeleton className="h-4 w-1/2" />
+                    </div>
                 </Card>
             ))}
         </div>
@@ -104,7 +107,10 @@ export default function FeedPage() {
                             <div className="p-3">
                                 <p className="text-xs font-medium truncate" title={item.prompt}>{item.prompt}</p>
                                 <div className="flex items-center gap-2 mt-1">
-                                    {item.authorPhotoUrl && <Image src={item.authorPhotoUrl} alt={item.authorName} width={20} height={20} className="rounded-full" />}
+                                    {item.authorPhotoUrl ? 
+                                      <Image src={item.authorPhotoUrl} alt={item.authorName} width={20} height={20} className="rounded-full" />
+                                      : <div className="w-5 h-5 rounded-full bg-muted-foreground"></div>
+                                    }
                                     <p className="text-xs text-muted-foreground truncate">{item.authorName}</p>
                                 </div>
                             </div>
