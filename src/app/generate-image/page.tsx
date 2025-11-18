@@ -61,7 +61,7 @@ function ImageFeed({ images, isLoading }: { images: WithId<GeneratedImage>[] | n
   
   if (!images || images.length === 0) {
     return (
-       <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center h-full">
+       <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-6 md:p-12 text-center h-full">
             <ImageIcon className="mx-auto h-12 w-12 text-muted-foreground" />
             <h3 className="mt-4 text-lg font-semibold">Tseem Tsis Tau Muaj Duab Li</h3>
             <p className="mt-2 text-sm text-muted-foreground">
