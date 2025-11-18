@@ -7,10 +7,11 @@ import { useCollection, WithId } from '@/firebase/firestore/use-collection';
 import { DashboardLayout } from '@/components/dashboard/dashboard-layout';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ImageIcon, Download } from 'lucide-react';
+import { ImageIcon, Download, Share2 } from 'lucide-react';
 import Image from 'next/image';
 import { formatDistanceToNow } from 'date-fns';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 interface PublicImage {
   prompt: string;
@@ -46,8 +47,12 @@ export default function FeedPage() {
     if (isLoading && (!publicImages || publicImages.length === 0)) {
         return (
             <DashboardLayout>
-                <h1 className="mb-6 text-3xl font-bold tracking-tight">Public Feed</h1>
-                <p className="mb-6 text-muted-foreground">Discover images created by the community.</p>
+                <div className="flex items-center justify-between mb-6">
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight">Public Feed</h1>
+                        <p className="text-muted-foreground">Discover images created by the community.</p>
+                    </div>
+                </div>
                 <FeedSkeleton />
             </DashboardLayout>
         );
@@ -55,16 +60,32 @@ export default function FeedPage() {
     
     return (
         <DashboardLayout>
-            <h1 className="mb-6 text-3xl font-bold tracking-tight">Public Feed</h1>
-            <p className="mb-6 text-muted-foreground">Discover images created by the community.</p>
+             <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">Public Feed</h1>
+                    <p className="text-muted-foreground">Discover images created by the community.</p>
+                </div>
+                 <Link href="/gallery" passHref>
+                    <Button>
+                        <Share2 className="mr-2 h-4 w-4" />
+                        Share Your Images
+                    </Button>
+                </Link>
+            </div>
 
             {publicImages && publicImages.length === 0 ? (
                  <div className="flex flex-col items-center justify-center rounded-lg border border-dashed text-center p-12 h-80">
                     <ImageIcon className="mx-auto h-12 w-12 text-muted-foreground" />
                     <h3 className="mt-4 text-lg font-semibold">The Feed is Empty</h3>
-                    <p className="mt-2 text-sm text-muted-foreground">
+                    <p className="mt-2 mb-4 text-sm text-muted-foreground">
                         Be the first to share an image to the public feed!
                     </p>
+                    <Link href="/gallery" passHref>
+                        <Button>
+                            <Share2 className="mr-2 h-4 w-4" />
+                            Go to Gallery
+                        </Button>
+                    </Link>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
