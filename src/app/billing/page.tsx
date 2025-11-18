@@ -1,28 +1,121 @@
 
 'use client';
 
+import { useState } from 'react';
+import { useFirebase, useMemoFirebase } from '@/firebase';
+import { useDoc } from '@/firebase/firestore/use-doc';
+import { doc, updateDoc, increment } from 'firebase/firestore';
 import { DashboardLayout } from '@/components/dashboard/dashboard-layout';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { CreditCard, Zap } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Coins, Loader2, Zap } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { Skeleton } from '@/components/ui/skeleton';
+
+interface CreditPackage {
+  credits: number;
+  price: number;
+  bestValue?: boolean;
+}
+
+const creditPackages: CreditPackage[] = [
+  { credits: 100, price: 5 },
+  { credits: 500, price: 20, bestValue: true },
+  { credits: 1000, price: 35 },
+];
 
 export default function BillingPage() {
+  const { user, firestore, isUserLoading } = useFirebase();
+  const { toast } = useToast();
+  const [purchasingId, setPurchasingId] = useState<number | null>(null);
+  
+  const userDocRef = useMemoFirebase(
+    () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
+    [firestore, user]
+  );
+  
+  const { data: profile, isLoading: isProfileLoading } = useDoc<{ credits: number }>(userDocRef);
+
+  const handlePurchase = async (amount: number) => {
+    if (!user || !firestore) {
+      toast({ title: "Error", description: "You must be logged in.", variant: "destructive" });
+      return;
+    }
+    setPurchasingId(amount);
+    try {
+      const userRef = doc(firestore, 'users', user.uid);
+      await updateDoc(userRef, {
+        credits: increment(amount)
+      });
+      toast({
+        title: "Purchase Successful!",
+        description: `Added ${amount} credits to your account.`,
+      });
+    } catch (error) {
+      console.error("Credit purchase error:", error);
+      toast({ title: "Error", description: "Could not complete purchase.", variant: "destructive" });
+    } finally {
+      setPurchasingId(null);
+    }
+  };
+  
+  const isLoading = isUserLoading || isProfileLoading;
+
   return (
     <DashboardLayout>
-      <div className="flex flex-col items-center justify-center h-full text-center">
-         <Card className="w-full max-w-2xl">
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-8 text-center">
+            <h1 className="text-3xl font-bold tracking-tight">Billing & Credits</h1>
+            <p className="text-muted-foreground">Refill your balance to continue creating with Nou AI.</p>
+        </div>
+
+        <Card className="mb-8">
             <CardHeader>
-                <div className="flex flex-col items-center gap-4">
-                    <Zap className="h-12 w-12 text-primary" />
-                    <CardTitle className="text-3xl">Go Pro!</CardTitle>
-                    <CardDescription>This feature is coming soon!</CardDescription>
-                </div>
+                <CardTitle>Your Balance</CardTitle>
             </CardHeader>
             <CardContent>
-                <p className="text-muted-foreground">
-                    Unlock advanced features, get more credits, and enjoy priority support. The billing and credit system is under construction.
-                </p>
+                {isLoading ? (
+                     <Skeleton className="h-10 w-24" />
+                ) : (
+                    <div className="flex items-center gap-2 text-3xl font-bold">
+                        <Coins className="h-8 w-8 text-yellow-500" />
+                        <span>{profile?.credits ?? 0}</span>
+                    </div>
+                )}
             </CardContent>
         </Card>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {creditPackages.map((pkg) => (
+            <Card key={pkg.credits} className={`flex flex-col ${pkg.bestValue ? 'border-primary border-2 shadow-lg' : ''}`}>
+               {pkg.bestValue && <div className="bg-primary text-primary-foreground text-xs font-bold text-center py-1 rounded-t-lg">BEST VALUE</div>}
+              <CardHeader className="text-center">
+                <div className="flex justify-center items-center gap-2">
+                    <Coins className="h-6 w-6 text-yellow-500" />
+                    <CardTitle className="text-2xl">{pkg.credits} Credits</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="flex-grow text-center">
+                <p className="text-4xl font-bold">${pkg.price}</p>
+                <p className="text-muted-foreground">One-time purchase</p>
+              </CardContent>
+              <CardFooter>
+                <Button 
+                  className="w-full" 
+                  onClick={() => handlePurchase(pkg.credits)}
+                  disabled={purchasingId !== null}
+                >
+                  {purchasingId === pkg.credits ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Zap className="mr-2 h-4 w-4" />
+                  )}
+                  {purchasingId === pkg.credits ? 'Processing...' : 'Purchase'}
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
       </div>
     </DashboardLayout>
   );
