@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { WithId } from '@/firebase/firestore/use-collection';
-import { Timestamp, deleteDoc, doc } from 'firebase/firestore';
+import { Timestamp, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { useFirebase } from '@/firebase';
 import {
@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import {
   Table,
@@ -24,7 +25,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, Coins, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import {
   AlertDialog,
@@ -37,6 +38,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
 
 interface UserData {
   email: string;
@@ -44,6 +47,7 @@ interface UserData {
   displayName: string;
   photoURL?: string;
   createdAt?: Timestamp;
+  credits?: number;
 }
 
 interface UserListDialogProps {
@@ -59,8 +63,11 @@ export function UserListDialog({ isOpen, onOpenChange, users, isLoading }: UserL
   const { toast } = useToast();
   const [userToDelete, setUserToDelete] = useState<WithId<UserData> | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [userToEditCredits, setUserToEditCredits] = useState<WithId<UserData> | null>(null);
+  const [newCreditAmount, setNewCreditAmount] = useState<number>(0);
+  const [isCreditSaving, setIsCreditSaving] = useState(false);
 
-  const handleEdit = (userId: string) => {
+  const handleEditProfile = (userId: string) => {
     router.push(`/profile?userId=${userId}`);
     onOpenChange(false);
   };
@@ -69,6 +76,35 @@ export function UserListDialog({ isOpen, onOpenChange, users, isLoading }: UserL
     setUserToDelete(user);
   };
 
+  const handleEditCredits = (user: WithId<UserData>) => {
+    setUserToEditCredits(user);
+    setNewCreditAmount(user.credits ?? 0);
+  };
+
+  const handleSaveCredits = async () => {
+    if (!userToEditCredits || !firestore) return;
+
+    setIsCreditSaving(true);
+    try {
+        const userRef = doc(firestore, 'users', userToEditCredits.id);
+        await updateDoc(userRef, { credits: Number(newCreditAmount) });
+        toast({
+            title: 'Credits Updated',
+            description: `${userToEditCredits.email}'s balance is now ${newCreditAmount}.`
+        });
+        setUserToEditCredits(null);
+    } catch (error) {
+        console.error("Error updating credits:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Failed to update credits.'
+        });
+    } finally {
+        setIsCreditSaving(false);
+    }
+  }
+
   const handleDelete = async () => {
     if (!userToDelete || !firestore) return;
 
@@ -76,11 +112,6 @@ export function UserListDialog({ isOpen, onOpenChange, users, isLoading }: UserL
     try {
       const userDocRef = doc(firestore, 'users', userToDelete.id);
       await deleteDoc(userDocRef);
-
-      // Note: This only deletes the Firestore document.
-      // Deleting the Firebase Auth user requires admin privileges and a backend function.
-      // The user will no longer appear in the app, but their auth record still exists.
-
       toast({
         title: 'User Deleted',
         description: `${userToDelete.email} has been removed from the system.`,
@@ -102,7 +133,7 @@ export function UserListDialog({ isOpen, onOpenChange, users, isLoading }: UserL
   return (
     <>
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl w-full">
+      <DialogContent className="max-w-5xl w-full">
         <DialogHeader>
           <DialogTitle>All Registered Users</DialogTitle>
           <DialogDescription>A complete list of all users in the system.</DialogDescription>
@@ -115,7 +146,7 @@ export function UserListDialog({ isOpen, onOpenChange, users, isLoading }: UserL
                 <TableHead>Display Name</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead className="hidden sm:table-cell">Joined</TableHead>
-                <TableHead className="hidden md:table-cell">Role</TableHead>
+                <TableHead>Credits</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -127,7 +158,7 @@ export function UserListDialog({ isOpen, onOpenChange, users, isLoading }: UserL
                     <TableCell><Skeleton className="h-4 w-[120px]" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-[180px]" /></TableCell>
                     <TableCell className="hidden sm:table-cell"><Skeleton className="h-4 w-[100px]" /></TableCell>
-                    <TableCell className="hidden md:table-cell"><Skeleton className="h-6 w-[70px] rounded-full" /></TableCell>
+                     <TableCell><Skeleton className="h-4 w-[60px]" /></TableCell>
                     <TableCell className="space-x-2">
                         <Skeleton className="h-8 w-8 inline-block" />
                         <Skeleton className="h-8 w-8 inline-block" />
@@ -150,18 +181,20 @@ export function UserListDialog({ isOpen, onOpenChange, users, isLoading }: UserL
                     <TableCell className="hidden sm:table-cell">
                       {u.createdAt ? format(u.createdAt.toDate(), 'MMM d, yyyy') : 'N/A'}
                     </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {u.email === 'admin@noukha.com' ? (
-                        <Badge>Admin</Badge>
-                      ) : (
-                        <Badge variant="secondary">User</Badge>
-                      )}
+                    <TableCell>
+                        <div className="flex items-center gap-2">
+                             <Coins className="h-4 w-4 text-yellow-500" />
+                            <span>{u.credits ?? 0}</span>
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleEditCredits(u)}>
+                                <Edit className="h-3 w-3" />
+                            </Button>
+                        </div>
                     </TableCell>
                     <TableCell>
                         <div className="flex items-center gap-1 sm:gap-2">
-                            <Button variant="outline" size="icon" onClick={() => handleEdit(u.id)} className="h-8 w-8">
+                            <Button variant="outline" size="icon" onClick={() => handleEditProfile(u.id)} className="h-8 w-8">
                                 <Edit className="h-4 w-4" />
-                                <span className="sr-only">Edit User</span>
+                                <span className="sr-only">Edit Profile</span>
                             </Button>
                             {u.email !== 'admin@noukha.com' && (
                                <Button variant="destructive" size="icon" onClick={() => handleDeleteConfirm(u)} className="h-8 w-8">
@@ -201,7 +234,39 @@ export function UserListDialog({ isOpen, onOpenChange, users, isLoading }: UserL
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
+    </AlertDialog>
+
+     <Dialog open={!!userToEditCredits} onOpenChange={() => setUserToEditCredits(null)}>
+        <DialogContent className="max-w-sm">
+            <DialogHeader>
+                <DialogTitle>Edit Credits</DialogTitle>
+                <DialogDescription>
+                    Update the credit balance for {userToEditCredits?.email}.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="credits-amount" className="text-right">
+                        Credits
+                    </Label>
+                    <Input
+                        id="credits-amount"
+                        type="number"
+                        value={newCreditAmount}
+                        onChange={(e) => setNewCreditAmount(Number(e.target.value))}
+                        className="col-span-3"
+                    />
+                </div>
+            </div>
+             <DialogFooter>
+                <Button variant="outline" onClick={() => setUserToEditCredits(null)}>Cancel</Button>
+                <Button onClick={handleSaveCredits} disabled={isCreditSaving}>
+                    {isCreditSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Save Changes
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+     </Dialog>
     </>
   );
 }

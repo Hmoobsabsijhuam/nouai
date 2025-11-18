@@ -27,6 +27,7 @@ interface UserData {
   displayName: string;
   photoURL?: string;
   createdAt?: Timestamp;
+  credits?: number;
 }
 
 interface SupportTicket {
