@@ -59,7 +59,7 @@ export default function BillingPage() {
         message: `${user.displayName || user.email} purchased ${amount} credits.`,
         createdAt: serverTimestamp(),
         read: false,
-        paymentStatus: 'pending'
+        paymentStatus: 'paid'
       });
 
       toast({
