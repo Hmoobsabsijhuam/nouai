@@ -56,7 +56,7 @@ function VideoFeed({ videos, isLoading }: { videos: WithId<GeneratedVideo>[] | n
 
     if (!videos || videos.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-4 md:p-12 text-center h-full">
+            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
                 <Video className="mx-auto h-10 w-10 text-muted-foreground" />
                 <h3 className="mt-4 text-md font-semibold">Tseem Tsis Tau Muaj Video</h3>
                 <p className="mt-1 text-xs text-muted-foreground">Koj cov videos yuav tshwm rau hauv qab no.</p>
@@ -87,8 +87,8 @@ function ImageToVideoControls({ form, isGenerating }: { form: any, isGenerating:
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(form.onSubmit)} className="space-y-6 flex flex-col h-full">
-                <div className="flex-1 space-y-6">
+            <form onSubmit={form.handleSubmit(form.onSubmit)} className="space-y-6">
+                <div className="space-y-6">
                     <FormField
                         control={form.control}
                         name="image"
@@ -143,7 +143,7 @@ function ImageToVideoControls({ form, isGenerating }: { form: any, isGenerating:
                         )}
                     />
                 </div>
-                 <div className="space-y-2">
+                 <div className="space-y-2 pt-4">
                     <Button type="submit" disabled={isGenerating || !imagePreview} size="lg" className="w-full">
                         {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
                         {isGenerating ? 'Tab tom tsim...' : 'Generate'}

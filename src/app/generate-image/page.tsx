@@ -61,7 +61,7 @@ function ImageFeed({ images, isLoading }: { images: WithId<GeneratedImage>[] | n
   
   if (!images || images.length === 0) {
     return (
-       <div className="flex flex-col items-center justify-center rounded-lg border border-dashed text-center h-full p-4 md:p-12">
+       <div className="flex flex-col items-center justify-center rounded-lg border border-dashed text-center p-8">
             <ImageIcon className="mx-auto h-10 w-10 text-muted-foreground" />
             <h3 className="mt-4 text-md font-semibold">Tseem Tsis Tau Muaj Duab Li</h3>
             <p className="mt-1 text-xs text-muted-foreground">
@@ -102,8 +102,8 @@ function ImageFeed({ images, isLoading }: { images: WithId<GeneratedImage>[] | n
 function ImageGeneratorControls({ form, isGenerating }: { form: any, isGenerating: boolean }) {
      return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(form.onSubmit)} className="space-y-6 flex flex-col h-full">
-                <div className="flex-1 space-y-6">
+            <form onSubmit={form.handleSubmit(form.onSubmit)} className="space-y-6">
+                <div className="space-y-6">
                     <FormField
                         control={form.control}
                         name="prompt"
@@ -165,7 +165,7 @@ function ImageGeneratorControls({ form, isGenerating }: { form: any, isGeneratin
                       />
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-2 pt-4">
                     <Button type="submit" disabled={isGenerating} size="lg" className="w-full">
                         {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
                         {isGenerating ? 'Tab tom tsim duab...' : 'Generate'}

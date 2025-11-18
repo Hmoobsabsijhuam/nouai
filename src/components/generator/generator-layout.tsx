@@ -227,7 +227,7 @@ export function GeneratorLayout({
           </SidebarFooter>
         </Sidebar>
 
-        <main className="flex flex-col flex-1">
+        <main className="flex flex-col flex-1 min-h-screen">
            <div className="md:hidden p-4 border-b flex items-center justify-between bg-card sticky top-0 z-10">
               <div className="flex items-center gap-2">
                 <SidebarTrigger />
@@ -253,7 +253,7 @@ export function GeneratorLayout({
               </div>
            </div>
           
-          <div className="flex-1 flex flex-col md:grid md:grid-cols-[1fr_2fr]">
+          <div className="flex-1 flex flex-col md:grid md:grid-cols-[400px_1fr]">
               {/* Middle Column: Control Panel */}
               <div className="w-full bg-background p-4 border-b md:border-b-0 md:border-r flex flex-col">
                 <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-4">
@@ -264,14 +264,14 @@ export function GeneratorLayout({
                     <TabsTrigger value="speech">Speech</TabsTrigger>
                   </TabsList>
                 </Tabs>
-                <div className="flex-1 overflow-y-auto">
+                <div className="overflow-y-auto">
                     {controlPanel}
                 </div>
               </div>
     
               {/* Right Column: Content Feed */}
               <div className="flex-1 bg-secondary p-4 overflow-y-auto">
-                <div className="h-full w-full">
+                <div className="w-full">
                     {contentPanel}
                 </div>
               </div>
