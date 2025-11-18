@@ -13,6 +13,7 @@
  * - /roles_admin/{userId}: Stores admin role assignments; the existence of a document
  *   indicates admin privileges.
  * - /notifications/{notificationId}: Stores global notifications sent by admins.
+ * - /admin_notifications/{notificationId}: Stores notifications for admins (e.g., credit purchases).
  * - /support_tickets/{ticketId}: Stores support tickets from users for admin review.
  * - /public_images/{imageId}: Stores public images for the feed.
  */
@@ -97,6 +98,17 @@ service cloud.firestore {
       allow create: if isAdmin();
       allow update, delete: if false;
     }
+
+    /**
+     * @description Manages notifications for admins (e.g. credit purchases).
+     * @path /admin_notifications/{notificationId}
+     * @allow (create) - Any signed-in user can create a notification (for their own purchases).
+     * @allow (list, get, update, delete) - Only admins can manage these notifications.
+     */
+    match /admin_notifications/{notificationId} {
+        allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+        allow get, list, update, delete: if isAdmin();
+    }
     
     /**
      * @description Public images for the feed.
@@ -135,3 +147,5 @@ service cloud.firestore {
     }
   }
 }
+
+    

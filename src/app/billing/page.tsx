@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { useFirebase, useMemoFirebase } from '@/firebase';
 import { useDoc } from '@/firebase/firestore/use-doc';
-import { doc, updateDoc, increment } from 'firebase/firestore';
+import { doc, updateDoc, increment, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { DashboardLayout } from '@/components/dashboard/dashboard-layout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -47,6 +47,18 @@ export default function BillingPage() {
       await updateDoc(userRef, {
         credits: increment(amount)
       });
+      
+      // Create admin notification
+      const adminNotifCollection = collection(firestore, 'admin_notifications');
+      await addDoc(adminNotifCollection, {
+        userId: user.uid,
+        userEmail: user.email,
+        message: `${user.displayName || user.email} purchased ${amount} credits.`,
+        createdAt: serverTimestamp(),
+        read: false,
+        link: `/profile?userId=${user.uid}`
+      });
+
       toast({
         title: "Purchase Successful!",
         description: `Added ${amount} credits to your account.`,
@@ -120,3 +132,5 @@ export default function BillingPage() {
     </DashboardLayout>
   );
 }
+
+    
