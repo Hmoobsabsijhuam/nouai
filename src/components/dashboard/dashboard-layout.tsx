@@ -23,7 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Home, Library, MoreHorizontal, Settings, Shield, Bot, LayoutGrid, ImageIcon, VideoIcon, Mic, LifeBuoy, LogOut, CreditCard } from 'lucide-react';
+import { Home, Library, MoreHorizontal, Settings, Shield, Bot, LayoutGrid, ImageIcon, VideoIcon, Mic, LifeBuoy, LogOut, CreditCard, History } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Logo } from '../icons/logo';
@@ -45,6 +45,7 @@ function UserProfile() {
   if (!user) return null;
 
   const name = user.displayName || user.email;
+  const isAdmin = user.email === 'admin@noukha.com';
 
   return (
     <div className="flex items-center justify-between">
@@ -76,7 +77,15 @@ function UserProfile() {
               <span>Go Pro / Refill Credits</span>
             </Link>
           </DropdownMenuItem>
-          {user.email === 'admin@noukha.com' && (
+          {!isAdmin && (
+            <DropdownMenuItem asChild>
+                <Link href="/purchase-history">
+                    <History className="mr-2 h-4 w-4" />
+                    <span>My Purchase History</span>
+                </Link>
+            </DropdownMenuItem>
+          )}
+          {isAdmin && (
             <DropdownMenuItem asChild>
                 <Link href="/dashboard">
                     <Shield className="mr-2 h-4 w-4" />
@@ -116,6 +125,12 @@ export function DashboardLayout({
       router.push('/login');
     }
   };
+  
+  if (!user) {
+    return null;
+  }
+  
+  const isAdmin = user.email === 'admin@noukha.com';
 
   return (
     <SidebarProvider>
@@ -223,6 +238,14 @@ export function DashboardLayout({
                                 <span>Go Pro / Refill Credits</span>
                             </Link>
                         </DropdownMenuItem>
+                         {!isAdmin && (
+                            <DropdownMenuItem asChild>
+                                <Link href="/purchase-history">
+                                    <History className="mr-2 h-4 w-4" />
+                                    <span>My Purchase History</span>
+                                </Link>
+                            </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem asChild>
                             <Link href="/contact-admin">
                                 <LifeBuoy className="mr-2 h-4 w-4" />

@@ -1,6 +1,6 @@
 'use client';
 
-import { LogOut, User as UserIcon, Settings, LifeBuoy, CreditCard } from 'lucide-react';
+import { LogOut, User as UserIcon, Settings, LifeBuoy, CreditCard, History } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { useFirebase } from '@/firebase';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -75,6 +75,14 @@ export function UserNav() {
                 <span>Go Pro / Refill Credits</span>
             </Link>
         </DropdownMenuItem>
+        {!isAdmin && (
+            <DropdownMenuItem asChild className="cursor-pointer">
+                <Link href="/purchase-history">
+                    <History className="mr-2 h-4 w-4" />
+                    <span>My Purchase History</span>
+                </Link>
+            </DropdownMenuItem>
+        )}
          <DropdownMenuItem asChild className="cursor-pointer">
             <Link href="/contact-admin">
                 <LifeBuoy className="mr-2 h-4 w-4" />

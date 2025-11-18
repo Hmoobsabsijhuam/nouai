@@ -103,11 +103,13 @@ service cloud.firestore {
      * @description Manages notifications for admins (e.g. credit purchases).
      * @path /admin_notifications/{notificationId}
      * @allow (create) - Any signed-in user can create a notification (for their own purchases).
-     * @allow (list, get, update, delete) - Only admins can manage these notifications.
+     * @allow (list) - Admins can list all notifications. A user can list their own purchase notifications.
+     * @allow (get, update, delete) - Only admins can manage these notifications.
      */
     match /admin_notifications/{notificationId} {
         allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-        allow get, list, update, delete: if isAdmin();
+        allow get, update, delete: if isAdmin();
+        allow list: if isAdmin() || (isSignedIn() && request.query.where.userId == request.auth.uid);
     }
     
     /**
@@ -147,5 +149,3 @@ service cloud.firestore {
     }
   }
 }
-
-    
