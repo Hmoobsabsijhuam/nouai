@@ -48,7 +48,7 @@ export function LoginForm() {
     if (!auth) return;
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
-      router.push('/');
+      router.push('/dashboard');
     } catch (error: any) {
       toast({
         title: 'Nkag mus tsis tau vim',

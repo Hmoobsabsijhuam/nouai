@@ -12,7 +12,7 @@ export function Header() {
     <header className="sticky top-0 z-10 flex h-16 w-full items-center justify-between border-b bg-card px-4 md:px-6">
       <div className="flex items-center gap-2">
         <SidebarTrigger className="md:hidden" />
-        <Link href="/" className="hidden items-center gap-2 md:flex">
+        <Link href="/dashboard" className="hidden items-center gap-2 md:flex">
           <Logo className="h-8 w-8" />
           <span className="text-lg font-bold">Nou AI</span>
         </Link>

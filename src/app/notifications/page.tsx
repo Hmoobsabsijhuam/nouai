@@ -36,7 +36,7 @@ export default function NotificationsPage() {
   useEffect(() => {
     if (!isUserLoading) {
       if (!user || user.email !== 'admin@noukha.com') {
-        router.replace('/');
+        router.replace('/dashboard');
       }
     }
   }, [user, isUserLoading, router]);
@@ -113,7 +113,7 @@ export default function NotificationsPage() {
                   <CardTitle>Send a Notification</CardTitle>
                   <CardDescription>Broadcast a message to all registered users.</CardDescription>
                 </div>
-                <Link href="/" passHref>
+                <Link href="/dashboard" passHref>
                   <Button variant="ghost" size="icon" className="h-8 w-8">
                       <X className="h-5 w-5" />
                       <span className="sr-only">Close</span>

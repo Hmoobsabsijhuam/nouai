@@ -73,7 +73,7 @@ function UserProfile() {
           </DropdownMenuItem>
           {user.email === 'admin@noukha.com' && (
             <DropdownMenuItem asChild>
-                <Link href="/">
+                <Link href="/dashboard">
                     <Shield className="mr-2 h-4 w-4" />
                     <span>Admin Dashboard</span>
                 </Link>
@@ -126,7 +126,7 @@ export function GeneratorLayout({
           className="w-64 bg-sidebar border-r border-sidebar-border hidden md:flex"
         >
           <SidebarHeader className="p-4">
-            <Link href="/" className="flex items-center gap-2">
+            <Link href="/dashboard" className="flex items-center gap-2">
               <Logo className="h-8 w-8 text-primary" />
               <span className="text-lg font-bold group-data-[collapsible=icon]:hidden">Nou AI</span>
             </Link>
@@ -136,8 +136,8 @@ export function GeneratorLayout({
                 <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Navigation</SidebarGroupLabel>
                 <SidebarMenu>
                      <SidebarMenuItem>
-                        <SidebarMenuButton asChild isActive={pathname === '/'} tooltip="Home">
-                            <Link href="/"><Home /> <span>Home</span></Link>
+                        <SidebarMenuButton asChild isActive={pathname === '/dashboard'} tooltip="Home">
+                            <Link href="/dashboard"><Home /> <span>Home</span></Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                     <SidebarMenuItem>
