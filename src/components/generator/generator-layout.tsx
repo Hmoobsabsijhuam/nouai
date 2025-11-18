@@ -147,7 +147,7 @@ export function GeneratorLayout({
                     </SidebarMenuItem>
                     <SidebarMenuItem>
                         <SidebarMenuButton asChild isActive={pathname === '/challenges'} tooltip="Challenge">
-                            <Link href="#"><Bot /> <span>Challenge</span></Link>
+                            <Link href="/challenges"><Bot /> <span>Challenge</span></Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
@@ -177,7 +177,7 @@ export function GeneratorLayout({
                     </SidebarMenuItem>
                 <SidebarMenuItem>
                     <SidebarMenuButton asChild isActive={pathname === '/apps'} tooltip="Apps">
-                        <Link href="#"><LayoutGrid /> <span>Apps</span></Link>
+                        <Link href="/apps"><LayoutGrid /> <span>Apps</span></Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
