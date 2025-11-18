@@ -25,29 +25,6 @@ const creditPackages: CreditPackage[] = [
   { credits: 1000, price: 35 },
 ];
 
-const createAdminNotification = (firestore: Firestore, userId: string, userEmail: string | null, displayName: string | null, amount: number) => {
-    const adminNotifCollection = collection(firestore, 'admin_notifications');
-    const notificationData = {
-        userId: userId,
-        userEmail: userEmail,
-        message: `${displayName || userEmail} purchased ${amount} credits.`,
-        createdAt: serverTimestamp(),
-        read: false,
-        link: `/profile?userId=${userId}`
-    };
-
-    addDoc(adminNotifCollection, notificationData)
-        .catch((error) => {
-            const contextualError = new FirestorePermissionError({
-                operation: 'create',
-                path: adminNotifCollection.path,
-                requestResourceData: notificationData
-            });
-            errorEmitter.emit('permission-error', contextualError);
-        });
-};
-
-
 export default function BillingPage() {
   const { user, firestore, isUserLoading } = useFirebase();
   const { toast } = useToast();
@@ -68,27 +45,55 @@ export default function BillingPage() {
     setPurchasingId(amount);
     
     try {
+      // 1. Update user's credits
       const userRef = doc(firestore, 'users', user.uid);
-      // First update the user's credits
       await updateDoc(userRef, {
         credits: increment(amount)
       });
 
-      // Then, create the admin notification without blocking
-      createAdminNotification(firestore, user.uid, user.email, user.displayName, amount);
+      // 2. Create a notification for the admin
+      const adminNotifCollection = collection(firestore, 'admin_notifications');
+      const notificationData = {
+          userId: user.uid,
+          userEmail: user.email,
+          message: `${user.displayName || user.email} purchased ${amount} credits.`,
+          createdAt: serverTimestamp(),
+          read: false,
+          link: `/profile?userId=${user.uid}`
+      };
+
+      // Use a .catch for the notification to avoid blocking the user and to handle permissions
+      addDoc(adminNotifCollection, notificationData).catch((error) => {
+          console.error("Failed to create admin notification:", error);
+          // Optional: You could log this to a specific monitoring service
+          // For now, we will just log it to the console as the user's purchase was successful.
+          // We can also emit a specialized error if we need to debug this flow.
+          const contextualError = new FirestorePermissionError({
+              operation: 'create',
+              path: adminNotifCollection.path,
+              requestResourceData: notificationData
+          });
+          errorEmitter.emit('permission-error', contextualError);
+      });
 
       toast({
         title: "Purchase Successful!",
         description: `Added ${amount} credits to your account.`,
       });
     } catch (error: any) {
-        // This catch block will now primarily handle errors from updating the user's credits
+        // This primarily catches errors from the user's credit update.
+        console.error("Error purchasing credits:", error);
         const contextualError = new FirestorePermissionError({
             operation: 'update',
             path: `users/${user.uid}`,
             requestResourceData: { credits: `increment(${amount})` }
         });
         errorEmitter.emit('permission-error', contextualError);
+        toast({
+            title: "Purchase Failed",
+            description: "Could not update your credit balance. Please try again.",
+            variant: "destructive"
+        });
     } finally {
       setPurchasingId(null);
     }

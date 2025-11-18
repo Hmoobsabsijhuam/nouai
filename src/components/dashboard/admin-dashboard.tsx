@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useMemo, FormEvent } from 'react';
-import { collection, Timestamp, query, orderBy, limit, updateDoc, doc, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, Timestamp, query, orderBy, limit, updateDoc, doc, addDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { useCollection, WithId } from '@/firebase/firestore/use-collection';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -244,10 +244,6 @@ export default function AdminDashboard({ user }: { user: any }) {
     return supportTickets?.filter(t => t.status === 'open') ?? [];
   }, [supportTickets]);
 
-  const unreadAdminNotifications = useMemo(() => {
-      return adminNotifications?.filter(n => !n.read) ?? [];
-  }, [adminNotifications]);
-
   const handleTicketStatusChange = async (ticketId: string, status: 'open' | 'closed') => {
     if (!firestore) return;
     try {
@@ -268,6 +264,40 @@ export default function AdminDashboard({ user }: { user: any }) {
         });
     }
   }
+
+  const handleMarkAsRead = async (notificationId: string) => {
+    if (!firestore) return;
+    try {
+      const notifRef = doc(firestore, 'admin_notifications', notificationId);
+      await updateDoc(notifRef, { read: true });
+    } catch (error) {
+      console.error("Failed to mark notification as read:", error);
+    }
+  };
+  
+  const handleMarkAllAsRead = async () => {
+    if (!firestore || !adminNotifications) return;
+    const unread = adminNotifications.filter(n => !n.read);
+    if (unread.length === 0) return;
+
+    const batch = writeBatch(firestore);
+    unread.forEach(notif => {
+      const notifRef = doc(firestore, 'admin_notifications', notif.id);
+      batch.update(notifRef, { read: true });
+    });
+    
+    try {
+      await batch.commit();
+      toast({ description: "All notifications marked as read." });
+    } catch (error) {
+      console.error("Failed to mark all notifications as read:", error);
+      toast({ title: "Error", description: "Could not mark all as read.", variant: "destructive" });
+    }
+  };
+
+  const unreadAdminNotifications = useMemo(() => {
+      return adminNotifications?.filter(n => !n.read) ?? [];
+  }, [adminNotifications]);
 
 
   return (
@@ -424,24 +454,31 @@ export default function AdminDashboard({ user }: { user: any }) {
             </Card>
              <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <CreditCard className="h-5 w-5" />
-                        Credit Purchase Alerts
-                    </CardTitle>
+                    <div className="flex justify-between items-center">
+                        <CardTitle className="flex items-center gap-2">
+                            <CreditCard className="h-5 w-5" />
+                            Credit Purchase Alerts
+                        </CardTitle>
+                        {unreadAdminNotifications.length > 0 && (
+                            <Button variant="ghost" size="sm" onClick={handleMarkAllAsRead}>Mark all as read</Button>
+                        )}
+                    </div>
                     <CardDescription>Recent credit refills by users.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     {isAdminNotifsLoading ? (
-                        <Skeleton className="h-16 w-full" />
+                        <Skeleton className="h-24 w-full" />
                     ) : adminNotifications && adminNotifications.length > 0 ? (
-                        <div className="space-y-2">
-                            {adminNotifications.map(notif => (
-                                <Link href={notif.link ?? '#'} key={notif.id} className={cn("block p-3 rounded-lg hover:bg-accent transition-colors border", !notif.read && "border-primary")}>
-                                    <p className="font-medium text-sm">{notif.message}</p>
-                                    <p className="text-xs text-muted-foreground">{formatDistanceToNow(notif.createdAt.toDate(), { addSuffix: true })}</p>
-                                </Link>
-                            ))}
-                        </div>
+                        <ScrollArea className="h-48">
+                            <div className="space-y-2 pr-4">
+                                {adminNotifications.map(notif => (
+                                    <Link href={notif.link ?? '#'} key={notif.id} onClick={() => !notif.read && handleMarkAsRead(notif.id)} className={cn("block p-3 rounded-lg hover:bg-accent transition-colors border", !notif.read && "border-primary bg-primary/10")}>
+                                        <p className="font-medium text-sm">{notif.message}</p>
+                                        <p className="text-xs text-muted-foreground">{formatDistanceToNow(notif.createdAt.toDate(), { addSuffix: true })}</p>
+                                    </Link>
+                                ))}
+                            </div>
+                        </ScrollArea>
                     ) : (
                         <p className="text-sm text-muted-foreground">No new credit purchases.</p>
                     )}
