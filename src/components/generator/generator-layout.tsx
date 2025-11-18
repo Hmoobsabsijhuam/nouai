@@ -271,7 +271,9 @@ export function GeneratorLayout({
     
               {/* Right Column: Content Feed */}
               <div className="flex-1 bg-secondary p-4 overflow-y-auto">
-                {contentPanel}
+                <div className="h-full w-full">
+                    {contentPanel}
+                </div>
               </div>
           </div>
         </main>
