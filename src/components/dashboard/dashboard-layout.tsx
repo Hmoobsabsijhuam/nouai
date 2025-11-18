@@ -23,7 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Home, Library, MoreHorizontal, Settings, Shield, Bot, LayoutGrid, ImageIcon, VideoIcon, Mic, LifeBuoy } from 'lucide-react';
+import { Home, Library, MoreHorizontal, Settings, Shield, Bot, LayoutGrid, ImageIcon, VideoIcon, Mic, LifeBuoy, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Logo } from '../icons/logo';
@@ -105,7 +105,7 @@ export function DashboardLayout({
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-background">
+      <div className="flex min-h-screen w-full">
         <Sidebar
           side="left"
           variant="sidebar"
@@ -208,12 +208,11 @@ export function DashboardLayout({
             </div>
           </SidebarFooter>
         </Sidebar>
-
-        <div className="flex flex-1 flex-col min-w-0">
-            <Header />
-            <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
-                {children}
-            </main>
+        <div className="flex flex-col flex-1 min-h-screen overflow-hidden">
+          <Header />
+          <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+            {children}
+          </main>
         </div>
       </div>
     </SidebarProvider>
