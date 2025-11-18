@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useFirebase, useMemoFirebase } from '@/firebase';
 import { useDoc } from '@/firebase/firestore/use-doc';
-import { doc, updateDoc, increment, collection, addDoc, serverTimestamp, Firestore } from 'firebase/firestore';
+import { doc, updateDoc, increment, collection, addDoc, serverTimestamp, writeBatch, Firestore } from 'firebase/firestore';
 import { DashboardLayout } from '@/components/dashboard/dashboard-layout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -45,22 +45,37 @@ export default function BillingPage() {
     setPurchasingId(amount);
     
     try {
+      const batch = writeBatch(firestore);
+
       // 1. Update user's credits
       const userRef = doc(firestore, 'users', user.uid);
-      await updateDoc(userRef, {
+      batch.update(userRef, {
         credits: increment(amount)
       });
 
       // 2. Create a notification for the admin
       const adminNotifCollection = collection(firestore, 'admin_notifications');
-      await addDoc(adminNotifCollection, {
+      const message = `${user.displayName || user.email} purchased ${amount} credits.`;
+      batch.set(doc(adminNotifCollection), {
         userId: user.uid,
         userEmail: user.email,
-        message: `${user.displayName || user.email} purchased ${amount} credits.`,
+        message: message,
         createdAt: serverTimestamp(),
         read: false,
         paymentStatus: 'paid'
       });
+
+      // 3. Create a purchase history record for the user
+      const userPurchaseHistoryCollection = collection(firestore, 'users', user.uid, 'purchase_history');
+      batch.set(doc(userPurchaseHistoryCollection), {
+          userId: user.uid,
+          message: message,
+          credits: amount,
+          createdAt: serverTimestamp(),
+          paymentStatus: 'paid'
+      });
+
+      await batch.commit();
 
       toast({
         title: "Purchase Successful!",
@@ -75,8 +90,8 @@ export default function BillingPage() {
         }
 
         const contextualError = new FirestorePermissionError({
-            operation: 'update',
-            path: pathForError,
+            operation: 'write', // more generic for batch
+            path: pathForError, 
             requestResourceData: { credits: `increment(${amount})` }
         });
         errorEmitter.emit('permission-error', contextualError);
@@ -152,3 +167,4 @@ export default function BillingPage() {
     </DashboardLayout>
   );
 }
+    

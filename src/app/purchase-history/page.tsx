@@ -2,19 +2,19 @@
 
 import { useMemo } from 'react';
 import { useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, query, where, orderBy, Timestamp } from 'firebase/firestore';
+import { collection, query, orderBy, Timestamp } from 'firebase/firestore';
 import { useCollection, WithId } from '@/firebase/firestore/use-collection';
 import { DashboardLayout } from '@/components/dashboard/dashboard-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CreditCard, Coins, Calendar } from 'lucide-react';
+import { CreditCard, Coins } from 'lucide-react';
 import { format } from 'date-fns';
 
-interface AdminNotification {
-    userId: string;
+interface PurchaseRecord {
     message: string;
     createdAt: Timestamp;
+    credits: number;
     paymentStatus: 'pending' | 'paid' | 'rejected';
 }
 
@@ -48,22 +48,12 @@ export default function PurchaseHistoryPage() {
     const purchaseHistoryQuery = useMemoFirebase(() => {
         if (!firestore || !user) return null;
         return query(
-            collection(firestore, 'admin_notifications'),
-            where('userId', '==', user.uid),
-            where('paymentStatus', '==', 'paid'),
+            collection(firestore, 'users', user.uid, 'purchase_history'),
             orderBy('createdAt', 'desc')
         );
     }, [firestore, user]);
 
-    const { data: purchases, isLoading } = useCollection<AdminNotification>(purchaseHistoryQuery);
-    
-    const processedPurchases = useMemo(() => {
-        return purchases?.map(p => {
-            const creditMatch = p.message.match(/(\d+)\s*credits/);
-            const credits = creditMatch ? parseInt(creditMatch[1], 10) : 0;
-            return { ...p, credits };
-        }) || [];
-    }, [purchases]);
+    const { data: purchases, isLoading } = useCollection<PurchaseRecord>(purchaseHistoryQuery);
 
     if (isUserLoading || (isLoading && !purchases)) {
         return (
@@ -84,7 +74,7 @@ export default function PurchaseHistoryPage() {
                         <CardDescription>A record of all your credit purchases.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        {processedPurchases.length === 0 ? (
+                        {purchases && purchases.length === 0 ? (
                             <div className="text-center py-10">
                                 <p className="text-muted-foreground">You have not made any purchases yet.</p>
                             </div>
@@ -98,7 +88,7 @@ export default function PurchaseHistoryPage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {processedPurchases.map(item => (
+                                    {purchases?.map(item => (
                                         <TableRow key={item.id}>
                                             <TableCell className="hidden md:table-cell">
                                                  {item.createdAt ? format(item.createdAt.toDate(), 'PPP') : 'N/A'}
@@ -123,3 +113,4 @@ export default function PurchaseHistoryPage() {
         </DashboardLayout>
     );
 }
+    
