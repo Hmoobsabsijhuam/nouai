@@ -7,6 +7,7 @@ import { Notifications } from './notifications';
 import { ThemeToggle } from './theme-toggle';
 import { SidebarTrigger } from '../ui/sidebar';
 import { LanguageToggle } from './language-toggle';
+import { CreditDisplay } from './credit-display';
 
 export function Header() {
   return (
@@ -20,6 +21,7 @@ export function Header() {
       </div>
 
       <div className="flex flex-1 items-center justify-end gap-2 md:gap-4">
+        <CreditDisplay />
         <Notifications />
         <LanguageToggle />
         <ThemeToggle />

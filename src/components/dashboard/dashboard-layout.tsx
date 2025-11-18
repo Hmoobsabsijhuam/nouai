@@ -193,16 +193,6 @@ export function DashboardLayout({
                     </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarGroup>
-            <SidebarGroup>
-              <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Account</SidebarGroupLabel>
-                <SidebarMenu>
-                    <SidebarMenuItem>
-                        <SidebarMenuButton asChild isActive={pathname === '/billing'} tooltip="Billing">
-                            <Link href="/billing"><CreditCard /> <span>Billing</span></Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                </SidebarMenu>
-            </SidebarGroup>
           </SidebarContent>
           <SidebarFooter className="p-4 group-data-[collapsible=icon]:p-2">
             <div className="group-data-[collapsible=icon]:hidden">
