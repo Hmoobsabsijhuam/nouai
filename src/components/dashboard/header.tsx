@@ -6,6 +6,7 @@ import { UserNav } from './user-nav';
 import { Notifications } from './notifications';
 import { ThemeToggle } from './theme-toggle';
 import { SidebarTrigger } from '../ui/sidebar';
+import { LanguageToggle } from './language-toggle';
 
 export function Header() {
   return (
@@ -20,6 +21,7 @@ export function Header() {
 
       <div className="flex flex-1 items-center justify-end gap-2 md:gap-4">
         <Notifications />
+        <LanguageToggle />
         <ThemeToggle />
         <UserNav />
       </div>
