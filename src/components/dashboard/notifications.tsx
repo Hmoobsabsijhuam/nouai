@@ -1,8 +1,9 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
 import { Bell, ExternalLink } from 'lucide-react';
-import { collection, query, orderBy, limit, writeBatch, doc } from 'firebase/firestore';
+import { collection, query, orderBy, limit, writeBatch, doc, updateDoc } from 'firebase/firestore';
 import { useCollection, WithId } from '@/firebase/firestore/use-collection';
 import { useFirebase, useMemoFirebase } from '@/firebase';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '../ui/skeleton';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 interface UserNotification {
   message: string;
@@ -37,8 +39,7 @@ type MergedNotification = WithId<UserNotification | AdminNotification>;
 export function Notifications() {
   const { firestore, user } = useFirebase();
   const [open, setOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
-
+  
   const isAdmin = user?.email === 'admin@noukha.com';
 
   // Query for standard user notifications
@@ -81,28 +82,22 @@ export function Notifications() {
 
   }, [userNotifications, adminNotifications]);
 
-
-  useEffect(() => {
-    if (mergedNotifications) {
-      setUnreadCount(mergedNotifications.filter(n => !n.read).length);
-    }
+  const unreadCount = useMemo(() => {
+      return mergedNotifications.filter(n => !n.read).length;
   }, [mergedNotifications]);
 
+  const handleMarkAsRead = async (notif: MergedNotification) => {
+    if (!firestore || !user || notif.read) return;
 
-  useEffect(() => {
-    if (open && user && firestore && mergedNotifications) {
-      const unread = mergedNotifications.filter(n => !n.read);
-      if (unread.length === 0) return;
-
-      const batch = writeBatch(firestore);
-      unread.forEach(notif => {
+    try {
         const collectionPath = notif.type === 'admin' ? 'admin_notifications' : `users/${user.uid}/user_notifications`;
         const notifRef = doc(firestore, collectionPath, notif.id);
-        batch.update(notifRef, { read: true });
-      });
-      batch.commit().catch(console.error);
+        await updateDoc(notifRef, { read: true });
+    } catch (error) {
+        console.error("Failed to mark notification as read:", error);
     }
-  }, [open, user, firestore, mergedNotifications]);
+  };
+
   
   const isLoading = isUserLoading || (isAdmin && isAdminLoading);
 
@@ -143,9 +138,18 @@ export function Notifications() {
                 </div>
               ) : mergedNotifications && mergedNotifications.length > 0 ? (
                 mergedNotifications.map((notif) => (
-                  <div
+                  <Link 
                     key={notif.id}
-                    className="grid grid-cols-[25px_1fr] items-start pb-4 last:mb-0 last:pb-0"
+                    href={notif.link ?? '#'}
+                    onClick={(e) => {
+                      handleMarkAsRead(notif);
+                      if (!notif.link) e.preventDefault();
+                      else setOpen(false);
+                    }}
+                    className={cn(
+                        "grid grid-cols-[25px_1fr] items-start pb-4 last:mb-0 last:pb-0 rounded-lg p-2 -mx-2 hover:bg-accent",
+                        !notif.read && "bg-primary/10 hover:bg-primary/20"
+                    )}
                   >
                     <span className={`flex h-2 w-2 translate-y-1 rounded-full ${!notif.read ? 'bg-primary' : 'bg-muted'}`} />
                     <div className="grid gap-1">
@@ -157,15 +161,11 @@ export function Notifications() {
                            </p>
                          )}
                          {notif.link && (
-                            <Link href={notif.link} passHref>
-                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setOpen(false)}>
-                                    <ExternalLink className="h-4 w-4" />
-                                </Button>
-                            </Link>
+                            <ExternalLink className="h-4 w-4 text-muted-foreground" />
                          )}
                        </div>
                     </div>
-                  </div>
+                  </Link>
                 ))
               ) : (
                 <p className="text-sm text-muted-foreground text-center py-4">No new notifications.</p>
@@ -177,3 +177,5 @@ export function Notifications() {
     </Popover>
   );
 }
+
+    

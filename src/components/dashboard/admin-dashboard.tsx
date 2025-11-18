@@ -274,26 +274,6 @@ export default function AdminDashboard({ user }: { user: any }) {
       console.error("Failed to mark notification as read:", error);
     }
   };
-  
-  const handleMarkAllAsRead = async () => {
-    if (!firestore || !adminNotifications) return;
-    const unread = adminNotifications.filter(n => !n.read);
-    if (unread.length === 0) return;
-
-    const batch = writeBatch(firestore);
-    unread.forEach(notif => {
-      const notifRef = doc(firestore, 'admin_notifications', notif.id);
-      batch.update(notifRef, { read: true });
-    });
-    
-    try {
-      await batch.commit();
-      toast({ description: "All notifications marked as read." });
-    } catch (error) {
-      console.error("Failed to mark all notifications as read:", error);
-      toast({ title: "Error", description: "Could not mark all as read.", variant: "destructive" });
-    }
-  };
 
   const unreadAdminNotifications = useMemo(() => {
       return adminNotifications?.filter(n => !n.read) ?? [];
@@ -459,9 +439,6 @@ export default function AdminDashboard({ user }: { user: any }) {
                             <CreditCard className="h-5 w-5" />
                             Credit Purchase Alerts
                         </CardTitle>
-                        {unreadAdminNotifications.length > 0 && (
-                            <Button variant="ghost" size="sm" onClick={handleMarkAllAsRead}>Mark all as read</Button>
-                        )}
                     </div>
                     <CardDescription>Recent credit refills by users.</CardDescription>
                 </CardHeader>
@@ -513,5 +490,7 @@ export default function AdminDashboard({ user }: { user: any }) {
     </div>
   );
 }
+
+    
 
     
