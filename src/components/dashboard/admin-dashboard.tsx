@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend } from 'recharts';
 import { format, formatDistanceToNow } from 'date-fns';
 import { UserListDialog } from './user-list-dialog';
 import { useToast } from '@/hooks/use-toast';
@@ -48,12 +48,25 @@ interface AdminNotification {
     createdAt: Timestamp;
     read: boolean;
     link?: string;
+    paymentStatus: 'pending' | 'paid' | 'rejected';
 }
 
-type ChartDataItem = {
+type UserChartDataItem = {
   date: string;
   count: number;
   users: WithId<UserData>[];
+};
+
+type CreditChartDataItem = {
+    date: string;
+    credits: number;
+    revenue: number;
+};
+
+const creditPricing: { [key: number]: number } = {
+  100: 5,
+  500: 20,
+  1000: 35,
 };
 
 function RecentUsersTable({ users, isLoading }: { users: WithId<UserData>[] | null; isLoading: boolean }) {
@@ -181,7 +194,7 @@ function TicketDetailsDialog({
 export default function AdminDashboard({ user }: { user: any }) {
   const { firestore } = useFirebase();
   const { toast } = useToast();
-  const [selectedDay, setSelectedDay] = useState<ChartDataItem | null>(null);
+  const [selectedDay, setSelectedDay] = useState<UserChartDataItem | null>(null);
   const [selectedTicket, setSelectedTicket] = useState<WithId<SupportTicket> | null>(null);
   const [isUserListOpen, setIsUserListOpen] = useState(false);
 
@@ -205,14 +218,14 @@ export default function AdminDashboard({ user }: { user: any }) {
   const { data: supportTickets, isLoading: isTicketsLoading } = useCollection<SupportTicket>(supportTicketsQuery);
 
   const adminNotificationsQuery = useMemoFirebase(
-    () => (firestore ? query(collection(firestore, 'admin_notifications'), orderBy('createdAt', 'desc'), limit(10)) : null),
+    () => (firestore ? query(collection(firestore, 'admin_notifications'), orderBy('createdAt', 'desc'), limit(100)) : null),
     [firestore]
   );
   const { data: adminNotifications, isLoading: isAdminNotifsLoading } = useCollection<AdminNotification>(adminNotificationsQuery);
 
 
-  const { chartData, totalUsers } = useMemo(() => {
-    if (!users) return { chartData: [], totalUsers: 0 };
+  const { userChartData, totalUsers } = useMemo(() => {
+    if (!users) return { userChartData: [], totalUsers: 0 };
 
     const groupedByDay = users.reduce((acc, user) => {
       if (user.createdAt) {
@@ -225,7 +238,7 @@ export default function AdminDashboard({ user }: { user: any }) {
       return acc;
     }, {} as Record<string, WithId<UserData>[]>);
 
-    const chartData = Object.entries(groupedByDay)
+    const userChartData = Object.entries(groupedByDay)
       .map(([date, usersOnDay]) => ({
         date,
         count: usersOnDay.length,
@@ -233,10 +246,42 @@ export default function AdminDashboard({ user }: { user: any }) {
       }))
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-    return { chartData, totalUsers: users.length };
+    return { userChartData, totalUsers: users.length };
   }, [users]);
+  
+  const creditChartData = useMemo(() => {
+    if (!adminNotifications) return [];
+    
+    const purchases = adminNotifications.filter(n => n.paymentStatus === 'paid' && n.message.includes('purchased'));
 
-  const handleBarClick = (data: ChartDataItem) => {
+    const groupedByDay = purchases.reduce((acc, notif) => {
+        const date = format(notif.createdAt.toDate(), 'yyyy-MM-dd');
+        if (!acc[date]) {
+            acc[date] = { credits: 0, revenue: 0 };
+        }
+        
+        const creditAmountMatch = notif.message.match(/(\d+)\s*credits/);
+        const credits = creditAmountMatch ? parseInt(creditAmountMatch[1], 10) : 0;
+        
+        if (credits > 0) {
+            acc[date].credits += credits;
+            acc[date].revenue += creditPricing[credits] || 0;
+        }
+
+        return acc;
+    }, {} as Record<string, { credits: number, revenue: number }>);
+
+     return Object.entries(groupedByDay)
+      .map(([date, data]) => ({
+        date,
+        credits: data.credits,
+        revenue: data.revenue,
+      }))
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  }, [adminNotifications]);
+
+  const handleBarClick = (data: UserChartDataItem) => {
     setSelectedDay(data);
   };
   
@@ -368,7 +413,7 @@ export default function AdminDashboard({ user }: { user: any }) {
 
       {/* Main content grid */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 space-y-6">
             <Card>
                 <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -382,10 +427,10 @@ export default function AdminDashboard({ user }: { user: any }) {
                 <CardContent>
                 {isUsersLoading ? (
                     <Skeleton className="h-[300px] w-full" />
-                ) : chartData.length > 0 ? (
+                ) : userChartData.length > 0 ? (
                     <ResponsiveContainer width="100%" height={300}>
                     <BarChart
-                        data={chartData}
+                        data={userChartData}
                         margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
                         onClick={(e) => e && e.activePayload && handleBarClick(e.activePayload[0].payload)}
                     >
@@ -407,7 +452,7 @@ export default function AdminDashboard({ user }: { user: any }) {
                         }
                         />
                         <Bar dataKey="count" name="New Users" unit=" users">
-                        {chartData.map((entry, index) => (
+                        {userChartData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill="hsl(var(--primary))" className="cursor-pointer" />
                         ))}
                         </Bar>
@@ -418,6 +463,52 @@ export default function AdminDashboard({ user }: { user: any }) {
                     <p className="text-muted-foreground">No user registration data yet.</p>
                     </div>
                 )}
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <CreditCard className="h-5 w-5" />
+                        Daily Credit Purchases
+                    </CardTitle>
+                    <CardDescription>
+                        Total credits sold and revenue generated per day.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {isAdminNotifsLoading ? (
+                        <Skeleton className="h-[300px] w-full" />
+                    ) : creditChartData.length > 0 ? (
+                         <ResponsiveContainer width="100%" height={300}>
+                            <BarChart data={creditChartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                <XAxis 
+                                    dataKey="date" 
+                                    tickFormatter={(date) => format(new Date(date), 'MMM d')}
+                                />
+                                <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />
+                                <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
+                                <Tooltip
+                                    content={({ active, payload, label }) =>
+                                        active && payload && payload.length ? (
+                                        <div className="rounded-lg border bg-background p-2 shadow-sm">
+                                            <p className="font-bold">{`${format(new Date(label), 'eeee, MMM d')}`}</p>
+                                            <p className="text-sm" style={{ color: '#8884d8' }}>Credits: {payload[0].value}</p>
+                                            <p className="text-sm" style={{ color: '#82ca9d' }}>Revenue: ${payload[1].value?.toFixed(2)}</p>
+                                        </div>
+                                        ) : null
+                                    }
+                                />
+                                <Legend />
+                                <Bar yAxisId="left" dataKey="credits" fill="#8884d8" name="Credits Sold" />
+                                <Bar yAxisId="right" dataKey="revenue" fill="#82ca9d" name="Revenue ($)" />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    ) : (
+                         <div className="flex h-[300px] items-center justify-center">
+                            <p className="text-muted-foreground">No credit purchase data yet.</p>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
           </div>
@@ -448,7 +539,7 @@ export default function AdminDashboard({ user }: { user: any }) {
                     ) : adminNotifications && adminNotifications.length > 0 ? (
                         <ScrollArea className="h-48">
                             <div className="space-y-2 pr-4">
-                                {adminNotifications.map(notif => (
+                                {adminNotifications.filter(n => n.paymentStatus === 'paid').map(notif => (
                                     <Link href={`/admin/payments/${notif.id}`} key={notif.id} onClick={() => !notif.read && handleMarkAsRead(notif.id)} className={cn("block p-3 rounded-lg hover:bg-accent transition-colors border", !notif.read && "border-primary bg-primary/10")}>
                                         <p className="font-medium text-sm">{notif.message}</p>
                                         <p className="text-xs text-muted-foreground">{formatDistanceToNow(notif.createdAt.toDate(), { addSuffix: true })}</p>
@@ -490,3 +581,5 @@ export default function AdminDashboard({ user }: { user: any }) {
     </div>
   );
 }
+
+    
