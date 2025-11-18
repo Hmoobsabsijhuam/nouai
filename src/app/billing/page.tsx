@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -45,7 +44,6 @@ const createAdminNotification = (firestore: Firestore, userId: string, userEmail
                 requestResourceData: notificationData
             });
             errorEmitter.emit('permission-error', contextualError);
-            console.error("Error creating admin notification", error);
         });
 };
 
@@ -84,8 +82,7 @@ export default function BillingPage() {
         description: `Added ${amount} credits to your account.`,
       });
     } catch (error: any) {
-        // This catch block will now primarily handle errors from updating the user's credits,
-        // as the admin notification error is handled separately.
+        // This catch block will now primarily handle errors from updating the user's credits
         const contextualError = new FirestorePermissionError({
             operation: 'update',
             path: `users/${user.uid}`,

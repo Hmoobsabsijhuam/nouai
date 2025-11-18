@@ -339,7 +339,7 @@ export default function AdminDashboard({ user }: { user: any }) {
         <Card>
            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Pending Payments
+              Purchase Alerts
             </CardTitle>
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -350,7 +350,7 @@ export default function AdminDashboard({ user }: { user: any }) {
                 <div className="text-2xl font-bold">{unreadAdminNotifications.length}</div>
             )}
             <p className="text-xs text-muted-foreground">
-              Recent credit purchases to review.
+              Unread credit purchase alerts.
             </p>
           </CardContent>
         </Card>
@@ -433,10 +433,10 @@ export default function AdminDashboard({ user }: { user: any }) {
                 <CardContent>
                     {isAdminNotifsLoading ? (
                         <Skeleton className="h-16 w-full" />
-                    ) : unreadAdminNotifications.length > 0 ? (
+                    ) : adminNotifications && adminNotifications.length > 0 ? (
                         <div className="space-y-2">
-                            {unreadAdminNotifications.map(notif => (
-                                <Link href={notif.link ?? '#'} key={notif.id} className="block p-3 rounded-lg hover:bg-accent transition-colors border">
+                            {adminNotifications.map(notif => (
+                                <Link href={notif.link ?? '#'} key={notif.id} className={cn("block p-3 rounded-lg hover:bg-accent transition-colors border", !notif.read && "border-primary")}>
                                     <p className="font-medium text-sm">{notif.message}</p>
                                     <p className="text-xs text-muted-foreground">{formatDistanceToNow(notif.createdAt.toDate(), { addSuffix: true })}</p>
                                 </Link>
