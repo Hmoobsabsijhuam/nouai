@@ -180,7 +180,7 @@ export function DashboardLayout({
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton asChild isActive={pathname === '/gallery'} tooltip="Gallery">
-                            <Link href="#"><Library /> <span>Gallery</span></Link>
+                            <Link href="/gallery"><Library /> <span>Gallery</span></Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
