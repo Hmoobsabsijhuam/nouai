@@ -67,7 +67,7 @@ function UserProfile() {
           <DropdownMenuItem asChild>
             <Link href="/profile">
               <Settings className="mr-2 h-4 w-4" />
-              <span>Settings</span>
+              <span>Profile</span>
             </Link>
           </DropdownMenuItem>
            <DropdownMenuItem asChild>
@@ -107,7 +107,15 @@ export function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const { user } = useFirebase();
+  const { user, auth } = useFirebase();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    if (auth) {
+      await signOut(auth);
+      router.push('/login');
+    }
+  };
 
   return (
     <SidebarProvider>
@@ -216,7 +224,7 @@ export function DashboardLayout({
                          <DropdownMenuItem asChild>
                             <Link href="/profile">
                             <Settings className="mr-2 h-4 w-4" />
-                            <span>Settings</span>
+                            <span>Profile</span>
                             </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
@@ -224,6 +232,17 @@ export function DashboardLayout({
                                 <CreditCard className="mr-2 h-4 w-4" />
                                 <span>Go Pro / Refill Credits</span>
                             </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                            <Link href="/contact-admin">
+                                <LifeBuoy className="mr-2 h-4 w-4" />
+                                <span>Support</span>
+                            </Link>
+                        </DropdownMenuItem>
+                         <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={handleLogout}>
+                            <LogOut className="mr-2 h-4 w-4" />
+                            <span>Log out</span>
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>

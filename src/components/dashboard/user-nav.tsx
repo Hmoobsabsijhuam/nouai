@@ -14,13 +14,16 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export function UserNav() {
   const { user, auth } = useFirebase();
+  const router = useRouter();
 
   const handleLogout = async () => {
     if(auth) {
       await signOut(auth);
+      router.push('/login');
     }
   };
 
@@ -70,6 +73,12 @@ export function UserNav() {
             <Link href="/billing">
                 <CreditCard className="mr-2 h-4 w-4" />
                 <span>Go Pro / Refill Credits</span>
+            </Link>
+        </DropdownMenuItem>
+         <DropdownMenuItem asChild className="cursor-pointer">
+            <Link href="/contact-admin">
+                <LifeBuoy className="mr-2 h-4 w-4" />
+                <span>Support</span>
             </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
