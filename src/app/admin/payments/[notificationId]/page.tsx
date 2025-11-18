@@ -180,9 +180,6 @@ export default function PaymentTrackingPage() {
                          <Button onClick={() => handleStatusUpdate('rejected')} disabled={isUpdating || notification.paymentStatus === 'rejected'} variant="destructive">
                             <XCircle className="mr-2 h-4 w-4" /> Mark as Rejected
                         </Button>
-                         <Button onClick={() => handleStatusUpdate('pending')} disabled={isUpdating || notification.paymentStatus === 'pending'} variant="outline">
-                            Mark as Pending
-                        </Button>
                     </div>
                 </CardFooter>
             </Card>
