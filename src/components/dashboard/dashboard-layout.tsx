@@ -23,7 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Home, Library, MoreHorizontal, Settings, Shield, Bot, LayoutGrid, ImageIcon, VideoIcon, Mic, LifeBuoy, LogOut } from 'lucide-react';
+import { Home, Library, MoreHorizontal, Settings, Shield, Bot, LayoutGrid, ImageIcon, VideoIcon, Mic, LifeBuoy, LogOut, CreditCard } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Logo } from '../icons/logo';
@@ -68,6 +68,12 @@ function UserProfile() {
             <Link href="/profile">
               <Settings className="mr-2 h-4 w-4" />
               <span>Settings</span>
+            </Link>
+          </DropdownMenuItem>
+           <DropdownMenuItem asChild>
+            <Link href="/billing">
+              <CreditCard className="mr-2 h-4 w-4" />
+              <span>Go Pro / Refill Credits</span>
             </Link>
           </DropdownMenuItem>
           {user.email === 'admin@noukha.com' && (
@@ -179,6 +185,16 @@ export function DashboardLayout({
                     </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarGroup>
+            <SidebarGroup>
+              <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Account</SidebarGroupLabel>
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton asChild isActive={pathname === '/billing'} tooltip="Billing">
+                            <Link href="/billing"><CreditCard /> <span>Billing</span></Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                </SidebarMenu>
+            </SidebarGroup>
           </SidebarContent>
           <SidebarFooter className="p-4 group-data-[collapsible=icon]:p-2">
             <div className="group-data-[collapsible=icon]:hidden">
@@ -201,6 +217,12 @@ export function DashboardLayout({
                             <Link href="/profile">
                             <Settings className="mr-2 h-4 w-4" />
                             <span>Settings</span>
+                            </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                            <Link href="/billing">
+                                <CreditCard className="mr-2 h-4 w-4" />
+                                <span>Go Pro / Refill Credits</span>
                             </Link>
                         </DropdownMenuItem>
                     </DropdownMenuContent>

@@ -1,6 +1,6 @@
 'use client';
 
-import { LogOut, User as UserIcon, Settings, LifeBuoy } from 'lucide-react';
+import { LogOut, User as UserIcon, Settings, LifeBuoy, CreditCard } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { useFirebase } from '@/firebase';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -65,6 +65,12 @@ export function UserNav() {
             <Settings className="mr-2 h-4 w-4" />
             <span>Profile</span>
           </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild className="cursor-pointer">
+            <Link href="/billing">
+                <CreditCard className="mr-2 h-4 w-4" />
+                <span>Go Pro / Refill Credits</span>
+            </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={handleLogout} className="cursor-pointer">
