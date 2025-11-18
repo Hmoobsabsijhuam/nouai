@@ -135,7 +135,7 @@ export function DashboardLayout({
                     </SidebarMenuItem>
                     <SidebarMenuItem>
                         <SidebarMenuButton asChild isActive={pathname === '/feed'} tooltip="Feed">
-                            <Link href="#"><Library /> <span>Feed</span></Link>
+                            <Link href="/feed"><Library /> <span>Feed</span></Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                     <SidebarMenuItem>

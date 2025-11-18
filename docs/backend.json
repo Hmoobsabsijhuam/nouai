@@ -143,12 +143,58 @@
           "type": "string",
           "format": "date-time",
           "description": "The timestamp when the image was generated."
+        },
+        "isPublic": {
+          "type": "boolean",
+          "description": "Whether the image is visible to the public."
         }
       },
       "required": [
         "prompt",
         "imageUrl",
         "createdAt"
+      ]
+    },
+    "PublicImage": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Public Image",
+      "type": "object",
+      "description": "Represents an image that has been made public by a user.",
+      "properties": {
+        "prompt": {
+          "type": "string",
+          "description": "The text prompt used to generate the image."
+        },
+        "imageUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "The URL of the generated image."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the image was generated."
+        },
+        "authorId": {
+          "type": "string",
+          "description": "The ID of the user who created the image."
+        },
+        "authorName": {
+          "type": "string",
+          "description": "The display name of the user who created the image."
+        },
+        "authorPhotoUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "The profile picture URL of the user who created the image."
+        }
+      },
+      "required": [
+        "prompt",
+        "imageUrl",
+        "createdAt",
+        "authorId",
+        "authorName"
       ]
     },
     "GeneratedVideo": {
@@ -307,8 +353,18 @@
           },
           "description": "Stores support tickets submitted by users. Allows users to create tickets and admins to manage them."
         }
+      },
+      {
+        "path": "/public_images/{imageId}",
+        "definition": {
+          "entityName": "PublicImage",
+          "schema": {
+            "$ref": "#/backend/entities/PublicImage"
+          },
+          "description": "Stores a copy of images that users have made public. This collection is optimized for public, read-only access."
+        }
       }
     ],
-    "reasoning": "The Firestore structure is designed to securely manage user authentication and admin roles, ensuring authorization independence and supporting secure list operations (QAPs). We achieve this by separating user data and admin role definitions into distinct collections. The structure prioritizes simplicity and leverages path-based ownership for user data. Admin roles are determined by the *existence* of a document in a dedicated `/roles_admin/{uid}` collection, enabling simple presence checks in security rules without relying on complex data comparisons. This is more robust than storing the admin role within the user document itself. The path-based ownership structure `/users/{userId}` ensures secure `list` operations, as rules can easily restrict access based on the authenticated user ID. A global `notifications` collection is added for admins to broadcast messages. A `user_notifications` subcollection is added under each user to handle per-user read status, improving scalability and query efficiency. A `support_tickets` collection is added for users to submit issue reports."
+    "reasoning": "The Firestore structure is designed to securely manage user authentication and admin roles, ensuring authorization independence and supporting secure list operations (QAPs). We achieve this by separating user data and admin role definitions into distinct collections. The structure prioritizes simplicity and leverages path-based ownership for user data. Admin roles are determined by the *existence* of a document in a dedicated `/roles_admin/{uid}` collection, enabling simple presence checks in security rules without relying on complex data comparisons. This is more robust than storing the admin role within the user document itself. The path-based ownership structure `/users/{userId}` ensures secure `list` operations, as rules can easily restrict access based on the authenticated user ID. A global `notifications` collection is added for admins to broadcast messages. A `user_notifications` subcollection is added under each user to handle per-user read status, improving scalability and query efficiency. A `support_tickets` collection is added for users to submit issue reports. A `public_images` collection is added to store copies of user-generated images that are explicitly made public, allowing for efficient and secure public feed queries without exposing user-private data."
   }
 }

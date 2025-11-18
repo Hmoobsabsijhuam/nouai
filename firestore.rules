@@ -14,6 +14,7 @@
  *   indicates admin privileges.
  * - /notifications/{notificationId}: Stores global notifications sent by admins.
  * - /support_tickets/{ticketId}: Stores support tickets from users for admin review.
+ * - /public_images/{imageId}: Stores public images for the feed.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -50,8 +51,8 @@ service cloud.firestore {
        * @allow (get, list, create) - Owner can read and create their own generated images.
        */
       match /generated_images/{imageId} {
-        allow get, list, create: if isOwner(userId);
-        allow update, delete: if false;
+        allow get, list, create, update: if isOwner(userId);
+        allow delete: if isOwner(userId);
       }
 
       /**
@@ -94,6 +95,18 @@ service cloud.firestore {
     match /notifications/{notificationId} {
       allow list, get: if isSignedIn();
       allow create: if isAdmin();
+      allow update, delete: if false;
+    }
+    
+    /**
+     * @description Public images for the feed.
+     * @path /public_images/{imageId}
+     * @allow (list, get) - Any user can see public images.
+     * @allow (create) - Signed in users can post public images.
+     */
+    match /public_images/{imageId} {
+      allow list, get: if true;
+      allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
       allow update, delete: if false;
     }
 

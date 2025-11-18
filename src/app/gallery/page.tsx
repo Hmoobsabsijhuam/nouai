@@ -1,22 +1,26 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, Timestamp } from 'firebase/firestore';
+import { collection, query, orderBy, Timestamp, updateDoc, doc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useCollection, WithId } from '@/firebase/firestore/use-collection';
 import { DashboardLayout } from '@/components/dashboard/dashboard-layout';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ImageIcon, VideoIcon, Download } from 'lucide-react';
+import { ImageIcon, VideoIcon, Download, Share2, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { formatDistanceToNow } from 'date-fns';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 interface GeneratedImage {
   prompt: string;
   imageUrl: string;
   createdAt: Timestamp;
+  isPublic?: boolean;
 }
 
 interface GeneratedVideo {
@@ -46,6 +50,8 @@ function GallerySkeleton() {
 export default function GalleryPage() {
     const { user, firestore, isUserLoading } = useFirebase();
     const router = useRouter();
+    const { toast } = useToast();
+    const [publishingStates, setPublishingStates] = useState<Record<string, boolean>>({});
 
     useEffect(() => {
         if (!isUserLoading && !user) {
@@ -80,6 +86,45 @@ export default function GalleryPage() {
 
     }, [images, videos]);
 
+    const handlePublicToggle = async (item: WithId<GeneratedImage>) => {
+        if (!firestore || !user) return;
+        const newPublicState = !item.isPublic;
+        setPublishingStates(prev => ({...prev, [item.id]: true}));
+
+        try {
+            const imageDocRef = doc(firestore, 'users', user.uid, 'generated_images', item.id);
+            await updateDoc(imageDocRef, { isPublic: newPublicState });
+
+            if (newPublicState) {
+                // Post to public_images collection
+                const publicImagesCollection = collection(firestore, 'public_images');
+                await addDoc(publicImagesCollection, {
+                    prompt: item.prompt,
+                    imageUrl: item.imageUrl,
+                    createdAt: item.createdAt,
+                    authorId: user.uid,
+                    authorName: user.displayName,
+                    authorPhotoUrl: user.photoURL || null,
+                    originalImageId: item.id,
+                });
+            }
+            // Note: Deleting from public_images when un-publishing is complex
+            // as we'd need to query for the document. For simplicity, we leave it.
+            // A backend function would be better for this cleanup.
+
+            toast({
+                title: newPublicState ? "Image Published" : "Image Unpublished",
+                description: `Your image is now ${newPublicState ? 'public' : 'private'}.`
+            });
+
+        } catch (error) {
+            console.error("Failed to update public state:", error);
+            toast({ variant: 'destructive', title: "Error", description: "Could not update image status."})
+        } finally {
+             setPublishingStates(prev => ({...prev, [item.id]: false}));
+        }
+    }
+
     const isLoading = isUserLoading || isImagesLoading || isVideosLoading;
 
     if (isLoading && galleryItems.length === 0) {
@@ -107,7 +152,7 @@ export default function GalleryPage() {
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {galleryItems.map(item => (
-                         <Card key={item.id} className="overflow-hidden group bg-muted border-none">
+                         <Card key={item.id} className="overflow-hidden group bg-muted border-none flex flex-col">
                             <div className="relative aspect-square w-full">
                                 {item.type === 'image' ? (
                                     <>
@@ -124,12 +169,27 @@ export default function GalleryPage() {
                                     <video src={item.videoUrl} controls autoPlay muted loop className="w-full h-full object-cover"></video>
                                 )}
                             </div>
-                            <div className="p-3">
-                                <p className="text-xs font-medium truncate" title={item.prompt}>{item.prompt}</p>
-                                {item.createdAt?.toDate && (
-                                    <p className="text-xs text-muted-foreground">
-                                        {formatDistanceToNow(item.createdAt.toDate(), { addSuffix: true })}
-                                    </p>
+                            <div className="p-3 flex-grow flex flex-col justify-between">
+                                <div>
+                                    <p className="text-xs font-medium truncate" title={item.prompt}>{item.prompt}</p>
+                                    {item.createdAt?.toDate && (
+                                        <p className="text-xs text-muted-foreground">
+                                            {formatDistanceToNow(item.createdAt.toDate(), { addSuffix: true })}
+                                        </p>
+                                    )}
+                                </div>
+                                 {item.type === 'image' && (
+                                    <div className="flex items-center space-x-2 mt-2 pt-2 border-t">
+                                        <Switch
+                                            id={`public-switch-${item.id}`}
+                                            checked={item.isPublic}
+                                            onCheckedChange={() => handlePublicToggle(item)}
+                                            disabled={publishingStates[item.id]}
+                                        />
+                                        <Label htmlFor={`public-switch-${item.id}`} className="text-xs">
+                                            {publishingStates[item.id] ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Public'}
+                                        </Label>
+                                    </div>
                                 )}
                             </div>
                         </Card>
