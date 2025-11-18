@@ -132,9 +132,9 @@ export default function PaymentTrackingPage() {
 
     const getStatusBadge = (status: PaymentStatus) => {
         switch (status) {
-            case 'paid': return <Badge className="bg-green-500 hover:bg-green-600">Paid</Badge>;
-            case 'rejected': return <Badge variant="destructive">Rejected</Badge>;
-            default: return <Badge variant="secondary">Pending</Badge>;
+            case 'paid': return <Badge className="bg-green-500 hover:bg-green-600"><CheckCircle className="mr-1 h-3 w-3" />Paid</Badge>;
+            case 'rejected': return <Badge variant="destructive"><XCircle className="mr-1 h-3 w-3" />Rejected</Badge>;
+            default: return <Badge variant="secondary"><Clock className="mr-1 h-3 w-3" />Pending</Badge>;
         }
     };
 
