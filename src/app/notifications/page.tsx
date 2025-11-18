@@ -21,7 +21,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Send, X } from 'lucide-react';
-import { Header } from '@/components/dashboard/header';
+import { DashboardLayout } from '@/components/dashboard/dashboard-layout';
 
 const formSchema = z.object({
   message: z.string().min(1, { message: 'Message cannot be empty.' }).max(280, { message: 'Message must be 280 characters or less.'}),
@@ -102,55 +102,52 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-background">
-      <Header />
-      <main className="flex flex-1 justify-center p-4 md:p-8">
-        <div className="w-full">
-          <Card>
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div>
-                  <CardTitle>Send a Notification</CardTitle>
-                  <CardDescription>Broadcast a message to all registered users.</CardDescription>
-                </div>
-                <Link href="/dashboard" passHref>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <X className="h-5 w-5" />
-                      <span className="sr-only">Close</span>
-                  </Button>
-                </Link>
+    <DashboardLayout>
+      <div className="w-full">
+        <Card>
+          <CardHeader>
+            <div className="flex items-start justify-between">
+              <div>
+                <CardTitle>Send a Notification</CardTitle>
+                <CardDescription>Broadcast a message to all registered users.</CardDescription>
               </div>
-            </CardHeader>
-            <CardContent>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  <FormField
-                    control={form.control}
-                    name="message"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Message</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="Enter your notification message here..."
-                            className="min-h-[120px]"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? 'Sending...' : 'Send Notification'}
-                    <Send className="ml-2 h-4 w-4" />
-                  </Button>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
-    </div>
+              <Link href="/dashboard" passHref>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <X className="h-5 w-5" />
+                    <span className="sr-only">Close</span>
+                </Button>
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="message"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Message</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Enter your notification message here..."
+                          className="min-h-[120px]"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? 'Sending...' : 'Send Notification'}
+                  <Send className="ml-2 h-4 w-4" />
+                </Button>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      </div>
+    </DashboardLayout>
   );
 }
