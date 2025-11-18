@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Bell, ExternalLink } from 'lucide-react';
 import { collection, query, orderBy, limit, writeBatch, doc } from 'firebase/firestore';
 import { useCollection, WithId } from '@/firebase/firestore/use-collection';
@@ -21,50 +21,90 @@ interface UserNotification {
   createdAt: any; // Firestore Timestamp
   read: boolean;
   link?: string;
+  type?: 'user';
 }
+
+interface AdminNotification {
+    message: string;
+    createdAt: any;
+    read: boolean;
+    link?: string;
+    type?: 'admin';
+}
+
+type MergedNotification = WithId<UserNotification | AdminNotification>;
 
 export function Notifications() {
   const { firestore, user } = useFirebase();
   const [open, setOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  const notificationsQuery = useMemoFirebase(
+  const isAdmin = user?.email === 'admin@noukha.com';
+
+  // Query for standard user notifications
+  const userNotificationsQuery = useMemoFirebase(
     () =>
       firestore && user
         ? query(
             collection(firestore, 'users', user.uid, 'user_notifications'),
             orderBy('createdAt', 'desc'),
-            limit(20) // Fetch more notifications
+            limit(10)
           )
         : null,
     [firestore, user]
   );
   
-  const { data: notifications, isLoading } = useCollection<UserNotification>(
-    notificationsQuery
+  const { data: userNotifications, isLoading: isUserLoading } = useCollection<UserNotification>(userNotificationsQuery);
+  
+  // Query for admin-specific notifications (only if user is an admin)
+  const adminNotificationsQuery = useMemoFirebase(
+      () =>
+        firestore && isAdmin
+        ? query(
+            collection(firestore, 'admin_notifications'),
+            orderBy('createdAt', 'desc'),
+            limit(10)
+        )
+        : null,
+      [firestore, isAdmin]
   );
 
+  const { data: adminNotifications, isLoading: isAdminLoading } = useCollection<AdminNotification>(adminNotificationsQuery);
+
+  // Merge and sort notifications
+  const mergedNotifications = useMemo<MergedNotification[]>(() => {
+    const userNotifsWithType: MergedNotification[] = userNotifications?.map(n => ({...n, type: 'user'})) || [];
+    const adminNotifsWithType: MergedNotification[] = adminNotifications?.map(n => ({...n, type: 'admin'})) || [];
+    
+    return [...userNotifsWithType, ...adminNotifsWithType]
+        .sort((a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
+
+  }, [userNotifications, adminNotifications]);
+
+
   useEffect(() => {
-    if (notifications) {
-      setUnreadCount(notifications.filter(n => !n.read).length);
+    if (mergedNotifications) {
+      setUnreadCount(mergedNotifications.filter(n => !n.read).length);
     }
-  }, [notifications]);
+  }, [mergedNotifications]);
 
 
   useEffect(() => {
-    if (open && user && firestore && notifications) {
-      // When popover opens, mark all visible notifications as read for the current user
-      const unreadNotifications = notifications.filter(n => !n.read);
-      if (unreadNotifications.length === 0) return;
+    if (open && user && firestore && mergedNotifications) {
+      const unread = mergedNotifications.filter(n => !n.read);
+      if (unread.length === 0) return;
 
       const batch = writeBatch(firestore);
-      unreadNotifications.forEach(notif => {
-        const notifRef = doc(firestore, 'users', user.uid, 'user_notifications', notif.id);
+      unread.forEach(notif => {
+        const collectionPath = notif.type === 'admin' ? 'admin_notifications' : `users/${user.uid}/user_notifications`;
+        const notifRef = doc(firestore, collectionPath, notif.id);
         batch.update(notifRef, { read: true });
       });
       batch.commit().catch(console.error);
     }
-  }, [open, user, firestore, notifications]);
+  }, [open, user, firestore, mergedNotifications]);
+  
+  const isLoading = isUserLoading || (isAdmin && isAdminLoading);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -84,7 +124,7 @@ export function Notifications() {
           <div className="space-y-1.5 p-4">
             <h4 className="font-medium leading-none">Notifications</h4>
             <p className="text-sm text-muted-foreground">
-              Recent updates from the admin.
+              Recent updates.
             </p>
           </div>
           <ScrollArea className="h-72 w-full">
@@ -101,8 +141,8 @@ export function Notifications() {
                     </div>
                   ))}
                 </div>
-              ) : notifications && notifications.length > 0 ? (
-                notifications.map((notif) => (
+              ) : mergedNotifications && mergedNotifications.length > 0 ? (
+                mergedNotifications.map((notif) => (
                   <div
                     key={notif.id}
                     className="grid grid-cols-[25px_1fr] items-start pb-4 last:mb-0 last:pb-0"
