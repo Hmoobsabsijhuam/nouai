@@ -326,9 +326,17 @@ export default function ProfilePage() {
   return (
     <DashboardLayout>
       <div className="mx-auto w-full space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-          <p className="text-muted-foreground">Manage your account settings and set e-mail preferences.</p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+            <p className="text-muted-foreground">Manage your account settings and set e-mail preferences.</p>
+          </div>
+          <Link href="/dashboard" passHref>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+                <X className="h-5 w-5" />
+                <span className="sr-only">Close</span>
+            </Button>
+          </Link>
         </div>
         
          <Tabs defaultValue="profile" className="w-full">
