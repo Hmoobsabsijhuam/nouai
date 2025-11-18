@@ -111,7 +111,7 @@ export function DashboardLayout({
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen">
+      <div className="flex min-h-screen w-full flex-col md:flex-row">
         <Sidebar
           side="left"
           variant="sidebar"
@@ -215,31 +215,11 @@ export function DashboardLayout({
           </SidebarFooter>
         </Sidebar>
 
-        <div className="flex flex-col flex-1">
-            <div className="hidden md:block">
-                <Header />
-            </div>
-           <div className="md:hidden p-4 border-b flex items-center justify-between bg-card sticky top-0 z-10">
-              <div className="flex items-center gap-2">
-                <SidebarTrigger />
-                <Link href="/" className="flex items-center gap-2">
-                    <Logo className="h-7 w-7 text-primary" />
-                    <span className="text-md font-bold">Nou AI</span>
-                </Link>
-              </div>
-              <div className="flex items-center gap-2">
-                <Notifications />
-                <Link href="/" passHref>
-                  <Button variant="ghost" size="icon">
-                      <Home className="h-5 w-5" />
-                      <span className="sr-only">Home</span>
-                  </Button>
-                </Link>
-              </div>
-           </div>
-          <main className="flex-1 p-4 overflow-y-auto">
-            {children}
-          </main>
+        <div className="flex flex-1 flex-col">
+            <Header />
+            <main className="flex-1 overflow-y-auto bg-background p-4 md:p-6 lg:p-8">
+                {children}
+            </main>
         </div>
       </div>
     </SidebarProvider>
