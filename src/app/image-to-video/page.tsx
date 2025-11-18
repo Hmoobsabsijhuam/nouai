@@ -38,7 +38,7 @@ interface GeneratedVideo {
 
 function VideoFeedSkeleton() {
     return (
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {Array.from({ length: 2 }).map((_, i) => (
                 <Card key={i} className="overflow-hidden bg-muted border-none">
                     <Skeleton className="aspect-video w-full" />
@@ -65,7 +65,7 @@ function VideoFeed({ videos, isLoading }: { videos: WithId<GeneratedVideo>[] | n
     }
 
     return (
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {videos.map(video => (
                 <div key={video.id}>
                     <video src={video.videoUrl} controls autoPlay muted loop className="rounded-lg w-full aspect-video"></video>
