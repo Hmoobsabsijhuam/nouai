@@ -12,7 +12,6 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupLabel,
-  SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -119,7 +118,7 @@ export function GeneratorLayout({
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-background">
+      <div className="flex min-h-screen w-full">
         <Sidebar
           side="left"
           variant="sidebar"
@@ -223,11 +222,11 @@ export function GeneratorLayout({
           </SidebarFooter>
         </Sidebar>
 
-        <div className="flex flex-1 flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-h-screen">
           <Header />
-          <div className="grid flex-1 md:grid-cols-[400px_1fr]">
+          <div className="grid flex-1 md:grid-cols-[400px_1fr] overflow-hidden">
             {/* Control Panel */}
-            <div className="w-full bg-background p-4 border-b md:border-b-0 md:border-r flex flex-col">
+            <div className="w-full bg-background p-4 border-b md:border-b-0 md:border-r flex flex-col overflow-y-auto">
               <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-4">
                 <TabsList className="grid w-full grid-cols-4">
                   <TabsTrigger value="image">Image</TabsTrigger>
