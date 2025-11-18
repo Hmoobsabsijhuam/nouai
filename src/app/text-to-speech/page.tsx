@@ -1,17 +1,16 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { useFirebase } from '@/firebase';
 import { generateSpeech } from '@/ai/flows/generate-speech-flow';
 import { useToast } from '@/hooks/use-toast';
 
-import { DashboardLayout } from '@/components/dashboard/dashboard-layout';
+import { GeneratorLayout } from '@/components/generator/generator-layout';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,12 +25,111 @@ const formSchema = z.object({
 
 const voices = ['Algenib', 'Achernar', 'Erinome', 'Gacrux', 'Puck'] as const;
 
+function TextToSpeechControls({ form, isGenerating }: { form: any, isGenerating: boolean }) {
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(form.onSubmit)} className="space-y-6">
+        <FormField
+          control={form.control}
+          name="text"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Text to Convert</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Nyob zoo ntawm no kuv yog Nou AI yuav pab koj tsim koj lub suab."
+                  {...field}
+                  className="min-h-[150px] bg-secondary border-none"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="voice"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Voice</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a voice" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {voices.map(voice => (
+                    <SelectItem key={voice} value={voice}>{voice}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button type="submit" disabled={isGenerating} size="lg" className="w-full">
+          {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
+          {isGenerating ? 'Tab Tom Tsim Suab...' : 'Generate Speech'}
+        </Button>
+      </form>
+    </Form>
+  );
+}
+
+function SpeechContent({ isGenerating, generatedAudioUrl, onDownload }: { isGenerating: boolean; generatedAudioUrl: string | null; onDownload: () => void; }) {
+  if (!isGenerating && !generatedAudioUrl) {
+    return (
+      <div className="flex h-full w-full flex-col items-center justify-center rounded-lg border border-dashed text-center p-8">
+        <Mic className="mx-auto h-10 w-10 text-muted-foreground" />
+        <h3 className="mt-4 text-md font-semibold">Tsis tau muaj suab li</h3>
+        <p className="mt-1 text-xs text-muted-foreground">Koj lub suab yuav tshwm sim ntawm no.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center justify-center h-full">
+        <Card className="w-full max-w-md">
+            <CardHeader>
+                <CardTitle>Generated Audio</CardTitle>
+            </CardHeader>
+            <CardContent className="flex items-center justify-center p-6">
+                {isGenerating ? (
+                    <div className="flex flex-col items-center gap-4 p-8 text-muted-foreground">
+                        <Loader2 className="h-8 w-8 animate-spin" />
+                        <p>Tab Tom Tsim Koj Lub Suab...</p>
+                    </div>
+                ) : generatedAudioUrl ? (
+                    <audio src={generatedAudioUrl} controls className="w-full"></audio>
+                ) : null}
+            </CardContent>
+            {generatedAudioUrl && !isGenerating && (
+                <CardFooter>
+                    <Button onClick={onDownload} className="w-full">
+                        <Download className="mr-2 h-4 w-4" />
+                        Download Audio (.wav)
+                    </Button>
+                </CardFooter>
+            )}
+        </Card>
+    </div>
+  );
+}
+
+
 export default function GenerateSpeechPage() {
   const { user, isUserLoading } = useFirebase();
   const router = useRouter();
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedAudioUrl, setGeneratedAudioUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.replace('/login');
+    }
+  }, [user, isUserLoading, router]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -90,6 +188,8 @@ export default function GenerateSpeechPage() {
       setIsGenerating(false);
     }
   }
+
+  (form as any).onSubmit = onSubmit;
   
   if (isUserLoading || !user) {
     return (
@@ -100,99 +200,16 @@ export default function GenerateSpeechPage() {
   }
 
   return (
-    <DashboardLayout>
-      <div className="mx-auto w-full">
-          <Card className="mb-8">
-              <CardHeader>
-                  <div className="flex items-start justify-between">
-                      <div>
-                          <CardTitle className="flex items-center gap-2">
-                              <Mic />
-                              Sau Ntawv Kom Tsim Suab
-                          </CardTitle>
-                          <CardDescription>Sau koj kab ntawv Nou AI mam li tsim lub suab rau koj.</CardDescription>
-                      </div>
-                      <Link href="/" passHref>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <X className="h-5 w-5" />
-                              <span className="sr-only">Close</span>
-                          </Button>
-                      </Link>
-                  </div>
-              </CardHeader>
-              <CardContent>
-                  <Form {...form}>
-                      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                          <FormField
-                              control={form.control}
-                              name="text"
-                              render={({ field }) => (
-                              <FormItem className="w-full">
-                                  <FormLabel>Cov ntawv yuav hloov ua suab</FormLabel>
-                                  <FormControl>
-                                    <Textarea placeholder="Nyob zoo ntawm no kuv yog Nou AI yuav pab koj tsim koj lub suab." {...field} className="min-h-[150px]" />
-                                  </FormControl>
-                                  <FormMessage />
-                              </FormItem>
-                              )}
-                          />
-                           <FormField
-                              control={form.control}
-                              name="voice"
-                              render={({ field }) => (
-                              <FormItem className="w-full sm:w-1/2">
-                                  <FormLabel>Xaiv ib lub suab uas koj nyiam</FormLabel>
-                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                  <FormControl>
-                                      <SelectTrigger>
-                                      <SelectValue placeholder="Select a voice" />
-                                      </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                      {voices.map(voice => (
-                                          <SelectItem key={voice} value={voice}>{voice}</SelectItem>
-                                      ))}
-                                  </SelectContent>
-                                  </Select>
-                                  <FormMessage />
-                              </FormItem>
-                              )}
-                          />
-                          <Button type="submit" disabled={isGenerating} className="w-full sm:w-auto">
-                              {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-                              {isGenerating ? 'Tab Tom Tsim Suab...' : 'Tsim Suab'}
-                          </Button>
-                      </form>
-                  </Form>
-              </CardContent>
-          </Card>
-
-          {(isGenerating || generatedAudioUrl) && (
-              <Card className="mb-8">
-                  <CardHeader>
-                      <CardTitle>Thaum Tawm Los</CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex items-center justify-center p-6">
-                     {isGenerating ? (
-                         <div className="flex flex-col items-center gap-4 p-8 text-muted-foreground">
-                             <Loader2 className="h-8 w-8 animate-spin" />
-                             <p>Tab Tom Tsim Koj Lub Suab...</p>
-                         </div>
-                     ) : generatedAudioUrl ? (
-                         <audio src={generatedAudioUrl} controls className="w-full"></audio>
-                     ) : null}
-                  </CardContent>
-                  {generatedAudioUrl && (
-                      <CardFooter>
-                         <Button onClick={handleDownload} className="w-full">
-                              <Download className="mr-2 h-4 w-4" />
-                              Download Suab (.wav)
-                          </Button>
-                      </CardFooter>
-                  )}
-              </Card>
-          )}
-      </div>
-    </DashboardLayout>
+    <GeneratorLayout
+        activeTab="speech"
+        controlPanel={<TextToSpeechControls form={form} isGenerating={isGenerating} />}
+        contentPanel={
+            <SpeechContent
+                isGenerating={isGenerating}
+                generatedAudioUrl={generatedAudioUrl}
+                onDownload={handleDownload}
+            />
+        }
+    />
   );
 }
