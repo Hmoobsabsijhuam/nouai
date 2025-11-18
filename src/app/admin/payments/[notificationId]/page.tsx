@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useFirebase, useMemoFirebase } from '@/firebase';
-import { doc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { doc, updateDoc, serverTimestamp, Timestamp, writeBatch, increment } from 'firebase/firestore';
 import { useDoc, WithId } from '@/firebase/firestore/use-doc';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
@@ -76,14 +76,34 @@ export default function PaymentTrackingPage() {
     const { data: notification, isLoading: isNotifLoading } = useDoc<AdminNotification>(notifDocRef);
 
     const handleStatusUpdate = async (status: PaymentStatus) => {
-        if (!notifDocRef) return;
+        if (!notifDocRef || !firestore || !notification) return;
         setIsUpdating(true);
         try {
-            await updateDoc(notifDocRef, {
+            const batch = writeBatch(firestore);
+
+            // Update notification status
+            batch.update(notifDocRef, {
                 paymentStatus: status,
                 read: true,
                 updatedAt: serverTimestamp()
             });
+
+            // If rejected, deduct credits from the user
+            if (status === 'rejected') {
+                const creditAmountMatch = notification.message.match(/purchased (\d+) credits/);
+                if (creditAmountMatch && creditAmountMatch[1]) {
+                    const creditsToDeduct = parseInt(creditAmountMatch[1], 10);
+                    if (!isNaN(creditsToDeduct)) {
+                        const userRef = doc(firestore, 'users', notification.userId);
+                        batch.update(userRef, {
+                            credits: increment(-creditsToDeduct)
+                        });
+                    }
+                }
+            }
+
+            await batch.commit();
+
             toast({ title: "Status Updated", description: `Payment marked as ${status}.` });
         } catch (error) {
             console.error("Failed to update status:", error);
