@@ -101,18 +101,16 @@ function UserProfile() {
 }
 
 export function GeneratorLayout({
-  children,
   activeTab,
   controlPanel,
   contentPanel,
 }: {
-  children?: React.ReactNode;
   activeTab: 'image' | 'video' | 'animate' | 'speech';
   controlPanel: React.ReactNode;
   contentPanel: React.ReactNode;
 }) {
   const pathname = usePathname();
-   const router = useRouter();
+  const router = useRouter();
 
   const handleTabChange = (value: string) => {
     if (value === 'image') router.push('/generate-image');
@@ -123,7 +121,8 @@ export function GeneratorLayout({
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen">
+      <div className="flex min-h-screen w-full">
+        {/* First Column: Main Sidebar */}
         <Sidebar
           side="left"
           variant="sidebar"
@@ -227,56 +226,47 @@ export function GeneratorLayout({
           </SidebarFooter>
         </Sidebar>
 
-        <main className="flex flex-col flex-1 min-h-screen">
-           <div className="md:hidden p-4 border-b flex items-center justify-between bg-card sticky top-0 z-10">
-              <div className="flex items-center gap-2">
-                <SidebarTrigger />
-                <Link href="/" className="flex items-center gap-2">
-                    <Logo className="h-7 w-7 text-primary" />
-                    <span className="text-md font-bold">Nou AI</span>
-                </Link>
-              </div>
-              <div className='flex items-center gap-2'>
-                <Notifications />
-                <Link href="/" passHref>
-                  <Button variant="ghost" size="icon">
-                      <Home className="h-5 w-5" />
-                      <span className="sr-only">Home</span>
-                  </Button>
-                </Link>
-                <Link href="/" passHref>
-                  <Button variant="ghost" size="icon">
-                       <X className="h-5 w-5" />
-                      <span className="sr-only">Close</span>
-                  </Button>
-                </Link>
-              </div>
-           </div>
-          
-          <div className="flex-1 flex flex-col md:grid md:grid-cols-[400px_1fr]">
-              {/* Middle Column: Control Panel */}
-              <div className="w-full bg-background p-4 border-b md:border-b-0 md:border-r flex flex-col">
-                <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-4">
-                  <TabsList className="grid w-full grid-cols-4">
-                    <TabsTrigger value="image">Image</TabsTrigger>
-                    <TabsTrigger value="video">Video</TabsTrigger>
-                    <TabsTrigger value="animate">Animate</TabsTrigger>
-                    <TabsTrigger value="speech">Speech</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-                <div className="overflow-y-auto">
-                    {controlPanel}
-                </div>
-              </div>
-    
-              {/* Right Column: Content Feed */}
-              <div className="flex-1 bg-secondary p-4 overflow-y-auto">
-                <div className="w-full">
-                    {contentPanel}
-                </div>
-              </div>
+        <div className="flex flex-1 flex-col md:flex-row min-h-screen">
+          {/* Mobile Header */}
+          <div className="md:hidden p-4 border-b flex items-center justify-between bg-card sticky top-0 z-10">
+            <div className="flex items-center gap-2">
+              <SidebarTrigger />
+              <Link href="/" className="flex items-center gap-2">
+                  <Logo className="h-7 w-7 text-primary" />
+                  <span className="text-md font-bold">Nou AI</span>
+              </Link>
+            </div>
+            <div className='flex items-center gap-2'>
+              <Notifications />
+              <Link href="/" passHref>
+                <Button variant="ghost" size="icon">
+                     <X className="h-5 w-5" />
+                    <span className="sr-only">Close</span>
+                </Button>
+              </Link>
+            </div>
           </div>
-        </main>
+
+          {/* Second Column: Control Panel */}
+          <div className="w-full md:w-[400px] bg-background p-4 border-b md:border-b-0 md:border-r flex flex-col">
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-4">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="image">Image</TabsTrigger>
+                <TabsTrigger value="video">Video</TabsTrigger>
+                <TabsTrigger value="animate">Animate</TabsTrigger>
+                <TabsTrigger value="speech">Speech</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <div className="overflow-y-auto">
+                {controlPanel}
+            </div>
+          </div>
+
+          {/* Third Column: Content Feed */}
+          <main className="flex-1 bg-secondary p-4 overflow-y-auto">
+            {contentPanel}
+          </main>
+        </div>
       </div>
     </SidebarProvider>
   );
