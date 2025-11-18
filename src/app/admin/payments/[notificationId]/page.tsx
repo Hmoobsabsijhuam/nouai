@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useFirebase, useMemoFirebase } from '@/firebase';
 import { doc, updateDoc, serverTimestamp, Timestamp, writeBatch, increment } from 'firebase/firestore';
-import { useDoc, WithId } from '@/firebase/firestore/use-doc';
+import { useDoc } from '@/firebase/firestore/use-doc';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 
@@ -132,9 +132,9 @@ export default function PaymentTrackingPage() {
 
     const getStatusBadge = (status: PaymentStatus) => {
         switch (status) {
-            case 'paid': return <Badge className="bg-green-500 hover:bg-green-600"><CheckCircle className="mr-1 h-3 w-3" />Paid</Badge>;
-            case 'rejected': return <Badge variant="destructive"><XCircle className="mr-1 h-3 w-3" />Rejected</Badge>;
-            default: return <Badge variant="secondary"><Clock className="mr-1 h-3 w-3" />Pending</Badge>;
+            case 'paid': return <Badge className="bg-green-500 hover:bg-green-600 text-base"><CheckCircle className="mr-2 h-4 w-4" />Paid</Badge>;
+            case 'rejected': return <Badge variant="destructive" className="text-base"><XCircle className="mr-2 h-4 w-4" />Rejected</Badge>;
+            default: return <Badge variant="secondary" className="text-base"><Clock className="mr-2 h-4 w-4" />Pending</Badge>;
         }
     };
 
@@ -168,20 +168,22 @@ export default function PaymentTrackingPage() {
                         <span className="font-medium">{format(notification.createdAt.toDate(), 'PPP p')}</span>
                     </div>
                      <div className="flex items-center gap-2">
-                        <span className="font-medium">Status:</span>
+                        <span className="font-medium text-lg">Status:</span>
                         {getStatusBadge(notification.paymentStatus)}
                     </div>
                 </CardContent>
-                <CardFooter className="border-t pt-6">
-                    <div className="space-x-2">
-                        <Button onClick={() => handleStatusUpdate('paid')} disabled={isUpdating || notification.paymentStatus === 'paid'} className="bg-green-600 hover:bg-green-700">
-                            <CheckCircle className="mr-2 h-4 w-4" /> Mark as Paid
-                        </Button>
-                         <Button onClick={() => handleStatusUpdate('rejected')} disabled={isUpdating || notification.paymentStatus === 'rejected'} variant="destructive">
-                            <XCircle className="mr-2 h-4 w-4" /> Mark as Rejected
-                        </Button>
-                    </div>
-                </CardFooter>
+                {notification.paymentStatus === 'pending' && (
+                    <CardFooter className="border-t pt-6">
+                        <div className="space-x-2">
+                            <Button onClick={() => handleStatusUpdate('paid')} disabled={isUpdating} className="bg-green-600 hover:bg-green-700">
+                                <CheckCircle className="mr-2 h-4 w-4" /> Mark as Paid
+                            </Button>
+                             <Button onClick={() => handleStatusUpdate('rejected')} disabled={isUpdating} variant="destructive">
+                                <XCircle className="mr-2 h-4 w-4" /> Mark as Rejected
+                            </Button>
+                        </div>
+                    </CardFooter>
+                )}
             </Card>
         </DashboardLayout>
     )
