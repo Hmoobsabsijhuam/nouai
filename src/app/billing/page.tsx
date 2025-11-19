@@ -57,14 +57,17 @@ export default function BillingPage() {
 
       // 2. Create a notification for the admin
       const adminNotifCollection = collection(firestore, 'admin_notifications');
+      const newNotifDocRef = doc(adminNotifCollection);
       const message = `${user.displayName || user.email} purchased ${amount} credits. Previous balance: ${previousBalance} credits.`;
-      batch.set(doc(adminNotifCollection), {
+      
+      batch.set(newNotifDocRef, {
         userId: user.uid,
         userEmail: user.email,
         message: message,
         createdAt: serverTimestamp(),
         read: false,
-        paymentStatus: 'paid'
+        paymentStatus: 'paid',
+        link: `/admin/payments/${newNotifDocRef.id}`
       });
 
       // 3. Create a purchase history record for the user
