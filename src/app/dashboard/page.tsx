@@ -104,6 +104,36 @@ function UserDashboard() {
       </h1>
       <div className="grid gap-6">
         <div className="grid auto-rows-max items-start gap-6">
+            <Card>
+                <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <Bell className="h-5 w-5" />
+                    Cov kev tshaj tawm tshiab
+                </CardTitle>
+                <CardDescription>
+                    {unreadNotifications.length > 0 
+                    ? `You have ${unreadNotifications.length} unread message(s).`
+                    : 'Tsis tau muaj kev tshaj tawm tshiab li.'}
+                </CardDescription>
+                </CardHeader>
+                <CardContent>
+                <div className="space-y-4">
+                    {isNotificationsLoading ? (
+                        <p>Loading notifications...</p>
+                    ) : unreadNotifications.length > 0 ? (
+                    unreadNotifications.slice(0, 3).map(notif => (
+                        <div key={notif.id} className="border-l-2 border-primary pl-3">
+                        <p className="text-sm font-medium">{notif.message}</p>
+                        </div>
+                    ))
+                    ) : (
+                    <p className="text-sm text-muted-foreground">Your notification inbox is clear.</p>
+                    )}
+                </div>
+                </CardContent>
+            </Card>
+        </div>
+        <div className="grid auto-rows-max items-start gap-6">
            <Card>
             <CardHeader>
               <CardTitle>Creation Categories</CardTitle>
@@ -158,37 +188,6 @@ function UserDashboard() {
                 </div>
             </CardContent>
           </Card>
-        </div>
-
-        <div className="grid auto-rows-max items-start gap-6">
-            <Card>
-                <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <Bell className="h-5 w-5" />
-                    Cov kev tshaj tawm tshiab
-                </CardTitle>
-                <CardDescription>
-                    {unreadNotifications.length > 0 
-                    ? `You have ${unreadNotifications.length} unread message(s).`
-                    : 'Tsis tau muaj kev tshaj tawm tshiab li.'}
-                </CardDescription>
-                </CardHeader>
-                <CardContent>
-                <div className="space-y-4">
-                    {isNotificationsLoading ? (
-                        <p>Loading notifications...</p>
-                    ) : unreadNotifications.length > 0 ? (
-                    unreadNotifications.slice(0, 3).map(notif => (
-                        <div key={notif.id} className="border-l-2 border-primary pl-3">
-                        <p className="text-sm font-medium">{notif.message}</p>
-                        </div>
-                    ))
-                    ) : (
-                    <p className="text-sm text-muted-foreground">Your notification inbox is clear.</p>
-                    )}
-                </div>
-                </CardContent>
-            </Card>
         </div>
       </div>
     </>
