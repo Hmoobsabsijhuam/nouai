@@ -69,12 +69,14 @@ export function UserNav() {
             <span>Profile</span>
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild className="cursor-pointer">
-            <Link href="/billing">
-                <CreditCard className="mr-2 h-4 w-4" />
-                <span>Go Pro / Refill Credits</span>
-            </Link>
-        </DropdownMenuItem>
+        {!isAdmin && (
+            <DropdownMenuItem asChild className="cursor-pointer">
+                <Link href="/billing">
+                    <CreditCard className="mr-2 h-4 w-4" />
+                    <span>Go Pro / Refill Credits</span>
+                </Link>
+            </DropdownMenuItem>
+        )}
         {!isAdmin && (
             <DropdownMenuItem asChild className="cursor-pointer">
                 <Link href="/purchase-history">

@@ -71,12 +71,14 @@ function UserProfile() {
               <span>Profile</span>
             </Link>
           </DropdownMenuItem>
-           <DropdownMenuItem asChild>
-            <Link href="/billing">
-              <CreditCard className="mr-2 h-4 w-4" />
-              <span>Go Pro / Refill Credits</span>
-            </Link>
-          </DropdownMenuItem>
+           {!isAdmin && (
+            <DropdownMenuItem asChild>
+              <Link href="/billing">
+                <CreditCard className="mr-2 h-4 w-4" />
+                <span>Go Pro / Refill Credits</span>
+              </Link>
+            </DropdownMenuItem>
+          )}
           {!isAdmin && (
             <DropdownMenuItem asChild>
                 <Link href="/purchase-history">
@@ -232,12 +234,14 @@ export function DashboardLayout({
                             <span>Profile</span>
                             </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                            <Link href="/billing">
-                                <CreditCard className="mr-2 h-4 w-4" />
-                                <span>Go Pro / Refill Credits</span>
-                            </Link>
-                        </DropdownMenuItem>
+                        {!isAdmin && (
+                          <DropdownMenuItem asChild>
+                              <Link href="/billing">
+                                  <CreditCard className="mr-2 h-4 w-4" />
+                                  <span>Go Pro / Refill Credits</span>
+                              </Link>
+                          </DropdownMenuItem>
+                        )}
                          {!isAdmin && (
                             <DropdownMenuItem asChild>
                                 <Link href="/purchase-history">
