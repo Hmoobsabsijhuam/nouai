@@ -300,6 +300,11 @@
           "format": "date-time",
           "description": "The timestamp when the notification was created."
         },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the notification was last updated."
+        },
         "read": {
             "type": "boolean",
             "description": "Whether the admin has marked this notification as read."

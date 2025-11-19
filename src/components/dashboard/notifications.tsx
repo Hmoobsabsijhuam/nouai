@@ -12,11 +12,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '../ui/skeleton';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
 interface UserNotification {
   message: string;
@@ -29,6 +30,7 @@ interface UserNotification {
 interface AdminNotification {
     message: string;
     createdAt: any;
+    updatedAt?: any;
     read: boolean;
     link?: string;
     type?: 'admin';
@@ -137,36 +139,45 @@ export function Notifications() {
                   ))}
                 </div>
               ) : mergedNotifications && mergedNotifications.length > 0 ? (
-                mergedNotifications.map((notif) => (
-                  <Link 
-                    key={notif.id}
-                    href={notif.link ?? '#'}
-                    onClick={(e) => {
-                      handleMarkAsRead(notif);
-                      if (!notif.link) e.preventDefault();
-                      else setOpen(false);
-                    }}
-                    className={cn(
-                        "grid grid-cols-[25px_1fr] items-start pb-4 last:mb-0 last:pb-0 rounded-lg p-2 -mx-2 hover:bg-accent",
-                        !notif.read && "bg-primary/10 hover:bg-primary/20"
-                    )}
-                  >
-                    <span className={`flex h-2 w-2 translate-y-1 rounded-full ${!notif.read ? 'bg-primary' : 'bg-muted'}`} />
-                    <div className="grid gap-1">
-                       <p className="text-sm font-medium">{notif.message}</p>
-                       <div className="flex items-center justify-between">
-                         {notif.createdAt?.toDate && (
-                           <p className="text-sm text-muted-foreground">
-                             {formatDistanceToNow(notif.createdAt.toDate(), { addSuffix: true })}
-                           </p>
-                         )}
-                         {notif.link && (
-                            <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                         )}
-                       </div>
-                    </div>
-                  </Link>
-                ))
+                <TooltipProvider>
+                  {mergedNotifications.map((notif) => (
+                    <Link 
+                      key={notif.id}
+                      href={notif.link ?? '#'}
+                      onClick={(e) => {
+                        handleMarkAsRead(notif);
+                        if (!notif.link) e.preventDefault();
+                        else setOpen(false);
+                      }}
+                      className={cn(
+                          "grid grid-cols-[25px_1fr] items-start pb-4 last:mb-0 last:pb-0 rounded-lg p-2 -mx-2 hover:bg-accent",
+                          !notif.read && "bg-primary/10 hover:bg-primary/20"
+                      )}
+                    >
+                      <span className={`flex h-2 w-2 translate-y-1 rounded-full ${!notif.read ? 'bg-primary' : 'bg-muted'}`} />
+                      <div className="grid gap-1">
+                         <p className="text-sm font-medium">{notif.message}</p>
+                         <div className="flex items-center justify-between">
+                           {(notif.createdAt?.toDate) && (
+                             <Tooltip>
+                               <TooltipTrigger asChild>
+                                  <p className="text-sm text-muted-foreground cursor-default">
+                                    {formatDistanceToNow(notif.updatedAt?.toDate() || notif.createdAt.toDate(), { addSuffix: true })}
+                                  </p>
+                               </TooltipTrigger>
+                               <TooltipContent>
+                                <p>{format(notif.updatedAt?.toDate() || notif.createdAt.toDate(), 'PPP p')}</p>
+                               </TooltipContent>
+                             </Tooltip>
+                           )}
+                           {notif.link && (
+                              <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                           )}
+                         </div>
+                      </div>
+                    </Link>
+                  ))}
+                </TooltipProvider>
               ) : (
                 <p className="text-sm text-muted-foreground text-center py-4">No new notifications.</p>
               )}
@@ -177,5 +188,3 @@ export function Notifications() {
     </Popover>
   );
 }
-
-    

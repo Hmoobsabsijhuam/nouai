@@ -27,6 +27,7 @@ interface AdminNotification {
     userEmail: string;
     message: string;
     createdAt: Timestamp;
+    updatedAt?: Timestamp;
     read: boolean;
     link?: string;
     paymentStatus: PaymentStatus;
