@@ -189,7 +189,7 @@ export function Notifications() {
                                     !notif.read && "bg-primary/10 hover:bg-primary/20"
                                 )}
                                 >
-                                <div className="grid grid-cols-[15px_1fr] items-start">
+                                <div className="grid grid-cols-[15px_1fr_auto] items-start gap-3">
                                     <span className={cn("flex h-2 w-2 translate-y-1.5 rounded-full", !notif.read ? 'bg-primary' : 'bg-muted')} />
                                     <div className="grid gap-1">
                                         <p className="text-sm font-medium leading-tight">{notif.message}</p>
