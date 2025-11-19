@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -38,7 +39,7 @@ export default function BillingPage() {
   const { data: profile, isLoading: isProfileLoading } = useDoc<{ credits: number }>(userDocRef);
 
   const handlePurchase = async (amount: number) => {
-    if (!user || !firestore) {
+    if (!user || !firestore || !profile) {
       toast({ title: "Error", description: "You must be logged in.", variant: "destructive" });
       return;
     }
@@ -46,6 +47,7 @@ export default function BillingPage() {
     
     try {
       const batch = writeBatch(firestore);
+      const previousBalance = profile.credits ?? 0;
 
       // 1. Update user's credits
       const userRef = doc(firestore, 'users', user.uid);
@@ -55,7 +57,7 @@ export default function BillingPage() {
 
       // 2. Create a notification for the admin
       const adminNotifCollection = collection(firestore, 'admin_notifications');
-      const message = `${user.displayName || user.email} purchased ${amount} credits.`;
+      const message = `${user.displayName || user.email} purchased ${amount} credits. Previous balance: ${previousBalance} credits.`;
       batch.set(doc(adminNotifCollection), {
         userId: user.uid,
         userEmail: user.email,
@@ -69,8 +71,9 @@ export default function BillingPage() {
       const userPurchaseHistoryCollection = collection(firestore, 'users', user.uid, 'purchase_history');
       batch.set(doc(userPurchaseHistoryCollection), {
           userId: user.uid,
-          message: message,
+          message: `Purchased ${amount} credits.`,
           credits: amount,
+          previousBalance: previousBalance,
           createdAt: serverTimestamp(),
           paymentStatus: 'paid'
       });
