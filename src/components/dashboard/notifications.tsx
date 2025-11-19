@@ -159,16 +159,14 @@ export function Notifications() {
                          <p className="text-sm font-medium">{notif.message}</p>
                          <div className="flex items-center justify-between">
                            {(notif.createdAt?.toDate) && (
-                             <Tooltip>
-                               <TooltipTrigger asChild>
-                                  <p className="text-sm text-muted-foreground cursor-default">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <p>
                                     {formatDistanceToNow(notif.updatedAt?.toDate() || notif.createdAt.toDate(), { addSuffix: true })}
-                                  </p>
-                               </TooltipTrigger>
-                               <TooltipContent>
-                                <p>{format(notif.updatedAt?.toDate() || notif.createdAt.toDate(), 'PPP p')}</p>
-                               </TooltipContent>
-                             </Tooltip>
+                                </p>
+                                <p className="hidden sm:block">
+                                    ({format(notif.updatedAt?.toDate() || notif.createdAt.toDate(), 'PPp')})
+                                </p>
+                            </div>
                            )}
                            {notif.link && (
                               <ExternalLink className="h-4 w-4 text-muted-foreground" />
