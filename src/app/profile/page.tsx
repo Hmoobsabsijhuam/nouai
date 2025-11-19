@@ -37,6 +37,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ThemeToggle } from '@/components/dashboard/theme-toggle';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { LanguageToggle } from '@/components/dashboard/language-toggle';
 
 
 const profileFormSchema = z.object({
@@ -586,13 +587,20 @@ export default function ProfilePage() {
                   <CardTitle>Appearance</CardTitle>
                   <CardDescription>Customize the look and feel of the application.</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6">
                  <div className="flex items-center justify-between rounded-lg border p-4">
                       <div>
                           <h3 className="font-medium">Theme</h3>
                           <p className="text-sm text-muted-foreground">Select the theme for the dashboard.</p>
                       </div>
                       <ThemeToggle />
+                 </div>
+                 <div className="flex items-center justify-between rounded-lg border p-4">
+                      <div>
+                          <h3 className="font-medium">Language</h3>
+                          <p className="text-sm text-muted-foreground">Select the language for the dashboard.</p>
+                      </div>
+                      <LanguageToggle />
                  </div>
               </CardContent>
             </Card>
