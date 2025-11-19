@@ -1,0 +1,40 @@
+mutation CreateUser($displayName: String!, $email: String, $photoUrl: String) @auth(level: USER) {
+  user_insert(data: {
+    displayName: $displayName,
+    email: $email,
+    createdAt_expr: "request.time",
+    id_expr: "uuidV4()",
+    photoUrl: $photoUrl
+  })
+}
+
+query GetGenerationsByUser($userId: UUID!) @auth(level: USER) {
+  generations(where: {userId: {eq: $userId}}) {
+    id
+    createdAt
+    isPublic
+    parameters
+    prompt
+    type
+    url
+  }
+}
+
+mutation CreateComment($generationId: UUID!, $content: String!) @auth(level: USER) {
+  comment_insert(data: {
+    generationId: $generationId,
+    userId_expr: "auth.uid",
+    content: $content,
+    createdAt_expr: "request.time"
+  })
+}
+
+query ListPublicGenerations @auth(level: PUBLIC, insecureReason: "This operation is safe to expose to the public") {
+  generations(where: {isPublic: {eq: true}}) {
+    id
+    createdAt
+    prompt
+    type
+    url
+  }
+}
