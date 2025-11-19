@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
@@ -26,9 +26,20 @@ const formSchema = z.object({
 });
 
 const voices = ['Algenib', 'Achernar', 'Erinome', 'Gacrux', 'Puck'] as const;
-const SPEECH_GENERATION_COST = 5;
+const BASE_SPEECH_COST = 5;
+const CHARS_PER_CREDIT_UNIT = 100;
 
-function TextToSpeechControls({ form, isGenerating }: { form: any, isGenerating: boolean }) {
+function calculateCost(text: string): number {
+    if (!text || text.length === 0) {
+        return BASE_SPEECH_COST;
+    }
+    const characterCount = text.length;
+    // Base cost for the first block of characters, then additional cost for subsequent blocks.
+    const cost = BASE_SPEECH_COST + Math.floor(Math.max(0, characterCount - 1) / CHARS_PER_CREDIT_UNIT) * BASE_SPEECH_COST;
+    return cost;
+}
+
+function TextToSpeechControls({ form, isGenerating, cost }: { form: any, isGenerating: boolean, cost: number }) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(form.onSubmit)} className="space-y-6">
@@ -73,7 +84,7 @@ function TextToSpeechControls({ form, isGenerating }: { form: any, isGenerating:
         />
         <Button type="submit" disabled={isGenerating} size="lg" className="w-full">
           {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-          {isGenerating ? 'Tab Tom Tsim Suab...' : `Generate Speech (${SPEECH_GENERATION_COST} credits)`}
+          {isGenerating ? 'Tab Tom Tsim Suab...' : `Generate Speech (${cost} credits)`}
         </Button>
       </form>
     </Form>
@@ -149,6 +160,13 @@ export default function GenerateSpeechPage() {
     },
   });
 
+  const textToConvert = useWatch({
+    control: form.control,
+    name: 'text'
+  });
+
+  const cost = calculateCost(textToConvert);
+
   const handleDownload = () => {
     if (generatedAudioUrl) {
         const link = document.createElement('a');
@@ -165,11 +183,13 @@ export default function GenerateSpeechPage() {
         toast({ title: 'Error', description: 'You must be logged in to generate audio.', variant: 'destructive'});
         return;
     }
+    
+    const generationCost = calculateCost(values.text);
 
-    if (profile.credits < SPEECH_GENERATION_COST) {
+    if (profile.credits < generationCost) {
         toast({
             title: 'Insufficient Credits',
-            description: `You need at least ${SPEECH_GENERATION_COST} credits to generate audio.`,
+            description: `You need at least ${generationCost} credits to generate audio.`,
             variant: 'destructive',
         });
         return;
@@ -179,7 +199,7 @@ export default function GenerateSpeechPage() {
     setGeneratedAudioUrl(null);
     try {
         await updateDoc(doc(firestore, 'users', user.uid), {
-            credits: increment(-SPEECH_GENERATION_COST)
+            credits: increment(-generationCost)
         });
 
         const { audioUrl } = await generateSpeech({ text: values.text, voice: values.voice });
@@ -190,7 +210,7 @@ export default function GenerateSpeechPage() {
       console.error('Audio generation failed:', error);
 
        await updateDoc(doc(firestore, 'users', user.uid), {
-          credits: increment(SPEECH_GENERATION_COST)
+          credits: increment(generationCost)
       });
 
       let description = 'An unexpected error occurred during audio generation.';
@@ -232,7 +252,7 @@ export default function GenerateSpeechPage() {
   return (
     <GeneratorLayout
         activeTab="speech"
-        controlPanel={<TextToSpeechControls form={form} isGenerating={isGenerating} />}
+        controlPanel={<TextToSpeechControls form={form} isGenerating={isGenerating} cost={cost} />}
         contentPanel={
             <SpeechContent
                 isGenerating={isGenerating}
@@ -243,5 +263,3 @@ export default function GenerateSpeechPage() {
     />
   );
 }
-
-    
