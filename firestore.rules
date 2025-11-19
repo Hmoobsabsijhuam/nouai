@@ -70,10 +70,12 @@ service cloud.firestore {
       /**
        * @description Manages user's purchase history.
        * @path /users/{userId}/purchase_history/{purchaseId}
-       * @allow (list, get, create) - The owner can read and create their own purchase history records.
+       * @allow (list, get) - The owner or an admin can read purchase history records.
+       * @allow (create) - Only the owner can have purchase records created for them.
        */
       match /purchase_history/{purchaseId} {
-        allow list, get, create: if isOwner(userId);
+        allow list, get: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId);
         allow update, delete: if false;
       }
     }
