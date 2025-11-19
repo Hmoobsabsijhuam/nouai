@@ -189,9 +189,10 @@ export default function GenerateSpeechPage() {
     if (profile.credits < generationCost) {
         toast({
             title: 'Insufficient Credits',
-            description: `You need at least ${generationCost} credits to generate audio.`,
+            description: `You need at least ${generationCost} credits. Redirecting to purchase page.`,
             variant: 'destructive',
         });
+        router.push('/billing');
         return;
     }
     
