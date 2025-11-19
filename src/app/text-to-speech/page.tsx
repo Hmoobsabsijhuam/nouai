@@ -213,17 +213,18 @@ export default function GenerateSpeechPage() {
           credits: increment(generationCost)
       });
 
-      let description = 'An unexpected error occurred during audio generation.';
-       if (typeof error.message === 'string') {
-        if (error.message.includes('429') || error.message.toLowerCase().includes('quota')) {
-            description = 'You have exceeded the free usage limit for audio generation. Please try again later.';
-        } else if (error.message.toLowerCase().includes('billing')) {
-            description = 'This feature is only available on a paid plan. Please enable billing for your project to generate audio.';
-        } else if (error.message.toLowerCase().includes('voice name')) {
+      let description = 'An unexpected error occurred.';
+      if (typeof error.message === 'string') {
+        const lowerCaseError = error.message.toLowerCase();
+        if (lowerCaseError.includes('429') || lowerCaseError.includes('quota')) {
+            description = 'You have exceeded the free usage limit for audio generation. Please try again later or check your billing plan.';
+        } else if (lowerCaseError.includes('billing')) {
+             description = 'This feature may require a paid plan. Please check your billing details and try again.';
+        } else if (lowerCaseError.includes('voice name')) {
             description = 'An invalid voice was selected. Please choose a different voice and try again.';
         }
         else {
-            description = error.message;
+            description = 'An unexpected error occurred during audio generation.';
         }
       }
       

@@ -205,14 +205,16 @@ export default function GenerateVideoPage() {
           credits: increment(VIDEO_GENERATION_COST)
       });
       
-      let description = 'Muaj tej yam yuam kev thaum Nou AI tab tom tsim koj daim video.';
-       if (typeof error.message === 'string') {
-        if (error.message.includes('429') || error.message.toLowerCase().includes('quota')) {
-            description = 'You have exceeded the free usage limit for video generation. Please try again later.';
-        } else if (error.message.toLowerCase().includes('billing')) {
-            description = 'This feature is only available on a paid plan. Please enable billing for your project to generate videos.';
-        } else {
-            description = error.message;
+      let description = 'An unexpected error occurred.';
+      if (typeof error.message === 'string') {
+        const lowerCaseError = error.message.toLowerCase();
+        if (lowerCaseError.includes('429') || lowerCaseError.includes('quota')) {
+            description = 'You have exceeded the free usage limit for video generation. Please try again later or check your billing plan.';
+        } else if (lowerCaseError.includes('billing')) {
+             description = 'This feature may require a paid plan. Please check your billing details and try again.';
+        }
+        else {
+            description = 'An unexpected error occurred during video generation.';
         }
       }
       
@@ -246,5 +248,3 @@ export default function GenerateVideoPage() {
     />
   );
 }
-
-    
