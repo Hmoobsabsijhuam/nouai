@@ -25,6 +25,7 @@ interface UserNotification {
   read: boolean;
   link?: string;
   type?: 'user';
+  updatedAt?: any;
 }
 
 interface AdminNotification {
@@ -197,7 +198,7 @@ export function Notifications() {
                                                 <span>
                                                     {formatDistanceToNow(notif.updatedAt?.toDate() || notif.createdAt.toDate(), { addSuffix: true })}
                                                 </span>
-                                                <span className="hidden sm:inline-block">
+                                                <span>
                                                     · {format(notif.updatedAt?.toDate() || notif.createdAt.toDate(), 'dd/MM/yyyy')}
                                                 </span>
                                             </div>
