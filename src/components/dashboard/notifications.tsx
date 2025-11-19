@@ -1,9 +1,9 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Bell, ExternalLink } from 'lucide-react';
-import { collection, query, orderBy, limit, writeBatch, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, orderBy, limit, updateDoc, doc } from 'firebase/firestore';
 import { useCollection, WithId } from '@/firebase/firestore/use-collection';
 import { useFirebase, useMemoFirebase } from '@/firebase';
 import { Button } from '@/components/ui/button';
@@ -12,12 +12,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { format, formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow, isToday, isYesterday, formatISO, startOfDay } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '../ui/skeleton';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import { Separator } from '../ui/separator';
 
 interface UserNotification {
   message: string;
@@ -38,6 +38,29 @@ interface AdminNotification {
 
 type MergedNotification = WithId<UserNotification | AdminNotification>;
 
+function groupNotificationsByDay(notifications: MergedNotification[]): Record<string, MergedNotification[]> {
+    return notifications.reduce((acc, notif) => {
+        if (!notif.createdAt?.toDate) return acc;
+        
+        const date = notif.createdAt.toDate();
+        let dayLabel: string;
+
+        if (isToday(date)) {
+            dayLabel = 'Today';
+        } else if (isYesterday(date)) {
+            dayLabel = 'Yesterday';
+        } else {
+            dayLabel = format(date, 'MMMM d, yyyy');
+        }
+
+        if (!acc[dayLabel]) {
+            acc[dayLabel] = [];
+        }
+        acc[dayLabel].push(notif);
+        return acc;
+    }, {} as Record<string, MergedNotification[]>);
+}
+
 export function Notifications() {
   const { firestore, user } = useFirebase();
   const [open, setOpen] = useState(false);
@@ -51,7 +74,7 @@ export function Notifications() {
         ? query(
             collection(firestore, 'users', user.uid, 'user_notifications'),
             orderBy('createdAt', 'desc'),
-            limit(10)
+            limit(20)
           )
         : null,
     [firestore, user]
@@ -66,7 +89,7 @@ export function Notifications() {
         ? query(
             collection(firestore, 'admin_notifications'),
             orderBy('createdAt', 'desc'),
-            limit(10)
+            limit(20)
         )
         : null,
       [firestore, isAdmin]
@@ -80,9 +103,12 @@ export function Notifications() {
     const adminNotifsWithType: MergedNotification[] = adminNotifications?.map(n => ({...n, type: 'admin'})) || [];
     
     return [...userNotifsWithType, ...adminNotifsWithType]
-        .sort((a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
+        .sort((a, b) => (b.createdAt?.toDate()?.getTime() || 0) - (a.createdAt?.toDate()?.getTime() || 0));
 
   }, [userNotifications, adminNotifications]);
+
+  const groupedNotifications = useMemo(() => groupNotificationsByDay(mergedNotifications), [mergedNotifications]);
+  const notificationGroups = Object.entries(groupedNotifications);
 
   const unreadCount = useMemo(() => {
       return mergedNotifications.filter(n => !n.read).length;
@@ -99,7 +125,6 @@ export function Notifications() {
         console.error("Failed to mark notification as read:", error);
     }
   };
-
   
   const isLoading = isUserLoading || (isAdmin && isAdminLoading);
 
@@ -124,7 +149,7 @@ export function Notifications() {
               Recent updates.
             </p>
           </div>
-          <ScrollArea className="h-72 w-full">
+          <ScrollArea className="h-96 w-full">
             <div className="p-4 pt-0">
               {isLoading ? (
                  <div className="space-y-4">
@@ -138,44 +163,54 @@ export function Notifications() {
                     </div>
                   ))}
                 </div>
-              ) : mergedNotifications && mergedNotifications.length > 0 ? (
-                <TooltipProvider>
-                  {mergedNotifications.map((notif) => (
-                    <Link 
-                      key={notif.id}
-                      href={notif.link ?? '#'}
-                      onClick={(e) => {
-                        handleMarkAsRead(notif);
-                        if (!notif.link) e.preventDefault();
-                        else setOpen(false);
-                      }}
-                      className={cn(
-                          "grid grid-cols-[25px_1fr] items-start pb-4 last:mb-0 last:pb-0 rounded-lg p-2 -mx-2 hover:bg-accent",
-                          !notif.read && "bg-primary/10 hover:bg-primary/20"
-                      )}
-                    >
-                      <span className={`flex h-2 w-2 translate-y-1 rounded-full ${!notif.read ? 'bg-primary' : 'bg-muted'}`} />
-                      <div className="grid gap-1">
-                         <p className="text-sm font-medium">{notif.message}</p>
-                         <div className="flex items-center justify-between">
-                           {(notif.createdAt?.toDate) && (
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <p>
-                                    {formatDistanceToNow(notif.updatedAt?.toDate() || notif.createdAt.toDate(), { addSuffix: true })}
-                                </p>
-                                <p className="hidden sm:block">
-                                    ({format(notif.updatedAt?.toDate() || notif.createdAt.toDate(), 'PPp')})
-                                </p>
-                            </div>
-                           )}
-                           {notif.link && (
-                              <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                           )}
-                         </div>
-                      </div>
-                    </Link>
-                  ))}
-                </TooltipProvider>
+              ) : notificationGroups.length > 0 ? (
+                  <div className="space-y-4">
+                    {notificationGroups.map(([day, notifs]) => (
+                        <div key={day}>
+                           <div className="relative my-2">
+                              <Separator />
+                              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-2 bg-popover">
+                                  <span className="text-xs font-medium text-muted-foreground">{day}</span>
+                              </div>
+                           </div>
+                           <div className="space-y-2">
+                            {notifs.map(notif => (
+                               <Link 
+                                key={notif.id}
+                                href={notif.link ?? '#'}
+                                onClick={(e) => {
+                                    handleMarkAsRead(notif);
+                                    if (!notif.link) e.preventDefault();
+                                    else setOpen(false);
+                                }}
+                                className={cn(
+                                    "block rounded-lg p-3 -mx-2 hover:bg-accent",
+                                    !notif.read && "bg-primary/10 hover:bg-primary/20"
+                                )}
+                                >
+                                <div className="grid grid-cols-[15px_1fr] items-start">
+                                    <span className={cn("flex h-2 w-2 translate-y-1.5 rounded-full", !notif.read ? 'bg-primary' : 'bg-muted')} />
+                                    <div className="grid gap-1">
+                                        <p className="text-sm font-medium leading-tight">{notif.message}</p>
+                                        {(notif.createdAt?.toDate) && (
+                                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                                <span>
+                                                    {formatDistanceToNow(notif.updatedAt?.toDate() || notif.createdAt.toDate(), { addSuffix: true })}
+                                                </span>
+                                                <span className="hidden sm:inline-block">
+                                                    · {format(notif.updatedAt?.toDate() || notif.createdAt.toDate(), 'dd/MM/yyyy')}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    {notif.link && <ExternalLink className="h-4 w-4 text-muted-foreground justify-self-end" />}
+                                </div>
+                               </Link>
+                            ))}
+                           </div>
+                        </div>
+                    ))}
+                  </div>
               ) : (
                 <p className="text-sm text-muted-foreground text-center py-4">No new notifications.</p>
               )}
