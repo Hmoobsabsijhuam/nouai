@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -5,12 +6,13 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
-import { addDoc, collection, serverTimestamp, query, orderBy } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, query, orderBy, doc, updateDoc, increment } from 'firebase/firestore';
 import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { useFirebase, useMemoFirebase } from '@/firebase';
 import { generateVideo } from '@/ai/flows/generate-video-flow';
 import { useToast } from '@/hooks/use-toast';
 import { useCollection, WithId } from '@/firebase/firestore/use-collection';
+import { useDoc } from '@/firebase/firestore/use-doc';
 
 import { GeneratorLayout } from '@/components/generator/generator-layout';
 import { Button } from '@/components/ui/button';
@@ -31,6 +33,7 @@ interface GeneratedVideo {
   createdAt: any;
 }
 
+const VIDEO_GENERATION_COST = 25;
 
 function VideoFeedSkeleton() {
     return (
@@ -112,7 +115,7 @@ function TextToVideoControls({ form, isGenerating }: { form: any, isGenerating: 
                 <div className="space-y-2 pt-4">
                     <Button type="submit" disabled={isGenerating} size="lg" className="w-full">
                         {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                        {isGenerating ? 'Tab tom tsim...' : 'Generate'}
+                        {isGenerating ? 'Tab tom tsim...' : `Generate (${VIDEO_GENERATION_COST} credits)`}
                     </Button>
                     <p className="text-xs text-muted-foreground text-center">Bring your ideas to life with AI-powered video.</p>
                 </div>
@@ -126,6 +129,13 @@ export default function GenerateVideoPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
+
+  const userDocRef = useMemoFirebase(
+    () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
+    [firestore, user]
+  );
+  
+  const { data: profile, isLoading: isProfileLoading } = useDoc<{ credits: number }>(userDocRef);
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -150,13 +160,26 @@ export default function GenerateVideoPage() {
 
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user || !firestore || !firebaseApp) {
+    if (!user || !firestore || !firebaseApp || !profile) {
         toast({ title: 'Error', description: 'You must be logged in to generate videos.', variant: 'destructive'});
+        return;
+    }
+
+    if (profile.credits < VIDEO_GENERATION_COST) {
+        toast({
+            title: 'Insufficient Credits',
+            description: `You need at least ${VIDEO_GENERATION_COST} credits to generate a video.`,
+            variant: 'destructive',
+        });
         return;
     }
     
     setIsGenerating(true);
     try {
+        await updateDoc(doc(firestore, 'users', user.uid), {
+            credits: increment(-VIDEO_GENERATION_COST)
+        });
+
         const { videoUrl: videoDataUri } = await generateVideo({ prompt: values.prompt });
 
         const storage = getStorage(firebaseApp);
@@ -177,6 +200,11 @@ export default function GenerateVideoPage() {
 
     } catch (error: any) {
       console.error('Koj daim video tsim tsis tau:', error);
+
+      await updateDoc(doc(firestore, 'users', user.uid), {
+          credits: increment(VIDEO_GENERATION_COST)
+      });
+      
       let description = 'Muaj tej yam yuam kev thaum Nou AI tab tom tsim koj daim video.';
        if (typeof error.message === 'string') {
         if (error.message.includes('429') || error.message.toLowerCase().includes('quota')) {
@@ -200,7 +228,9 @@ export default function GenerateVideoPage() {
   
   (form as any).onSubmit = onSubmit;
   
-  if (isUserLoading || !user) {
+  const isLoading = isUserLoading || isProfileLoading;
+
+  if (isLoading || !user) {
     return (
         <div className="flex h-screen w-full items-center justify-center">
             <p>Loading...</p>
@@ -216,3 +246,5 @@ export default function GenerateVideoPage() {
     />
   );
 }
+
+    

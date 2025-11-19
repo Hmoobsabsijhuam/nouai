@@ -6,9 +6,11 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
-import { useFirebase } from '@/firebase';
+import { useFirebase, useMemoFirebase } from '@/firebase';
 import { generateSpeech } from '@/ai/flows/generate-speech-flow';
 import { useToast } from '@/hooks/use-toast';
+import { doc, updateDoc, increment } from 'firebase/firestore';
+import { useDoc } from '@/firebase/firestore/use-doc';
 
 import { GeneratorLayout } from '@/components/generator/generator-layout';
 import { Button } from '@/components/ui/button';
@@ -24,6 +26,7 @@ const formSchema = z.object({
 });
 
 const voices = ['Algenib', 'Achernar', 'Erinome', 'Gacrux', 'Puck'] as const;
+const SPEECH_GENERATION_COST = 5;
 
 function TextToSpeechControls({ form, isGenerating }: { form: any, isGenerating: boolean }) {
   return (
@@ -70,7 +73,7 @@ function TextToSpeechControls({ form, isGenerating }: { form: any, isGenerating:
         />
         <Button type="submit" disabled={isGenerating} size="lg" className="w-full">
           {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-          {isGenerating ? 'Tab Tom Tsim Suab...' : 'Generate Speech'}
+          {isGenerating ? 'Tab Tom Tsim Suab...' : `Generate Speech (${SPEECH_GENERATION_COST} credits)`}
         </Button>
       </form>
     </Form>
@@ -119,11 +122,18 @@ function SpeechContent({ isGenerating, generatedAudioUrl, onDownload }: { isGene
 
 
 export default function GenerateSpeechPage() {
-  const { user, isUserLoading } = useFirebase();
+  const { user, firestore, isUserLoading } = useFirebase();
   const router = useRouter();
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedAudioUrl, setGeneratedAudioUrl] = useState<string | null>(null);
+
+  const userDocRef = useMemoFirebase(
+    () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
+    [firestore, user]
+  );
+  
+  const { data: profile, isLoading: isProfileLoading } = useDoc<{ credits: number }>(userDocRef);
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -151,20 +161,38 @@ export default function GenerateSpeechPage() {
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user) {
+    if (!user || !firestore || !profile) {
         toast({ title: 'Error', description: 'You must be logged in to generate audio.', variant: 'destructive'});
+        return;
+    }
+
+    if (profile.credits < SPEECH_GENERATION_COST) {
+        toast({
+            title: 'Insufficient Credits',
+            description: `You need at least ${SPEECH_GENERATION_COST} credits to generate audio.`,
+            variant: 'destructive',
+        });
         return;
     }
     
     setIsGenerating(true);
     setGeneratedAudioUrl(null);
     try {
+        await updateDoc(doc(firestore, 'users', user.uid), {
+            credits: increment(-SPEECH_GENERATION_COST)
+        });
+
         const { audioUrl } = await generateSpeech({ text: values.text, voice: values.voice });
         setGeneratedAudioUrl(audioUrl);
         toast({ title: 'Koj Lub Suab Tsim Tau Lawm!', description: 'Your audio has been created.' });
 
     } catch (error: any) {
       console.error('Audio generation failed:', error);
+
+       await updateDoc(doc(firestore, 'users', user.uid), {
+          credits: increment(SPEECH_GENERATION_COST)
+      });
+
       let description = 'An unexpected error occurred during audio generation.';
        if (typeof error.message === 'string') {
         if (error.message.includes('429') || error.message.toLowerCase().includes('quota')) {
@@ -190,8 +218,10 @@ export default function GenerateSpeechPage() {
   }
 
   (form as any).onSubmit = onSubmit;
+
+  const isLoading = isUserLoading || isProfileLoading;
   
-  if (isUserLoading || !user) {
+  if (isLoading || !user) {
     return (
         <div className="flex h-screen w-full items-center justify-center">
             <p>Loading...</p>
@@ -213,3 +243,5 @@ export default function GenerateSpeechPage() {
     />
   );
 }
+
+    

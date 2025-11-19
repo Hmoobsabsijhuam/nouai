@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,12 +7,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { addDoc, collection, serverTimestamp, query, orderBy } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, query, orderBy, doc, updateDoc, increment } from 'firebase/firestore';
 import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { useFirebase, useMemoFirebase } from '@/firebase';
 import { useCollection, WithId } from '@/firebase/firestore/use-collection';
 import { generateImage } from '@/ai/flows/generate-image-flow';
 import { useToast } from '@/hooks/use-toast';
+import { useDoc } from '@/firebase/firestore/use-doc';
 
 import { GeneratorLayout } from '@/components/generator/generator-layout';
 import { Button } from '@/components/ui/button';
@@ -37,6 +39,8 @@ interface GeneratedImage {
   imageUrl: string;
   createdAt: any;
 }
+
+const IMAGE_GENERATION_COST = 10;
 
 function ImageGallerySkeleton() {
     return (
@@ -168,7 +172,7 @@ function ImageGeneratorControls({ form, isGenerating }: { form: any, isGeneratin
                 <div className="space-y-2 pt-4">
                     <Button type="submit" disabled={isGenerating} size="lg" className="w-full">
                         {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                        {isGenerating ? 'Tab tom tsim duab...' : 'Generate'}
+                        {isGenerating ? 'Tab tom tsim duab...' : `Generate (${IMAGE_GENERATION_COST} credits)`}
                     </Button>
                     <p className="text-xs text-muted-foreground text-center">Click Generate to create your image.</p>
                 </div>
@@ -182,6 +186,13 @@ export default function GenerateImagePage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
+
+  const userDocRef = useMemoFirebase(
+    () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
+    [firestore, user]
+  );
+  
+  const { data: profile, isLoading: isProfileLoading } = useDoc<{ credits: number }>(userDocRef);
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -206,18 +217,28 @@ export default function GenerateImagePage() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user || !firestore || !firebaseApp) {
+    if (!user || !firestore || !firebaseApp || !profile) {
         toast({ title: 'Error', description: 'You must be logged in to generate images.', variant: 'destructive'});
+        return;
+    }
+
+    if (profile.credits < IMAGE_GENERATION_COST) {
+        toast({
+            title: 'Insufficient Credits',
+            description: `You need at least ${IMAGE_GENERATION_COST} credits to generate an image. Please purchase more.`,
+            variant: 'destructive',
+        });
         return;
     }
     
     setIsGenerating(true);
     try {
-        // This is a placeholder for the multi-image generation logic
-        // For now, we generate one image at a time
+        await updateDoc(doc(firestore, 'users', user.uid), {
+            credits: increment(-IMAGE_GENERATION_COST)
+        });
+        
         const { imageUrl: imageDataUri } = await generateImage({ prompt: values.prompt });
 
-        // Upload to Firebase Storage
         const storage = getStorage(firebaseApp);
         const imageId = `${Date.now()}`;
         const storageRef = ref(storage, `generated-images/${user.uid}/${imageId}.png`);
@@ -225,7 +246,6 @@ export default function GenerateImagePage() {
         const uploadResult = await uploadString(storageRef, imageDataUri, 'data_url');
         const downloadUrl = await getDownloadURL(uploadResult.ref);
 
-        // Save to Firestore
         const imagesCollection = collection(firestore, 'users', user.uid, 'generated_images');
         await addDoc(imagesCollection, {
             prompt: values.prompt,
@@ -237,11 +257,21 @@ export default function GenerateImagePage() {
 
     } catch (error: any) {
       console.error('Koj daim duab tsim tsis tau:', error);
+
+      // Re-credit user if generation fails
+       await updateDoc(doc(firestore, 'users', user.uid), {
+          credits: increment(IMAGE_GENERATION_COST)
+      });
+      
       let description = 'An unexpected error occurred.';
       if (typeof error.message === 'string') {
-        if (error.message.includes('429') || error.message.toLowerCase().includes('quota')) {
+        const lowerCaseError = error.message.toLowerCase();
+        if (lowerCaseError.includes('429') || lowerCaseError.includes('quota')) {
             description = 'You have exceeded the free usage limit for image generation. Please try again later or check your billing plan.';
-        } else {
+        } else if (lowerCaseError.includes('billing')) {
+             description = 'This feature may require a paid plan. Please check your billing details and try again.';
+        }
+        else {
             description = error.message;
         }
       }
@@ -259,7 +289,9 @@ export default function GenerateImagePage() {
   // Attach onSubmit to the form object so it can be accessed in the child component
   (form as any).onSubmit = onSubmit;
   
-  if (isUserLoading || !user) {
+  const isLoading = isUserLoading || isProfileLoading;
+
+  if (isLoading || !user) {
     return (
         <div className="flex h-screen w-full items-center justify-center">
             <p>Loading...</p>
@@ -275,3 +307,5 @@ export default function GenerateImagePage() {
     />
   );
 }
+
+    
