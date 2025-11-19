@@ -230,11 +230,6 @@ export default function ImageToVideoPage() {
     }
 
     if (profile.credits < VIDEO_GENERATION_COST) {
-        toast({
-            title: 'Insufficient Credits',
-            description: `You need at least ${VIDEO_GENERATION_COST} credits. Redirecting to purchase page.`,
-            variant: 'destructive',
-        });
         router.push('/billing');
         return;
     }

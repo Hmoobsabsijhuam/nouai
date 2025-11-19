@@ -223,11 +223,6 @@ export default function GenerateImagePage() {
     }
 
     if (profile.credits < IMAGE_GENERATION_COST) {
-        toast({
-            title: 'Insufficient Credits',
-            description: `You need at least ${IMAGE_GENERATION_COST} credits. Redirecting to purchase page.`,
-            variant: 'destructive',
-        });
         router.push('/billing');
         return;
     }
