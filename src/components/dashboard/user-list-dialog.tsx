@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { WithId } from '@/firebase/firestore/use-collection';
-import { Timestamp, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { Timestamp, deleteDoc, doc, updateDoc, collection, query, orderBy, limit } from 'firebase/firestore';
 import { format } from 'date-fns';
-import { useFirebase } from '@/firebase';
+import { useFirebase, useMemoFirebase } from '@/firebase';
 import {
   Dialog,
   DialogContent,
@@ -40,6 +40,8 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
+import { useCollection } from '@/firebase/firestore/use-collection';
+import { Separator } from '../ui/separator';
 
 interface UserData {
   email: string;
@@ -50,12 +52,110 @@ interface UserData {
   credits?: number;
 }
 
+interface PurchaseRecord {
+    createdAt: Timestamp;
+    credits: number;
+}
+
 interface UserListDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   users: WithId<UserData>[] | null;
   isLoading: boolean;
 }
+
+function EditCreditsDialog({
+    user,
+    onOpenChange,
+    onSave
+}: {
+    user: WithId<UserData> | null;
+    onOpenChange: (open: boolean) => void;
+    onSave: (userId: string, amount: number) => Promise<void>;
+}) {
+    const { firestore } = useFirebase();
+    const [newCreditAmount, setNewCreditAmount] = useState<number>(0);
+    const [isCreditSaving, setIsCreditSaving] = useState(false);
+
+    const purchaseHistoryQuery = useMemoFirebase(() => {
+        if (!firestore || !user) return null;
+        return query(collection(firestore, 'users', user.id, 'purchase_history'), orderBy('createdAt', 'desc'), limit(5));
+    }, [firestore, user]);
+
+    const { data: purchaseHistory, isLoading: isHistoryLoading } = useCollection<PurchaseRecord>(purchaseHistoryQuery);
+    
+    React.useEffect(() => {
+        if (user) {
+            setNewCreditAmount(user.credits ?? 0);
+        }
+    }, [user]);
+
+    const handleSave = async () => {
+        if (!user) return;
+        setIsCreditSaving(true);
+        await onSave(user.id, newCreditAmount);
+        setIsCreditSaving(false);
+    };
+
+    return (
+         <Dialog open={!!user} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-md">
+                <DialogHeader>
+                    <DialogTitle>Edit Credits</DialogTitle>
+                    <DialogDescription>
+                        Update the credit balance for {user?.email}.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="credits-amount" className="text-right">
+                            Credits
+                        </Label>
+                        <Input
+                            id="credits-amount"
+                            type="number"
+                            value={newCreditAmount}
+                            onChange={(e) => setNewCreditAmount(Number(e.target.value))}
+                            className="col-span-3"
+                        />
+                    </div>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-2">
+                    <h4 className="text-sm font-medium">Recent History</h4>
+                    {isHistoryLoading ? (
+                        <div className="space-y-2">
+                           <Skeleton className="h-4 w-full" />
+                           <Skeleton className="h-4 w-full" />
+                        </div>
+                    ) : purchaseHistory && purchaseHistory.length > 0 ? (
+                        <div className="space-y-2 text-sm text-muted-foreground">
+                            {purchaseHistory.map(record => (
+                                <div key={record.id} className="flex justify-between items-center">
+                                    <span>{format(record.createdAt.toDate(), 'MMM d, yyyy, p')}</span>
+                                    <span className="font-medium text-foreground">+{record.credits} credits</span>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-sm text-muted-foreground">No purchase history.</p>
+                    )}
+                </div>
+
+                 <DialogFooter>
+                    <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+                    <Button onClick={handleSave} disabled={isCreditSaving}>
+                        {isCreditSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Save Changes
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+         </Dialog>
+    );
+}
+
 
 export function UserListDialog({ isOpen, onOpenChange, users, isLoading }: UserListDialogProps) {
   const router = useRouter();
@@ -64,8 +164,6 @@ export function UserListDialog({ isOpen, onOpenChange, users, isLoading }: UserL
   const [userToDelete, setUserToDelete] = useState<WithId<UserData> | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [userToEditCredits, setUserToEditCredits] = useState<WithId<UserData> | null>(null);
-  const [newCreditAmount, setNewCreditAmount] = useState<number>(0);
-  const [isCreditSaving, setIsCreditSaving] = useState(false);
 
   const handleEditProfile = (userId: string) => {
     router.push(`/profile?userId=${userId}`);
@@ -78,19 +176,17 @@ export function UserListDialog({ isOpen, onOpenChange, users, isLoading }: UserL
 
   const handleEditCredits = (user: WithId<UserData>) => {
     setUserToEditCredits(user);
-    setNewCreditAmount(user.credits ?? 0);
   };
 
-  const handleSaveCredits = async () => {
-    if (!userToEditCredits || !firestore) return;
+  const handleSaveCredits = async (userId: string, amount: number) => {
+    if (!firestore) return;
 
-    setIsCreditSaving(true);
     try {
-        const userRef = doc(firestore, 'users', userToEditCredits.id);
-        await updateDoc(userRef, { credits: Number(newCreditAmount) });
+        const userRef = doc(firestore, 'users', userId);
+        await updateDoc(userRef, { credits: Number(amount) });
         toast({
             title: 'Credits Updated',
-            description: `${userToEditCredits.email}'s balance is now ${newCreditAmount}.`
+            description: `User's balance is now ${amount}.`
         });
         setUserToEditCredits(null);
     } catch (error) {
@@ -100,8 +196,6 @@ export function UserListDialog({ isOpen, onOpenChange, users, isLoading }: UserL
             title: 'Error',
             description: 'Failed to update credits.'
         });
-    } finally {
-        setIsCreditSaving(false);
     }
   }
 
@@ -236,37 +330,11 @@ export function UserListDialog({ isOpen, onOpenChange, users, isLoading }: UserL
         </AlertDialogContent>
     </AlertDialog>
 
-     <Dialog open={!!userToEditCredits} onOpenChange={() => setUserToEditCredits(null)}>
-        <DialogContent className="max-w-sm">
-            <DialogHeader>
-                <DialogTitle>Edit Credits</DialogTitle>
-                <DialogDescription>
-                    Update the credit balance for {userToEditCredits?.email}.
-                </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="credits-amount" className="text-right">
-                        Credits
-                    </Label>
-                    <Input
-                        id="credits-amount"
-                        type="number"
-                        value={newCreditAmount}
-                        onChange={(e) => setNewCreditAmount(Number(e.target.value))}
-                        className="col-span-3"
-                    />
-                </div>
-            </div>
-             <DialogFooter>
-                <Button variant="outline" onClick={() => setUserToEditCredits(null)}>Cancel</Button>
-                <Button onClick={handleSaveCredits} disabled={isCreditSaving}>
-                    {isCreditSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Save Changes
-                </Button>
-            </DialogFooter>
-        </DialogContent>
-     </Dialog>
+    <EditCreditsDialog
+        user={userToEditCredits}
+        onOpenChange={() => setUserToEditCredits(null)}
+        onSave={handleSaveCredits}
+    />
     </>
   );
 }
