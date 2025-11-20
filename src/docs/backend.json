@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "User": {
@@ -347,6 +348,14 @@
             "type": "number",
             "description": "The number of credits purchased."
         },
+        "price": {
+            "type": "number",
+            "description": "The price of the purchase."
+        },
+        "previousBalance": {
+            "type": "number",
+            "description": "The user's balance before the purchase."
+        },
         "createdAt": {
           "type": "string",
           "format": "date-time",
@@ -362,6 +371,7 @@
         "userId",
         "message",
         "credits",
+        "price",
         "createdAt",
         "paymentStatus"
       ]

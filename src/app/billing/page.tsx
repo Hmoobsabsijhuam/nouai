@@ -4,15 +4,15 @@
 import { useState } from 'react';
 import { useFirebase, useMemoFirebase } from '@/firebase';
 import { useDoc } from '@/firebase/firestore/use-doc';
-import { doc, updateDoc, increment, collection, addDoc, serverTimestamp, writeBatch, Firestore } from 'firebase/firestore';
+import { doc } from 'firebase/firestore';
 import { DashboardLayout } from '@/components/dashboard/dashboard-layout';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Coins, Loader2, Zap } from 'lucide-react';
+import { Coins, Zap } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
+import { useRouter } from 'next/navigation';
+
 
 interface CreditPackage {
   credits: number;
@@ -28,8 +28,7 @@ const creditPackages: CreditPackage[] = [
 
 export default function BillingPage() {
   const { user, firestore, isUserLoading } = useFirebase();
-  const { toast } = useToast();
-  const [purchasingId, setPurchasingId] = useState<number | null>(null);
+  const router = useRouter();
   
   const userDocRef = useMemoFirebase(
     () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
@@ -38,67 +37,11 @@ export default function BillingPage() {
   
   const { data: profile, isLoading: isProfileLoading } = useDoc<{ credits: number }>(userDocRef);
 
-  const handlePurchase = async (pkg: CreditPackage) => {
-    if (!user || !firestore || !profile) {
-      toast({ title: "Error", description: "You must be logged in.", variant: "destructive" });
+  const handlePurchase = (pkg: CreditPackage) => {
+    if (!user || !profile) {
       return;
     }
-    setPurchasingId(pkg.credits);
-    
-    try {
-        const batch = writeBatch(firestore);
-        
-        // 1. Create a notification for the admin with a pending status
-        const adminNotifCollection = collection(firestore, 'admin_notifications');
-        const newNotifDocRef = doc(adminNotifCollection);
-        const message = `${user.displayName || user.email} requested a purchase of ${pkg.credits} credits.`;
-
-        batch.set(newNotifDocRef, {
-            userId: user.uid,
-            userEmail: user.email,
-            message: message,
-            createdAt: serverTimestamp(),
-            read: false,
-            paymentStatus: 'pending', // Set status to pending
-            link: `/admin/payments/${newNotifDocRef.id}`
-        });
-
-        // 2. Create a purchase history record for the user with a pending status
-        const userPurchaseHistoryRef = doc(firestore, 'users', user.uid, 'purchase_history', newNotifDocRef.id);
-        batch.set(userPurchaseHistoryRef, {
-            userId: user.uid,
-            message: `Requested ${pkg.credits} credits.`,
-            credits: pkg.credits,
-            previousBalance: profile.credits ?? 0,
-            createdAt: serverTimestamp(),
-            paymentStatus: 'pending' // Set status to pending
-        });
-
-        await batch.commit();
-
-        toast({
-            title: "Purchase Request Sent!",
-            description: `Your request for ${pkg.credits} credits is pending admin approval.`,
-        });
-
-    } catch (error: any) {
-        console.error("Error requesting credit purchase:", error);
-        
-        const contextualError = new FirestorePermissionError({
-            operation: 'write',
-            path: 'admin_notifications', 
-            requestResourceData: { amount: pkg.credits }
-        });
-        errorEmitter.emit('permission-error', contextualError);
-        
-        toast({
-            title: "Request Failed",
-            description: "Could not send your purchase request. Please try again.",
-            variant: "destructive"
-        });
-    } finally {
-      setPurchasingId(null);
-    }
+    router.push(`/payment?credits=${pkg.credits}&price=${pkg.price}`);
   };
   
   const isLoading = isUserLoading || isProfileLoading;
@@ -145,14 +88,9 @@ export default function BillingPage() {
                 <Button 
                   className="w-full" 
                   onClick={() => handlePurchase(pkg)}
-                  disabled={purchasingId !== null}
                 >
-                  {purchasingId === pkg.credits ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <Zap className="mr-2 h-4 w-4" />
-                  )}
-                  {purchasingId === pkg.credits ? 'Processing...' : 'Purchase'}
+                  <Zap className="mr-2 h-4 w-4" />
+                  Purchase
                 </Button>
               </CardFooter>
             </Card>
