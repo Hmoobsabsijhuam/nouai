@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useFirebase } from '@/firebase';
@@ -30,6 +31,7 @@ import { Logo } from '../icons/logo';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { signOut } from 'firebase/auth';
 import { Header } from '../dashboard/header';
+import { cn } from '@/lib/utils';
 
 
 function UserProfile() {
@@ -103,7 +105,7 @@ export function GeneratorLayout({
 }: {
   activeTab: 'image' | 'video' | 'animate' | 'speech';
   controlPanel: React.ReactNode;
-  contentPanel: React.ReactNode;
+  contentPanel: React.ReactNode | null;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -224,7 +226,10 @@ export function GeneratorLayout({
 
         <div className="flex-1 flex flex-col h-screen">
           <Header />
-          <div className="grid flex-1 md:grid-cols-[400px_1fr] overflow-hidden">
+          <div className={cn(
+            "grid flex-1 overflow-hidden",
+            contentPanel ? "md:grid-cols-[400px_1fr]" : "grid-cols-1"
+          )}>
             {/* Control Panel */}
             <div className="w-full bg-background p-4 border-b md:border-b-0 md:border-r flex flex-col overflow-y-auto">
               <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-4">
@@ -235,15 +240,17 @@ export function GeneratorLayout({
                   <TabsTrigger value="speech">Speech</TabsTrigger>
                 </TabsList>
               </Tabs>
-              <div className="overflow-y-auto">
+              <div className={cn("overflow-y-auto", !contentPanel && "max-w-md w-full mx-auto")}>
                   {controlPanel}
               </div>
             </div>
             
             {/* Content Feed */}
-            <main className="bg-secondary p-4 overflow-y-auto">
-              {contentPanel}
-            </main>
+            {contentPanel && (
+                <main className="bg-secondary p-4 overflow-y-auto">
+                    {contentPanel}
+                </main>
+            )}
           </div>
         </div>
       </div>
