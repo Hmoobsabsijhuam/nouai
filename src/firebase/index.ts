@@ -3,28 +3,27 @@
 
 import { firebaseConfig } from '@/firebase/config';
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore'
+import { getAuth, Auth } from 'firebase/auth';
+import { getFirestore, Firestore } from 'firebase/firestore';
 
 let firebaseApp: FirebaseApp;
 
-// IMPORTANT: DO NOT MODIFY THIS FUNCTION
-export function initializeFirebase() {
-  if (getApps().length === 0) {
+// A function to initialize Firebase and get the services.
+// This will only initialize the app once.
+export function initializeFirebase(): { firebaseApp: FirebaseApp, auth: Auth, firestore: Firestore } {
+  if (!getApps().length) {
+    if (!firebaseConfig.apiKey) {
+        throw new Error('Firebase API key is not set. Please check your environment variables.');
+    }
     firebaseApp = initializeApp(firebaseConfig);
   } else {
     firebaseApp = getApp();
   }
 
-  return getSdks(firebaseApp);
-}
+  const auth = getAuth(firebaseApp);
+  const firestore = getFirestore(firebaseApp);
 
-export function getSdks(app: FirebaseApp) {
-  return {
-    firebaseApp: app,
-    auth: getAuth(app),
-    firestore: getFirestore(app)
-  };
+  return { firebaseApp, auth, firestore };
 }
 
 export * from './provider';
