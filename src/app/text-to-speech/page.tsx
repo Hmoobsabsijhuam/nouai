@@ -15,7 +15,7 @@ import { useDoc } from '@/firebase/firestore/use-doc';
 import { GeneratorLayout } from '@/components/generator/generator-layout';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Download, Loader2, Mic, Wand2, X } from 'lucide-react';
@@ -258,13 +258,7 @@ export default function GenerateSpeechPage() {
     <GeneratorLayout
         activeTab="speech"
         controlPanel={controlPanel}
-        contentPanel={
-            <div className="flex h-full w-full flex-col items-center justify-center rounded-lg border border-dashed text-center p-8">
-                <Mic className="mx-auto h-10 w-10 text-muted-foreground" />
-                <h3 className="mt-4 text-md font-semibold">Tsis tau muaj suab li</h3>
-                <p className="mt-1 text-xs text-muted-foreground">Koj lub suab yuav tshwm sim ntawm no.</p>
-            </div>
-        }
+        contentPanel={null}
     />
   );
 }
