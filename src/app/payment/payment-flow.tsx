@@ -17,8 +17,7 @@ import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-const ADMIN_BANK_ACCOUNT = '123-456-7890'; // Simulated admin bank account
-const ADMIN_ACCOUNT_NAME = 'NOUKHA HOUATOUXAY MR';
+const ADMIN_ACCOUNT_NAME = 'Nou AI';
 
 function PaymentPageSkeleton() {
     return (
@@ -161,10 +160,9 @@ export function PaymentFlow() {
 
                 {showBankDetails && (
                     <div className="p-3 bg-secondary rounded-md text-sm space-y-4">
-                        <p>Please transfer ${price} to the following bank account and enter your account number below for verification:</p>
+                        <p>Please transfer ${price} to the following account and enter your account number below for verification:</p>
                         <div className="font-mono bg-background p-2 rounded">
                             <p><strong>Account Name:</strong> {ADMIN_ACCOUNT_NAME}</p>
-                            <p><strong>Account Number:</strong> {ADMIN_BANK_ACCOUNT}</p>
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="user-bank-account">Your Bank Account Number</Label>

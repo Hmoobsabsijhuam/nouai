@@ -228,11 +228,11 @@ export default function PaymentTrackingPage() {
                                 <span className="text-muted-foreground">To Account</span>
                                  <div className="flex items-center gap-2 text-right">
                                      <div>
-                                        <p className="font-bold">NOUKHA HOUATOUXAY MR</p>
+                                        <p className="font-bold">Nou AI</p>
                                         <p className="text-xs text-muted-foreground">ADMIN</p>
                                     </div>
                                     <Avatar>
-                                        <AvatarFallback>?</AvatarFallback>
+                                        <AvatarFallback>N</AvatarFallback>
                                     </Avatar>
                                 </div>
                             </div>
