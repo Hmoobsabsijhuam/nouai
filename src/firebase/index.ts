@@ -11,9 +11,6 @@ let firebaseApp: FirebaseApp;
 // IMPORTANT: DO NOT MODIFY THIS FUNCTION
 export function initializeFirebase() {
   if (getApps().length === 0) {
-    if (!firebaseConfig.apiKey) {
-        throw new Error('Firebase API key is not set. Please check your environment variables.');
-    }
     firebaseApp = initializeApp(firebaseConfig);
   } else {
     firebaseApp = getApp();
@@ -36,4 +33,3 @@ export * from './firestore/use-collection';
 export * from './firestore/use-doc';
 export * from './errors';
 export * from './error-emitter';
-
