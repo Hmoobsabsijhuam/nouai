@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -8,36 +7,26 @@ import { useToast } from '@/hooks/use-toast';
 import { collection, doc, writeBatch, serverTimestamp } from 'firebase/firestore';
 
 import { DashboardLayout } from '@/components/dashboard/dashboard-layout';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, ArrowLeft, Copy } from 'lucide-react';
+import { Loader2, ArrowLeft, Banknote } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 
 const ADMIN_BANK_ACCOUNT = '123-456-7890'; // Simulated admin bank account
+const ADMIN_ACCOUNT_NAME = 'NOUKHA HOUATOUXAY MR';
 
 function PaymentPageSkeleton() {
     return (
         <DashboardLayout>
-            <div className="max-w-2xl mx-auto">
-                <Skeleton className="h-10 w-32 mb-4" />
+            <div className="max-w-md mx-auto">
+                <Skeleton className="h-8 w-48 mb-4" />
                 <Card>
-                    <CardHeader>
-                        <Skeleton className="h-8 w-48" />
-                        <Skeleton className="h-4 w-64 mt-2" />
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                        <div className="space-y-2">
-                           <Skeleton className="h-5 w-32" />
-                           <Skeleton className="h-12 w-full" />
-                        </div>
-                        <div className="space-y-2">
-                           <Skeleton className="h-5 w-32" />
-                           <Skeleton className="h-12 w-full" />
-                        </div>
-                         <div className="space-y-2">
-                           <Skeleton className="h-5 w-24" />
-                           <Skeleton className="h-12 w-full" />
-                        </div>
+                    <CardContent className="p-6 space-y-4">
+                        <Skeleton className="h-6 w-32" />
+                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-10 w-full" />
                     </CardContent>
                     <CardFooter>
                         <Skeleton className="h-12 w-full" />
@@ -58,6 +47,7 @@ export function PaymentFlow() {
   const [credits, setCredits] = useState<number | null>(null);
   const [price, setPrice] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showBankDetails, setShowBankDetails] = useState(false);
 
   useEffect(() => {
     const creditsParam = searchParams.get('credits');
@@ -66,18 +56,9 @@ export function PaymentFlow() {
       setCredits(parseInt(creditsParam, 10));
       setPrice(parseInt(priceParam, 10));
     } else {
-      // If params are missing, redirect back to billing
       router.replace('/billing');
     }
   }, [searchParams, router]);
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text).then(() => {
-        toast({ title: "Copied!", description: "Bank account number copied to clipboard." });
-    }, (err) => {
-        toast({ title: "Failed to copy", variant: "destructive" });
-    });
-  }
 
   const handleConfirmPayment = async () => {
     if (!user || !firestore || !credits || !price) {
@@ -90,7 +71,6 @@ export function PaymentFlow() {
     try {
         const batch = writeBatch(firestore);
         
-        // 1. Create admin notification
         const adminNotifCollection = collection(firestore, 'admin_notifications');
         const newNotifDocRef = doc(adminNotifCollection);
         const message = `${user.displayName || user.email} requested a purchase of ${credits} credits for $${price}.`;
@@ -105,7 +85,6 @@ export function PaymentFlow() {
             link: `/admin/payments/${newNotifDocRef.id}`
         });
 
-        // 2. Create user's purchase history record
         const userPurchaseHistoryRef = doc(firestore, 'users', user.uid, 'purchase_history', newNotifDocRef.id);
         batch.set(userPurchaseHistoryRef, {
             userId: user.uid,
@@ -143,53 +122,59 @@ export function PaymentFlow() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-md mx-auto">
         <Button variant="outline" size="sm" onClick={() => router.back()} className="mb-4">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
         </Button>
-        <Card>
-          <CardHeader>
-            <CardTitle>Complete Your Purchase</CardTitle>
-            <CardDescription>
-              To finalize your purchase of {credits} credits for ${price}, please transfer the amount to the account below.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-                <h3 className="font-medium text-lg">Payment Details</h3>
-                <div className="flex items-center justify-between rounded-lg border p-4">
-                    <span>Amount Due</span>
-                    <span className="font-bold text-xl">${price}</span>
-                </div>
-                 <div className="flex items-center justify-between rounded-lg border p-4">
-                    <span>Credits to Receive</span>
-                    <span className="font-bold text-xl">{credits}</span>
-                </div>
+        <h1 className="text-2xl font-bold mb-4">Complete your purchase</h1>
+        
+        <div className="border rounded-lg bg-card shadow-sm p-4">
+            <div className="flex justify-between items-center mb-4">
+                <span className="text-muted-foreground">Amount Due:</span>
+                <span className="font-bold text-lg">${price}</span>
             </div>
+            <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Credits:</span>
+                <span className="font-bold text-lg">{credits}</span>
+            </div>
+            
+            <Separator className="my-4" />
+
             <div className="space-y-2">
-                <h3 className="font-medium text-lg">Bank Transfer Information</h3>
-                <div className="flex items-center justify-between rounded-lg border bg-secondary p-4">
-                    <div className="flex flex-col">
-                        <span className="text-sm text-muted-foreground">Bank Account Number</span>
-                        <span className="font-mono text-lg">{ADMIN_BANK_ACCOUNT}</span>
+                <Button 
+                    variant="outline" 
+                    className={cn("w-full justify-start text-left h-auto py-3", showBankDetails && "border-primary ring-2 ring-primary")}
+                    onClick={() => setShowBankDetails(true)}
+                >
+                    <Banknote className="mr-4 h-6 w-6" />
+                    <div>
+                        <p className="font-semibold">Pay with Bank Transfer</p>
+                        <p className="text-xs text-muted-foreground">Transfer to the account below.</p>
                     </div>
-                     <Button variant="ghost" size="icon" onClick={() => copyToClipboard(ADMIN_BANK_ACCOUNT)}>
-                        <Copy className="h-5 w-5" />
-                     </Button>
-                </div>
-                 <p className="text-xs text-muted-foreground">
-                    After you have completed the transfer, click the button below to notify the administrator. Your credits will be added to your account upon verification.
-                </p>
+                </Button>
+
+                {showBankDetails && (
+                    <div className="p-3 bg-secondary rounded-md text-sm space-y-2">
+                        <p>Please transfer ${price} to the following bank account:</p>
+                        <div className="font-mono bg-background p-2 rounded">
+                            <p><strong>Account Name:</strong> {ADMIN_ACCOUNT_NAME}</p>
+                            <p><strong>Account Number:</strong> {ADMIN_BANK_ACCOUNT}</p>
+                        </div>
+                        <p className="text-xs text-muted-foreground">Your credits will be added after payment is verified.</p>
+                    </div>
+                )}
             </div>
-          </CardContent>
-          <CardFooter>
-            <Button className="w-full" size="lg" onClick={handleConfirmPayment} disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isSubmitting ? "Submitting..." : "I have completed the transfer"}
-            </Button>
-          </CardFooter>
-        </Card>
+        </div>
+
+        <p className="text-xs text-muted-foreground my-4 px-1">
+            By clicking "Confirm Purchase", you agree that you have completed the bank transfer.
+        </p>
+
+        <Button className="w-full" size="lg" onClick={handleConfirmPayment} disabled={isSubmitting || !showBankDetails}>
+          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {isSubmitting ? "Submitting..." : "Confirm Purchase"}
+        </Button>
       </div>
     </DashboardLayout>
   );
