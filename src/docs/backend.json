@@ -352,9 +352,9 @@
             "type": "number",
             "description": "The price of the purchase."
         },
-        "previousBalance": {
-            "type": "number",
-            "description": "The user's balance before the purchase."
+        "userBankAccount": {
+            "type": "string",
+            "description": "The user's bank account number provided for the transaction."
         },
         "createdAt": {
           "type": "string",
@@ -372,6 +372,7 @@
         "message",
         "credits",
         "price",
+        "userBankAccount",
         "createdAt",
         "paymentStatus"
       ]

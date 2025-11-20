@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -13,6 +14,8 @@ import { Loader2, ArrowLeft, Banknote } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 const ADMIN_BANK_ACCOUNT = '123-456-7890'; // Simulated admin bank account
 const ADMIN_ACCOUNT_NAME = 'NOUKHA HOUATOUXAY MR';
@@ -48,6 +51,7 @@ export function PaymentFlow() {
   const [price, setPrice] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showBankDetails, setShowBankDetails] = useState(false);
+  const [userBankAccount, setUserBankAccount] = useState('');
 
   useEffect(() => {
     const creditsParam = searchParams.get('credits');
@@ -61,8 +65,8 @@ export function PaymentFlow() {
   }, [searchParams, router]);
 
   const handleConfirmPayment = async () => {
-    if (!user || !firestore || !credits || !price) {
-      toast({ title: "Error", description: "Missing required information.", variant: "destructive" });
+    if (!user || !firestore || !credits || !price || !userBankAccount) {
+      toast({ title: "Error", description: "Please enter your bank account number.", variant: "destructive" });
       return;
     }
     
@@ -73,7 +77,7 @@ export function PaymentFlow() {
         
         const adminNotifCollection = collection(firestore, 'admin_notifications');
         const newNotifDocRef = doc(adminNotifCollection);
-        const message = `${user.displayName || user.email} requested a purchase of ${credits} credits for $${price}.`;
+        const message = `${user.displayName || user.email} requested a purchase of ${credits} credits for $${price} from account ${userBankAccount}.`;
         
         batch.set(newNotifDocRef, {
             userId: user.uid,
@@ -91,6 +95,7 @@ export function PaymentFlow() {
             message: `Requested ${credits} credits for $${price}.`,
             credits: credits,
             price: price,
+            userBankAccount: userBankAccount,
             createdAt: serverTimestamp(),
             paymentStatus: 'pending'
         });
@@ -141,7 +146,7 @@ export function PaymentFlow() {
             
             <Separator className="my-4" />
 
-            <div className="space-y-2">
+            <div className="space-y-4">
                 <Button 
                     variant="outline" 
                     className={cn("w-full justify-start text-left h-auto py-3", showBankDetails && "border-primary ring-2 ring-primary")}
@@ -155,11 +160,20 @@ export function PaymentFlow() {
                 </Button>
 
                 {showBankDetails && (
-                    <div className="p-3 bg-secondary rounded-md text-sm space-y-2">
-                        <p>Please transfer ${price} to the following bank account:</p>
+                    <div className="p-3 bg-secondary rounded-md text-sm space-y-4">
+                        <p>Please transfer ${price} to the following bank account and enter your account number below for verification:</p>
                         <div className="font-mono bg-background p-2 rounded">
                             <p><strong>Account Name:</strong> {ADMIN_ACCOUNT_NAME}</p>
                             <p><strong>Account Number:</strong> {ADMIN_BANK_ACCOUNT}</p>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="user-bank-account">Your Bank Account Number</Label>
+                          <Input
+                              id="user-bank-account"
+                              placeholder="Enter your account number"
+                              value={userBankAccount}
+                              onChange={(e) => setUserBankAccount(e.target.value)}
+                          />
                         </div>
                         <p className="text-xs text-muted-foreground">Your credits will be added after payment is verified.</p>
                     </div>
@@ -168,10 +182,10 @@ export function PaymentFlow() {
         </div>
 
         <p className="text-xs text-muted-foreground my-4 px-1">
-            By clicking "Confirm Purchase", you agree that you have completed the bank transfer.
+            By clicking "Confirm Purchase", you agree that you have completed the bank transfer from the account provided.
         </p>
 
-        <Button className="w-full" size="lg" onClick={handleConfirmPayment} disabled={isSubmitting || !showBankDetails}>
+        <Button className="w-full" size="lg" onClick={handleConfirmPayment} disabled={isSubmitting || !showBankDetails || !userBankAccount}>
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {isSubmitting ? "Submitting..." : "Confirm Purchase"}
         </Button>

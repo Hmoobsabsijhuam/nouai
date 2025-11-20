@@ -116,6 +116,9 @@ export default function PaymentTrackingPage() {
 
     const creditAmountMatch = notification?.message.match(/(\d+)\s*credits/);
     const creditAmount = creditAmountMatch ? parseInt(creditAmountMatch[1], 10) : 0;
+    const userAccountMatch = notification?.message.match(/from account (.+)\./);
+    const userBankAccount = userAccountMatch ? userAccountMatch[1] : 'Not provided';
+
 
     const handleStatusUpdate = async (status: PaymentStatus) => {
         if (!notifDocRef || !firestore || !notification) return;
@@ -212,6 +215,7 @@ export default function PaymentTrackingPage() {
                                     <div>
                                         <p className="font-bold">{buyerProfile?.displayName || 'Unknown User'}</p>
                                         <p className="text-xs text-muted-foreground">{buyerProfile?.email}</p>
+                                        <p className="font-mono text-xs">{userBankAccount}</p>
                                     </div>
                                     <Avatar>
                                         <AvatarImage src={buyerProfile?.photoURL}/>
