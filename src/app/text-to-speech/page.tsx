@@ -91,46 +91,43 @@ function TextToSpeechControls({ form, isGenerating, cost }: { form: any, isGener
   );
 }
 
-function SpeechContent({ isGenerating, generatedAudioUrl, onDownload }: { isGenerating: boolean; generatedAudioUrl: string | null; onDownload: () => void; }) {
-  if (!isGenerating && !generatedAudioUrl) {
+function GeneratedAudioPlayer({ audioUrl, onDownload, isGenerating }: { audioUrl: string | null; onDownload: () => void; isGenerating: boolean; }) {
+  if (isGenerating) {
     return (
-      <div className="flex h-full w-full flex-col items-center justify-center rounded-lg border border-dashed text-center p-8">
-        <Mic className="mx-auto h-10 w-10 text-muted-foreground" />
-        <h3 className="mt-4 text-md font-semibold">Tsis tau muaj suab li</h3>
-        <p className="mt-1 text-xs text-muted-foreground">Koj lub suab yuav tshwm sim ntawm no.</p>
+      <div className="mt-6">
+        <Card className="w-full max-w-md mx-auto">
+          <CardContent className="flex flex-col items-center gap-4 p-8 text-muted-foreground">
+            <Loader2 className="h-8 w-8 animate-spin" />
+            <p>Tab Tom Tsim Koj Lub Suab...</p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
+  if (!audioUrl) {
+    return null;
+  }
+  
   return (
-    <div className="flex items-center justify-center h-full">
-        <Card className="w-full max-w-md">
+    <div className="mt-6">
+        <Card className="w-full max-w-md mx-auto">
             <CardHeader>
                 <CardTitle>Generated Audio</CardTitle>
             </CardHeader>
             <CardContent className="flex items-center justify-center p-6">
-                {isGenerating ? (
-                    <div className="flex flex-col items-center gap-4 p-8 text-muted-foreground">
-                        <Loader2 className="h-8 w-8 animate-spin" />
-                        <p>Tab Tom Tsim Koj Lub Suab...</p>
-                    </div>
-                ) : generatedAudioUrl ? (
-                    <audio src={generatedAudioUrl} controls className="w-full"></audio>
-                ) : null}
+                <audio src={audioUrl} controls className="w-full"></audio>
             </CardContent>
-            {generatedAudioUrl && !isGenerating && (
-                <CardFooter>
-                    <Button onClick={onDownload} className="w-full">
-                        <Download className="mr-2 h-4 w-4" />
-                        Download Audio (.wav)
-                    </Button>
-                </CardFooter>
-            )}
+            <CardFooter>
+                <Button onClick={onDownload} className="w-full">
+                    <Download className="mr-2 h-4 w-4" />
+                    Download Audio (.wav)
+                </Button>
+            </CardFooter>
         </Card>
     </div>
   );
 }
-
 
 export default function GenerateSpeechPage() {
   const { user, firestore, isUserLoading } = useFirebase();
@@ -180,7 +177,7 @@ export default function GenerateSpeechPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!user || !firestore || !profile) {
-        toast({ title: 'Error', description: 'You must be logged in to generate audio.', variant: 'destructive'});
+        router.push('/billing');
         return;
     }
     
@@ -245,17 +242,28 @@ export default function GenerateSpeechPage() {
         </div>
     );
   }
+  
+  const controlPanel = (
+    <div className="flex flex-col gap-6">
+        <TextToSpeechControls form={form} isGenerating={isGenerating} cost={cost} />
+        <GeneratedAudioPlayer
+            isGenerating={isGenerating}
+            audioUrl={generatedAudioUrl}
+            onDownload={handleDownload}
+        />
+    </div>
+  );
 
   return (
     <GeneratorLayout
         activeTab="speech"
-        controlPanel={<TextToSpeechControls form={form} isGenerating={isGenerating} cost={cost} />}
+        controlPanel={controlPanel}
         contentPanel={
-            <SpeechContent
-                isGenerating={isGenerating}
-                generatedAudioUrl={generatedAudioUrl}
-                onDownload={handleDownload}
-            />
+            <div className="flex h-full w-full flex-col items-center justify-center rounded-lg border border-dashed text-center p-8">
+                <Mic className="mx-auto h-10 w-10 text-muted-foreground" />
+                <h3 className="mt-4 text-md font-semibold">Tsis tau muaj suab li</h3>
+                <p className="mt-1 text-xs text-muted-foreground">Koj lub suab yuav tshwm sim ntawm no.</p>
+            </div>
         }
     />
   );
