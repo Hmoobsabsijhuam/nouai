@@ -38,73 +38,62 @@ export default function BillingPage() {
   
   const { data: profile, isLoading: isProfileLoading } = useDoc<{ credits: number }>(userDocRef);
 
-  const handlePurchase = async (amount: number) => {
+  const handlePurchase = async (pkg: CreditPackage) => {
     if (!user || !firestore || !profile) {
       toast({ title: "Error", description: "You must be logged in.", variant: "destructive" });
       return;
     }
-    setPurchasingId(amount);
+    setPurchasingId(pkg.credits);
     
     try {
-      const batch = writeBatch(firestore);
-      const previousBalance = profile.credits ?? 0;
-
-      // 1. Update user's credits
-      const userRef = doc(firestore, 'users', user.uid);
-      batch.update(userRef, {
-        credits: increment(amount)
-      });
-
-      // 2. Create a notification for the admin
-      const adminNotifCollection = collection(firestore, 'admin_notifications');
-      const newNotifDocRef = doc(adminNotifCollection);
-      const message = `${user.displayName || user.email} purchased ${amount} credits. Previous balance: ${previousBalance} credits.`;
-      
-      batch.set(newNotifDocRef, {
-        userId: user.uid,
-        userEmail: user.email,
-        message: message,
-        createdAt: serverTimestamp(),
-        read: false,
-        paymentStatus: 'paid',
-        link: `/admin/payments/${newNotifDocRef.id}`
-      });
-
-      // 3. Create a purchase history record for the user
-      const userPurchaseHistoryCollection = collection(firestore, 'users', user.uid, 'purchase_history');
-      batch.set(doc(userPurchaseHistoryCollection), {
-          userId: user.uid,
-          message: `Purchased ${amount} credits.`,
-          credits: amount,
-          previousBalance: previousBalance,
-          createdAt: serverTimestamp(),
-          paymentStatus: 'paid'
-      });
-
-      await batch.commit();
-
-      toast({
-        title: "Purchase Successful!",
-        description: `Added ${amount} credits to your account. Admin has been notified.`,
-      });
-    } catch (error: any) {
-        console.error("Error purchasing credits:", error);
+        const batch = writeBatch(firestore);
         
-        let pathForError = `users/${user.uid}`;
-        if (error.message.includes('admin_notifications')) {
-            pathForError = 'admin_notifications';
-        }
+        // 1. Create a notification for the admin with a pending status
+        const adminNotifCollection = collection(firestore, 'admin_notifications');
+        const newNotifDocRef = doc(adminNotifCollection);
+        const message = `${user.displayName || user.email} requested a purchase of ${pkg.credits} credits.`;
 
+        batch.set(newNotifDocRef, {
+            userId: user.uid,
+            userEmail: user.email,
+            message: message,
+            createdAt: serverTimestamp(),
+            read: false,
+            paymentStatus: 'pending', // Set status to pending
+            link: `/admin/payments/${newNotifDocRef.id}`
+        });
+
+        // 2. Create a purchase history record for the user with a pending status
+        const userPurchaseHistoryRef = doc(firestore, 'users', user.uid, 'purchase_history', newNotifDocRef.id);
+        batch.set(userPurchaseHistoryRef, {
+            userId: user.uid,
+            message: `Requested ${pkg.credits} credits.`,
+            credits: pkg.credits,
+            previousBalance: profile.credits ?? 0,
+            createdAt: serverTimestamp(),
+            paymentStatus: 'pending' // Set status to pending
+        });
+
+        await batch.commit();
+
+        toast({
+            title: "Purchase Request Sent!",
+            description: `Your request for ${pkg.credits} credits is pending admin approval.`,
+        });
+
+    } catch (error: any) {
+        console.error("Error requesting credit purchase:", error);
+        
         const contextualError = new FirestorePermissionError({
-            operation: 'write', // more generic for batch
-            path: pathForError, 
-            requestResourceData: { credits: `increment(${amount})` }
+            operation: 'write',
+            path: 'admin_notifications', 
+            requestResourceData: { amount: pkg.credits }
         });
         errorEmitter.emit('permission-error', contextualError);
         
         toast({
-            title: "Purchase Failed",
-            description: "Could not complete your purchase. Please try again.",
+            title: "Request Failed",
+            description: "Could not send your purchase request. Please try again.",
             variant: "destructive"
         });
     } finally {
@@ -155,7 +144,7 @@ export default function BillingPage() {
               <CardFooter>
                 <Button 
                   className="w-full" 
-                  onClick={() => handlePurchase(pkg.credits)}
+                  onClick={() => handlePurchase(pkg)}
                   disabled={purchasingId !== null}
                 >
                   {purchasingId === pkg.credits ? (
@@ -173,4 +162,3 @@ export default function BillingPage() {
     </DashboardLayout>
   );
 }
-    

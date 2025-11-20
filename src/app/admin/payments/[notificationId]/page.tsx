@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -122,16 +123,22 @@ export default function PaymentTrackingPage() {
         try {
             const batch = writeBatch(firestore);
 
+            // Update the admin notification
             batch.update(notifDocRef, {
                 paymentStatus: status,
                 read: true,
                 updatedAt: serverTimestamp()
             });
 
-            if (status === 'rejected' && creditAmount > 0) {
+            // Update the user's purchase history record
+            const purchaseHistoryQuery = doc(firestore, 'users', notification.userId, 'purchase_history', notificationId);
+            batch.update(purchaseHistoryQuery, { paymentStatus: status });
+
+            // If payment is approved, add credits to the user's account
+            if (status === 'paid' && creditAmount > 0) {
                 const userRef = doc(firestore, 'users', notification.userId);
                 batch.update(userRef, {
-                    credits: increment(-creditAmount)
+                    credits: increment(creditAmount)
                 });
             }
 
