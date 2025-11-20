@@ -77,7 +77,8 @@ service cloud.firestore {
       match /purchase_history/{purchaseId} {
         allow list, get: if isOwner(userId) || isAdmin();
         allow create: if isSignedIn() && isOwner(userId);
-        allow update, delete: if false;
+        allow update: if isAdmin(); // Admin can update status
+        allow delete: if false;
       }
     }
 
