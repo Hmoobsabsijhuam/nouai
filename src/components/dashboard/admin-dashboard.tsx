@@ -263,9 +263,12 @@ export default function AdminDashboard({ user }: { user: any }) {
         const creditAmountMatch = notif.message.match(/(\d+)\s*credits/);
         const credits = creditAmountMatch ? parseInt(creditAmountMatch[1], 10) : 0;
         
+        const priceMatch = notif.message.match(/\$(\d+)/);
+        const price = priceMatch ? parseInt(priceMatch[1], 10) : 0;
+
         if (credits > 0) {
             acc[date].credits += credits;
-            acc[date].revenue += creditPricing[credits] || 0;
+            acc[date].revenue += price;
         }
 
         return acc;
@@ -394,19 +397,19 @@ export default function AdminDashboard({ user }: { user: any }) {
         <Card>
            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Purchase Alerts
+                Paid Transactions Log
             </CardTitle>
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {isAdminNotifsLoading ? (
-                 <Skeleton className="h-8 w-1/4" />
-            ) : (
-                <div className="text-2xl font-bold">{unreadAdminNotifications.length}</div>
-            )}
-            <p className="text-xs text-muted-foreground">
-              Unread credit purchase alerts.
+            <p className="text-xs text-muted-foreground mb-4">
+              View all completed purchases.
             </p>
+            <Button asChild size="sm">
+              <Link href="/admin/all-paid">
+                <CreditCard className="mr-2 h-4 w-4" /> View Transactions
+              </Link>
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -581,5 +584,3 @@ export default function AdminDashboard({ user }: { user: any }) {
     </div>
   );
 }
-
-    

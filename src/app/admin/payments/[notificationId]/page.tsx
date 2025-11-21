@@ -4,7 +4,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useFirebase, useMemoFirebase } from '@/firebase';
-import { doc, updateDoc, serverTimestamp, Timestamp, writeBatch, increment } from 'firebase/firestore';
+import { doc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { useDoc } from '@/firebase/firestore/use-doc';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
@@ -14,12 +14,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, CheckCircle, Clock, User, XCircle, Share2, Download, QrCode } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Clock, User, XCircle, QrCode } from 'lucide-react';
 import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-
 
 type PaymentStatus = 'pending' | 'paid' | 'rejected';
 
@@ -90,7 +86,6 @@ export default function PaymentTrackingPage() {
     const { toast } = useToast();
 
     const notificationId = params.notificationId as string;
-    const [isUpdating, setIsUpdating] = useState(false);
 
     const isAdmin = user?.email === 'admin@noukha.com';
 
@@ -119,42 +114,6 @@ export default function PaymentTrackingPage() {
     const userAccountMatch = notification?.message.match(/from account (.+)\./);
     const userBankAccount = userAccountMatch ? userAccountMatch[1] : 'Not provided';
 
-
-    const handleStatusUpdate = async (status: PaymentStatus) => {
-        if (!notifDocRef || !firestore || !notification) return;
-        setIsUpdating(true);
-        try {
-            const batch = writeBatch(firestore);
-
-            // Update the admin notification
-            batch.update(notifDocRef, {
-                paymentStatus: status,
-                read: true,
-                updatedAt: serverTimestamp()
-            });
-
-            // Update the user's purchase history record
-            const purchaseHistoryQuery = doc(firestore, 'users', notification.userId, 'purchase_history', notificationId);
-            batch.update(purchaseHistoryQuery, { paymentStatus: status });
-
-            // If payment is approved, add credits to the user's account
-            if (status === 'paid' && creditAmount > 0) {
-                const userRef = doc(firestore, 'users', notification.userId);
-                batch.update(userRef, {
-                    credits: increment(creditAmount)
-                });
-            }
-
-            await batch.commit();
-            toast({ title: "Status Updated", description: `Payment marked as ${status}.` });
-        } catch (error) {
-            console.error("Failed to update status:", error);
-            toast({ title: "Error", description: "Could not update payment status.", variant: "destructive" });
-        } finally {
-            setIsUpdating(false);
-        }
-    };
-    
     const isLoading = isUserLoading || isNotifLoading || isBuyerLoading;
 
     if (isLoading) {
@@ -190,9 +149,9 @@ export default function PaymentTrackingPage() {
         <DashboardLayout>
             <div className="mb-4">
                  <Button variant="outline" size="sm" asChild>
-                    <Link href="/dashboard">
+                    <Link href="/admin/all-paid">
                         <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back to Dashboard
+                        Back to Paid Transactions
                     </Link>
                 </Button>
             </div>
@@ -241,7 +200,7 @@ export default function PaymentTrackingPage() {
                         {/* Amount */}
                         <div className="text-center py-2">
                             <p className="text-sm text-muted-foreground">Amount</p>
-                            <p className="text-3xl font-bold text-red-500">{creditAmount.toLocaleString()} CREDITS</p>
+                            <p className="text-3xl font-bold text-primary">{creditAmount.toLocaleString()} CREDITS</p>
                         </div>
 
                          <div className="border-t pt-4 px-2 space-y-4">
@@ -250,28 +209,12 @@ export default function PaymentTrackingPage() {
                                 <div className="flex items-center gap-2">
                                      <QrCode className="h-8 w-8 text-primary" />
                                      <div>
-                                         <p className="font-semibold text-sm">one proof</p>
+                                         <p className="font-semibold text-sm">Transaction Receipt</p>
                                          <p className="text-xs text-muted-foreground">Confirmation</p>
                                      </div>
                                 </div>
                                 <p className="font-mono text-xs bg-background p-1 rounded-md">ID: {notificationId.substring(0, 8)}</p>
                             </div>
-
-                             {/* Action buttons */}
-                             {notification.paymentStatus === 'pending' ? (
-                                <div className="flex gap-2">
-                                    <Button onClick={() => handleStatusUpdate('paid')} disabled={isUpdating} className="w-full bg-green-600 hover:bg-green-700">
-                                        <CheckCircle className="mr-2 h-4 w-4" /> Mark as Paid
-                                    </Button>
-                                    <Button onClick={() => handleStatusUpdate('rejected')} disabled={isUpdating} variant="destructive" className="w-full">
-                                        <XCircle className="mr-2 h-4 w-4" /> Mark as Rejected
-                                    </Button>
-                                </div>
-                             ) : (
-                                <Button disabled className="w-full">
-                                    {notification.paymentStatus === 'paid' ? 'Completed' : 'Rejected'}
-                                </Button>
-                             )}
                          </div>
 
                     </CardContent>

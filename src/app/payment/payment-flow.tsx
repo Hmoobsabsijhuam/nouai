@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useFirebase } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { collection, doc, writeBatch, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, writeBatch, serverTimestamp, increment } from 'firebase/firestore';
 
 import { DashboardLayout } from '@/components/dashboard/dashboard-layout';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
@@ -74,9 +74,14 @@ export function PaymentFlow() {
     try {
         const batch = writeBatch(firestore);
         
+        // 1. Add credits to the user's document
+        const userRef = doc(firestore, 'users', user.uid);
+        batch.update(userRef, { credits: increment(credits) });
+
+        // 2. Create a notification for the admin
         const adminNotifCollection = collection(firestore, 'admin_notifications');
         const newNotifDocRef = doc(adminNotifCollection);
-        const message = `${user.displayName || user.email} requested a purchase of ${credits} credits for $${price} from account ${userBankAccount}.`;
+        const message = `${user.displayName || user.email} purchased ${credits} credits for $${price} from account ${userBankAccount}.`;
         
         batch.set(newNotifDocRef, {
             userId: user.uid,
@@ -84,26 +89,27 @@ export function PaymentFlow() {
             message: message,
             createdAt: serverTimestamp(),
             read: false,
-            paymentStatus: 'pending',
+            paymentStatus: 'paid', // Mark as paid immediately
             link: `/admin/payments/${newNotifDocRef.id}`
         });
 
+        // 3. Create a record in the user's purchase history
         const userPurchaseHistoryRef = doc(firestore, 'users', user.uid, 'purchase_history', newNotifDocRef.id);
         batch.set(userPurchaseHistoryRef, {
             userId: user.uid,
-            message: `Requested ${credits} credits for $${price}.`,
+            message: `Purchased ${credits} credits for $${price}.`,
             credits: credits,
             price: price,
             userBankAccount: userBankAccount,
             createdAt: serverTimestamp(),
-            paymentStatus: 'pending'
+            paymentStatus: 'paid' // Mark as paid immediately
         });
 
         await batch.commit();
 
         toast({
-            title: "Request Submitted!",
-            description: `Your purchase request for ${credits} credits is now pending admin verification.`,
+            title: "Purchase Successful!",
+            description: `${credits} credits have been added to your account.`,
         });
         
         router.push('/dashboard');
@@ -111,8 +117,8 @@ export function PaymentFlow() {
     } catch (error: any) {
         console.error("Error confirming payment:", error);
         toast({
-            title: "Submission Failed",
-            description: "Could not submit your payment confirmation. Please try again.",
+            title: "Purchase Failed",
+            description: "Could not complete your purchase. Please try again.",
             variant: "destructive"
         });
     } finally {
@@ -173,7 +179,7 @@ export function PaymentFlow() {
                               onChange={(e) => setUserBankAccount(e.target.value)}
                           />
                         </div>
-                        <p className="text-xs text-muted-foreground">Your credits will be added after payment is verified.</p>
+                        <p className="text-xs text-muted-foreground">Your credits will be added after confirming the purchase.</p>
                     </div>
                 )}
             </div>
@@ -185,7 +191,7 @@ export function PaymentFlow() {
 
         <Button className="w-full" size="lg" onClick={handleConfirmPayment} disabled={isSubmitting || !showBankDetails || !userBankAccount}>
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isSubmitting ? "Submitting..." : "Confirm Purchase"}
+          {isSubmitting ? "Processing..." : "Confirm Purchase & Get Credits"}
         </Button>
       </div>
     </DashboardLayout>
