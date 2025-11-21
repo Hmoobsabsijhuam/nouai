@@ -115,10 +115,10 @@ service cloud.firestore {
     }
 
     /**
-     * @description Manages notifications for admins (e.g. credit purchases).
+     * @description Manages individual notifications for admins (e.g. credit purchases).
      * @path /admin_notifications/{notificationId}
-     * @allow (create) - Any signed-in user can create a notification for admins.
      * @allow (get, update, delete) - Only admins can manage individual notifications.
+     * @allow (create) - Any signed-in user can create a notification for admins.
      */
     match /admin_notifications/{notificationId} {
         allow get, update, delete: if isAdmin();
