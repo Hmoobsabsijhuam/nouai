@@ -1,3 +1,4 @@
+
 /**
  * @fileoverview Firestore Security Rules for SecureLogin application.
  *
@@ -116,15 +117,22 @@ service cloud.firestore {
 
     /**
      * @description Manages notifications for admins (e.g. credit purchases).
-     * @path /admin_notifications/{notificationId}
+     * @path /admin_notifications
      * @allow (list) - Only admins can list all admin notifications.
+     */
+    match /admin_notifications {
+        allow list: if isAdmin();
+    }
+    
+    /**
+     * @description Manages individual admin notifications.
+     * @path /admin_notifications/{notificationId}
      * @allow (get, update, delete) - Only admins can manage individual notifications.
      * @allow (create) - Any signed-in user can create a notification for admins.
      */
     match /admin_notifications/{notificationId} {
-      allow list: if isAdmin();
-      allow get, update, delete: if isAdmin();
-      allow create: if isSignedIn();
+        allow get, update, delete: if isAdmin();
+        allow create: if isSignedIn();
     }
     
     /**
