@@ -107,7 +107,10 @@ function ImageFeed({ images, isLoading }: { images: WithId<GeneratedImage>[] | n
   )
 }
 
-function ImageGeneratorControls({ form, isGenerating, cost }: { form: any, isGenerating: boolean, cost: number }) {
+function ImageGeneratorControls({ form, isGenerating }: { form: any, isGenerating: boolean }) {
+     const imageCount = useWatch({ control: form.control, name: 'imageCount' });
+     const cost = calculateCost(imageCount);
+     
      return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(form.onSubmit)} className="space-y-6">
@@ -220,9 +223,6 @@ export default function GenerateImagePage() {
     },
   });
 
-  const imageCount = useWatch({ control: form.control, name: 'imageCount' });
-  const cost = calculateCost(imageCount);
-
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!user || !firestore || !firebaseApp || !profile) {
         toast({ title: 'Error', description: 'You must be logged in to generate images.', variant: 'destructive'});
@@ -311,7 +311,7 @@ export default function GenerateImagePage() {
   return (
     <GeneratorLayout
       activeTab="image"
-      controlPanel={<ImageGeneratorControls form={form} isGenerating={isGenerating} cost={cost} />}
+      controlPanel={<ImageGeneratorControls form={form} isGenerating={isGenerating} />}
       contentPanel={<ImageFeed images={images} isLoading={isImagesLoading} />}
     />
   );
