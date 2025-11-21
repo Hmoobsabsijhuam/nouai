@@ -40,6 +40,9 @@ interface GeneratedVideo {
 
 const VIDEO_GENERATION_COST = 25;
 
+function calculateCost(): number {
+    return VIDEO_GENERATION_COST;
+}
 
 function VideoFeedSkeleton() {
     return (
@@ -86,7 +89,7 @@ function VideoFeed({ videos, isLoading }: { videos: WithId<GeneratedVideo>[] | n
     );
 }
 
-function ImageToVideoControls({ form, isGenerating }: { form: any, isGenerating: boolean }) {
+function ImageToVideoControls({ form, isGenerating, cost }: { form: any, isGenerating: boolean, cost: number }) {
     const { imagePreview, fileError, handleImageChange } = form;
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -151,7 +154,7 @@ function ImageToVideoControls({ form, isGenerating }: { form: any, isGenerating:
                  <div className="space-y-2 pt-4">
                     <Button type="submit" disabled={isGenerating || !imagePreview} size="lg" className="w-full">
                         {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                        {isGenerating ? 'Tab tom tsim...' : `Generate (${VIDEO_GENERATION_COST} credits)`}
+                        {isGenerating ? 'Tab tom tsim...' : `Generate (${cost} credits)`}
                     </Button>
                      <p className="text-xs text-muted-foreground text-center">Animate your image with a text prompt.</p>
                 </div>
@@ -196,6 +199,8 @@ export default function ImageToVideoPage() {
     },
   });
 
+  const cost = calculateCost();
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFileError(null);
     form.setValue('image', null);
@@ -229,7 +234,9 @@ export default function ImageToVideoPage() {
         return;
     }
 
-    if (profile.credits < VIDEO_GENERATION_COST) {
+    const generationCost = calculateCost();
+
+    if (profile.credits < generationCost) {
         router.push('/billing');
         return;
     }
@@ -237,7 +244,7 @@ export default function ImageToVideoPage() {
     setIsGenerating(true);
     try {
         await updateDoc(doc(firestore, 'users', user.uid), {
-            credits: increment(-VIDEO_GENERATION_COST)
+            credits: increment(-generationCost)
         });
 
         const { videoUrl: videoDataUri } = await generateVideoFromImage({ 
@@ -265,7 +272,7 @@ export default function ImageToVideoPage() {
       console.error('Koj daim video tsim tsis tau:', error);
 
       await updateDoc(doc(firestore, 'users', user.uid), {
-          credits: increment(VIDEO_GENERATION_COST)
+          credits: increment(generationCost)
       });
 
       let description = 'An unexpected error occurred.';
@@ -308,7 +315,7 @@ export default function ImageToVideoPage() {
   return (
     <GeneratorLayout
       activeTab="animate"
-      controlPanel={<ImageToVideoControls form={form} isGenerating={isGenerating} />}
+      controlPanel={<ImageToVideoControls form={form} isGenerating={isGenerating} cost={cost} />}
       contentPanel={<VideoFeed videos={videos} isLoading={isVideosLoading || isGenerating} />}
     />
   );

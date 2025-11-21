@@ -35,6 +35,10 @@ interface GeneratedVideo {
 
 const VIDEO_GENERATION_COST = 25;
 
+function calculateCost(): number {
+    return VIDEO_GENERATION_COST;
+}
+
 function VideoFeedSkeleton() {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -89,7 +93,7 @@ function VideoFeed({ videos, isLoading, isGenerating }: { videos: WithId<Generat
     );
 }
 
-function TextToVideoControls({ form, isGenerating }: { form: any, isGenerating: boolean }) {
+function TextToVideoControls({ form, isGenerating, cost }: { form: any, isGenerating: boolean, cost: number }) {
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(form.onSubmit)} className="space-y-6">
@@ -115,7 +119,7 @@ function TextToVideoControls({ form, isGenerating }: { form: any, isGenerating: 
                 <div className="space-y-2 pt-4">
                     <Button type="submit" disabled={isGenerating} size="lg" className="w-full">
                         {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                        {isGenerating ? 'Tab tom tsim...' : `Generate (${VIDEO_GENERATION_COST} credits)`}
+                        {isGenerating ? 'Tab tom tsim...' : `Generate (${cost} credits)`}
                     </Button>
                     <p className="text-xs text-muted-foreground text-center">Bring your ideas to life with AI-powered video.</p>
                 </div>
@@ -158,6 +162,7 @@ export default function GenerateVideoPage() {
     },
   });
 
+  const cost = calculateCost();
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!user || !firestore || !firebaseApp || !profile) {
@@ -165,7 +170,9 @@ export default function GenerateVideoPage() {
         return;
     }
 
-    if (profile.credits < VIDEO_GENERATION_COST) {
+    const generationCost = calculateCost();
+
+    if (profile.credits < generationCost) {
         router.push('/billing');
         return;
     }
@@ -173,7 +180,7 @@ export default function GenerateVideoPage() {
     setIsGenerating(true);
     try {
         await updateDoc(doc(firestore, 'users', user.uid), {
-            credits: increment(-VIDEO_GENERATION_COST)
+            credits: increment(-generationCost)
         });
 
         const { videoUrl: videoDataUri } = await generateVideo({ prompt: values.prompt });
@@ -198,7 +205,7 @@ export default function GenerateVideoPage() {
       console.error('Koj daim video tsim tsis tau:', error);
 
       await updateDoc(doc(firestore, 'users', user.uid), {
-          credits: increment(VIDEO_GENERATION_COST)
+          credits: increment(generationCost)
       });
       
       let description = 'An unexpected error occurred.';
@@ -239,7 +246,7 @@ export default function GenerateVideoPage() {
   return (
     <GeneratorLayout
       activeTab="video"
-      controlPanel={<TextToVideoControls form={form} isGenerating={isGenerating} />}
+      controlPanel={<TextToVideoControls form={form} isGenerating={isGenerating} cost={cost} />}
       contentPanel={<VideoFeed videos={videos} isLoading={isVideosLoading} isGenerating={isGenerating} />}
     />
   );
