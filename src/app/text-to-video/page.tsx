@@ -41,7 +41,7 @@ function calculateCost(): number {
 
 function VideoFeedSkeleton() {
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
             {Array.from({ length: 2 }).map((_, i) => (
                 <Card key={i} className="overflow-hidden bg-muted border-none">
                     <Skeleton className="aspect-video w-full" />
@@ -56,9 +56,9 @@ function VideoFeed({ videos, isLoading, isGenerating }: { videos: WithId<Generat
         return <VideoFeedSkeleton />;
     }
 
-    if (!videos || videos.length === 0) {
+    if ((!videos || videos.length === 0) && !isGenerating) {
         return (
-            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
+            <div className="mt-6 flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
                 <Video className="mx-auto h-10 w-10 text-muted-foreground" />
                 <h3 className="mt-4 text-md font-semibold">Tseem Tsis Tau Muaj Video</h3>
                 <p className="mt-1 text-xs text-muted-foreground">Koj cov videos yuav tshwm rau hauv qab no.</p>
@@ -67,7 +67,7 @@ function VideoFeed({ videos, isLoading, isGenerating }: { videos: WithId<Generat
     }
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
             {isGenerating && (
                 <Card className="overflow-hidden bg-muted border-none">
                     <div className="aspect-video w-full flex items-center justify-center">
@@ -78,7 +78,7 @@ function VideoFeed({ videos, isLoading, isGenerating }: { videos: WithId<Generat
                     </div>
                 </Card>
             )}
-            {videos.map(video => (
+            {videos?.map(video => (
                 <div key={video.id}>
                     <video src={video.videoUrl} controls autoPlay muted loop className="rounded-lg w-full aspect-video"></video>
                      <p className="text-xs text-muted-foreground mt-1 truncate" title={video.prompt}>{video.prompt}</p>
@@ -243,11 +243,18 @@ export default function GenerateVideoPage() {
     );
   }
 
+  const controlPanel = (
+    <div className="flex flex-col gap-6">
+        <TextToVideoControls form={form} isGenerating={isGenerating} cost={cost} />
+        <VideoFeed videos={videos} isLoading={isVideosLoading} isGenerating={isGenerating} />
+    </div>
+  );
+
   return (
     <GeneratorLayout
       activeTab="video"
-      controlPanel={<TextToVideoControls form={form} isGenerating={isGenerating} cost={cost} />}
-      contentPanel={<VideoFeed videos={videos} isLoading={isVideosLoading} isGenerating={isGenerating} />}
+      controlPanel={controlPanel}
+      contentPanel={null}
     />
   );
 }
