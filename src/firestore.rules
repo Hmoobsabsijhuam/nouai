@@ -39,10 +39,10 @@ service cloud.firestore {
       /**
        * @description Manages per-user notification data.
        * @path /users/{userId}/user_notifications/{notificationId}
-       * @allow (get, list, update) - Owner can read, create and update their own notifications. Admins can create notifications for users.
+       * @allow (get, list, update) - Owner or admin can read, create and update their own notifications.
        */
       match /user_notifications/{notificationId} {
-        allow get, list, update: if isOwner(userId);
+        allow get, list, update: if isOwner(userId) || isAdmin();
         allow create: if isOwner(userId) || isAdmin();
         allow delete: if false;
       }
@@ -50,20 +50,22 @@ service cloud.firestore {
       /**
        * @description Manages user's generated images.
        * @path /users/{userId}/generated_images/{imageId}
-       * @allow (get, list, create) - Owner can read and create their own generated images.
+       * @allow (get, list, create, update, delete) - Owner can manage their images. Admin can read them.
        */
       match /generated_images/{imageId} {
-        allow get, list, create, update: if isOwner(userId);
-        allow delete: if isOwner(userId);
+        allow create, update, delete: if isOwner(userId);
+        allow get, list: if isOwner(userId) || isAdmin();
       }
 
       /**
        * @description Manages user's generated videos.
        * @path /users/{userId}/generated_videos/{videoId}
-       * @allow (get, list, create) - Owner can read and create their own generated videos.
+       * @allow (create) - Owner can create their videos.
+       * @allow (get, list) - Owner or admin can read them.
        */
       match /generated_videos/{videoId} {
-        allow get, list, create: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow get, list: if isOwner(userId) || isAdmin();
         allow update, delete: if false;
       }
 
