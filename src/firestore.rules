@@ -1,4 +1,3 @@
-
 /**
  * @fileoverview Firestore Security Rules for SecureLogin application.
  *
@@ -120,8 +119,11 @@ service cloud.firestore {
      * @allow (list, get, update, delete) - Only admins can manage these notifications.
      */
     match /admin_notifications/{notificationId} {
+        allow get, update, delete: if isAdmin();
         allow create: if isSignedIn();
-        allow get, list, update, delete: if isAdmin();
+    }
+    match /admin_notifications {
+      allow list: if isAdmin();
     }
     
     /**
