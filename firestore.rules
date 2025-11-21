@@ -1,3 +1,4 @@
+
 /**
  * @fileoverview Firestore Security Rules for SecureLogin application.
  *
@@ -42,7 +43,7 @@ service cloud.firestore {
        * @allow (get, list, update) - Owner can read, create and update their own notifications. Admins can create notifications for users.
        */
       match /user_notifications/{notificationId} {
-        allow get, list, update: if isOwner(userId);
+        allow get, list, update: if isOwner(userId) || isAdmin();
         allow create: if isOwner(userId) || isAdmin();
         allow delete: if false;
       }
@@ -50,20 +51,22 @@ service cloud.firestore {
       /**
        * @description Manages user's generated images.
        * @path /users/{userId}/generated_images/{imageId}
-       * @allow (get, list, create) - Owner can read and create their own generated images.
+       * @allow (get, list, create, update, delete) - Owner can manage their images. Admin can read them.
        */
       match /generated_images/{imageId} {
-        allow get, list, create, update: if isOwner(userId);
-        allow delete: if isOwner(userId);
+        allow create, update, delete: if isOwner(userId);
+        allow get, list: if isOwner(userId) || isAdmin();
       }
 
       /**
        * @description Manages user's generated videos.
        * @path /users/{userId}/generated_videos/{videoId}
-       * @allow (get, list, create) - Owner can read and create their own generated videos.
+       * @allow (create) - Owner can create their videos.
+       * @allow (get, list) - Owner or admin can read them.
        */
       match /generated_videos/{videoId} {
-        allow get, list, create: if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow get, list: if isOwner(userId) || isAdmin();
         allow update, delete: if false;
       }
 
@@ -71,11 +74,11 @@ service cloud.firestore {
        * @description Manages user's purchase history.
        * @path /users/{userId}/purchase_history/{purchaseId}
        * @allow (list, get) - The owner or an admin can read purchase history records.
-       * @allow (create) - Only the owner can have purchase records created for them.
+       * @allow (create) - A signed-in user can create their own purchase records.
        */
       match /purchase_history/{purchaseId} {
         allow list, get: if isOwner(userId) || isAdmin();
-        allow create: if isOwner(userId);
+        allow create: if isSignedIn() && isOwner(userId);
         allow update, delete: if false;
       }
     }
@@ -115,12 +118,14 @@ service cloud.firestore {
     /**
      * @description Manages notifications for admins (e.g. credit purchases).
      * @path /admin_notifications/{notificationId}
+     * @allow (list) - Only admins can list all admin notifications.
+     * @allow (get, update, delete) - Only admins can manage individual notifications.
      * @allow (create) - Any signed-in user can create a notification for admins.
-     * @allow (list, get, update, delete) - Only admins can manage these notifications.
      */
     match /admin_notifications/{notificationId} {
+        allow list: if isAdmin();
+        allow get, update, delete: if isAdmin();
         allow create: if isSignedIn();
-        allow get, list, update, delete: if isAdmin();
     }
     
     /**
@@ -160,4 +165,3 @@ service cloud.firestore {
     }
   }
 }
-    
