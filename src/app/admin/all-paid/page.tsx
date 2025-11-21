@@ -36,10 +36,12 @@ function PaidTransactionRow({ notification }: { notification: WithId<PaidTransac
     const { firestore } = useFirebase();
 
     const userDocRef = useMemoFirebase(
-        () => (firestore ? doc(firestore, 'users', notification.userId) : null),
+        () => (firestore && notification.userId ? doc(firestore, 'users', notification.userId) : null),
         [firestore, notification.userId]
     );
     const { data: userProfile, isLoading } = useDoc<UserProfile>(userDocRef);
+
+    const displayName = userProfile?.displayName ?? notification.userEmail;
 
     return (
         <TableRow>
@@ -47,10 +49,10 @@ function PaidTransactionRow({ notification }: { notification: WithId<PaidTransac
                 <div className="flex items-center gap-3">
                     <Avatar>
                         <AvatarImage src={userProfile?.photoURL}/>
-                        <AvatarFallback>{userProfile?.displayName?.charAt(0) ?? '?'}</AvatarFallback>
+                        <AvatarFallback>{displayName?.charAt(0) ?? '?'}</AvatarFallback>
                     </Avatar>
                     <div>
-                        <p className="font-medium">{isLoading ? <Skeleton className="h-5 w-24" /> : userProfile?.displayName}</p>
+                        <p className="font-medium">{isLoading ? <Skeleton className="h-5 w-24" /> : displayName}</p>
                         <p className="text-xs text-muted-foreground">{notification.userEmail}</p>
                     </div>
                 </div>
@@ -138,8 +140,14 @@ export default function AllPaidPage() {
         );
     }, [firestore]);
 
-    const { data: paidTransactions, isLoading } = useCollection<PaidTransaction>(paidQuery);
+    const { data: paidTransactions, isLoading, error } = useCollection<PaidTransaction>(paidQuery);
     
+    useEffect(() => {
+        if (error) {
+            console.error("Firestore Error in AllPaidPage:", error);
+        }
+    }, [error]);
+
     if (isUserLoading || (isLoading && !paidTransactions)) {
         return (
             <DashboardLayout>
