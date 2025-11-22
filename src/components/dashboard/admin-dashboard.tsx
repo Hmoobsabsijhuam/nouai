@@ -548,7 +548,7 @@ export default function AdminDashboard({ user }: { user: any }) {
                         Open Support Tickets
                     </CardTitle>
                     <CardDescription>The most recent open tickets.</CardDescription>
-                </Header>
+                </CardHeader>
                 <CardContent>
                     <SupportTickets tickets={openSupportTickets} isLoading={isTicketsLoading} onTicketSelect={setSelectedTicket}/>
                 </CardContent>
