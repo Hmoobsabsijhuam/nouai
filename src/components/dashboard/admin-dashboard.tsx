@@ -330,7 +330,7 @@ export default function AdminDashboard({ user }: { user: any }) {
   return (
     <div>
       <h1 className="mb-4 text-3xl font-bold tracking-tight">
-        Admin Dashboard
+        Admin Control Panel
       </h1>
       <p className="mb-6 text-muted-foreground">Welcome, {user.email}!</p>
       
@@ -548,7 +548,7 @@ export default function AdminDashboard({ user }: { user: any }) {
                         Open Support Tickets
                     </CardTitle>
                     <CardDescription>The most recent open tickets.</CardDescription>
-                </CardHeader>
+                </Header>
                 <CardContent>
                     <SupportTickets tickets={openSupportTickets} isLoading={isTicketsLoading} onTicketSelect={setSelectedTicket}/>
                 </CardContent>
