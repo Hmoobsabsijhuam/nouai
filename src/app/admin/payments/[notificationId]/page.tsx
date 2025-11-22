@@ -14,7 +14,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, CheckCircle, Clock, User, XCircle, QrCode } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Clock, User, XCircle, QrCode, X } from 'lucide-react';
 import { format } from 'date-fns';
 
 type PaymentStatus = 'pending' | 'paid' | 'rejected';
@@ -147,16 +147,15 @@ export default function PaymentTrackingPage() {
 
     return (
         <DashboardLayout>
-            <div className="mb-4">
-                 <Button variant="outline" size="sm" asChild>
-                    <Link href="/admin/all-paid">
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back to Paid Transactions
-                    </Link>
-                </Button>
-            </div>
             <div className="max-w-md mx-auto">
-                 <Card className="w-full shadow-lg">
+                 <Card className="w-full shadow-lg relative">
+                    <div className="absolute top-2 right-2">
+                        <Button asChild variant="ghost" size="icon">
+                            <Link href="/dashboard">
+                                <X className="h-5 w-5" />
+                            </Link>
+                        </Button>
+                    </div>
                     <CardContent className="p-4 space-y-4 bg-card">
                          <div className="flex flex-col items-center justify-center text-center py-4">
                             {StatusIcon}
