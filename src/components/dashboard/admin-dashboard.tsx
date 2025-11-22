@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, FormEvent } from 'react';
@@ -336,7 +335,7 @@ export default function AdminDashboard({ user }: { user: any }) {
       <p className="mb-6 text-muted-foreground">Welcome, {user.email}!</p>
       
       {/* Top Cards */}
-      <div className="mb-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -392,24 +391,6 @@ export default function AdminDashboard({ user }: { user: any }) {
             <p className="text-xs text-muted-foreground">
               New issues reported by users.
             </p>
-          </CardContent>
-        </Card>
-        <Card>
-           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-                Paid Transactions Log
-            </CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-muted-foreground mb-4">
-              View all completed purchases.
-            </p>
-            <Button asChild size="sm">
-              <Link href="/admin/all-paid">
-                <CreditCard className="mr-2 h-4 w-4" /> View Transactions
-              </Link>
-            </Button>
           </CardContent>
         </Card>
       </div>
@@ -492,15 +473,20 @@ export default function AdminDashboard({ user }: { user: any }) {
                                 <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />
                                 <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
                                 <Tooltip
-                                    content={({ active, payload, label }) =>
-                                        active && payload && payload.length ? (
-                                        <div className="rounded-lg border bg-background p-2 shadow-sm">
-                                            <p className="font-bold">{`${format(new Date(label), 'eeee, MMM d')}`}</p>
-                                            <p className="text-sm" style={{ color: '#8884d8' }}>Credits: {payload[0].value}</p>
-                                            <p className="text-sm" style={{ color: '#82ca9d' }}>Revenue: ${payload[1].value?.toFixed(2)}</p>
-                                        </div>
-                                        ) : null
-                                    }
+                                    content={({ active, payload, label }) => {
+                                        if (active && payload && payload.length) {
+                                            const revenueValue = payload[1].value;
+                                            const displayRevenue = typeof revenueValue === 'number' ? revenueValue.toFixed(2) : Number(revenueValue).toFixed(2);
+                                            return (
+                                                <div className="rounded-lg border bg-background p-2 shadow-sm">
+                                                    <p className="font-bold">{`${format(new Date(label), 'eeee, MMM d')}`}</p>
+                                                    <p className="text-sm" style={{ color: '#8884d8' }}>Credits: {payload[0].value}</p>
+                                                    <p className="text-sm" style={{ color: '#82ca9d' }}>Revenue: ${displayRevenue}</p>
+                                                </div>
+                                            );
+                                        }
+                                        return null;
+                                    }}
                                 />
                                 <Legend />
                                 <Bar yAxisId="left" dataKey="credits" fill="#8884d8" name="Credits Sold" />
