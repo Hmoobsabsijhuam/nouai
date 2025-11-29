@@ -14,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend } from 'recharts';
-import { format, formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { UserListDialog } from './user-list-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
@@ -248,8 +248,8 @@ export default function AdminDashboard({ user }: { user: any }) {
     return { userChartData, totalUsers: users.length };
   }, [users]);
   
-  const creditChartData = useMemo(() => {
-    if (!adminNotifications) return [];
+  const {creditChartData, monthlySummary} = useMemo(() => {
+    if (!adminNotifications) return { creditChartData: [], monthlySummary: { totalCredits: 0, totalRevenue: 0 } };
     
     const purchases = adminNotifications.filter(n => n.paymentStatus === 'paid' && n.message.includes('purchased'));
 
@@ -273,13 +273,37 @@ export default function AdminDashboard({ user }: { user: any }) {
         return acc;
     }, {} as Record<string, { credits: number, revenue: number }>);
 
-     return Object.entries(groupedByDay)
+    const creditChartData = Object.entries(groupedByDay)
       .map(([date, data]) => ({
         date,
         credits: data.credits,
         revenue: data.revenue,
       }))
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    const now = new Date();
+    const monthStart = startOfMonth(now);
+    const monthEnd = endOfMonth(now);
+
+    const purchasesThisMonth = purchases.filter(n => {
+        const purchaseDate = n.createdAt.toDate();
+        return isWithinInterval(purchaseDate, { start: monthStart, end: monthEnd });
+    });
+
+    const monthlySummary = purchasesThisMonth.reduce((acc, notif) => {
+        const creditAmountMatch = notif.message.match(/(\d+)\s*credits/);
+        const credits = creditAmountMatch ? parseInt(creditAmountMatch[1], 10) : 0;
+        
+        const priceMatch = notif.message.match(/\$(\d+)/);
+        const price = priceMatch ? parseInt(priceMatch[1], 10) : 0;
+
+        acc.totalCredits += credits;
+        acc.totalRevenue += price;
+
+        return acc;
+    }, { totalCredits: 0, totalRevenue: 0 });
+
+    return { creditChartData, monthlySummary };
 
   }, [adminNotifications]);
 
@@ -463,6 +487,7 @@ export default function AdminDashboard({ user }: { user: any }) {
                     {isAdminNotifsLoading ? (
                         <Skeleton className="h-[300px] w-full" />
                     ) : creditChartData.length > 0 ? (
+                        <>
                          <ResponsiveContainer width="100%" height={300}>
                             <BarChart data={creditChartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -493,6 +518,20 @@ export default function AdminDashboard({ user }: { user: any }) {
                                 <Bar yAxisId="right" dataKey="revenue" fill="#82ca9d" name="Revenue ($)" />
                             </BarChart>
                         </ResponsiveContainer>
+                        <div className="mt-4 pt-4 border-t">
+                            <h3 className="text-sm font-medium text-muted-foreground">This Month's Summary ({format(new Date(), 'MMMM yyyy')})</h3>
+                            <div className="mt-2 grid grid-cols-2 gap-4">
+                                <div>
+                                    <p className="text-xs text-muted-foreground">Total Credits Sold</p>
+                                    <p className="text-lg font-bold">{monthlySummary.totalCredits.toLocaleString()}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-muted-foreground">Total Revenue</p>
+                                    <p className="text-lg font-bold">${monthlySummary.totalRevenue.toLocaleString()}</p>
+                                </div>
+                            </div>
+                        </div>
+                        </>
                     ) : (
                          <div className="flex h-[300px] items-center justify-center">
                             <p className="text-muted-foreground">No credit purchase data yet.</p>

@@ -81,9 +81,11 @@ export function PaymentFlow() {
     try {
         const batch = writeBatch(firestore);
         
+        // 1. Add credits to the user's document
         const userRef = doc(firestore, 'users', user.uid);
         batch.update(userRef, { credits: increment(credits) });
 
+        // 2. Create a notification for the admin
         const adminNotifCollection = collection(firestore, 'admin_notifications');
         const newNotifDocRef = doc(adminNotifCollection);
         const message = `${user.displayName || user.email} purchased ${credits} credits for $${price}.`;
@@ -94,10 +96,11 @@ export function PaymentFlow() {
             message: message,
             createdAt: serverTimestamp(),
             read: false,
-            paymentStatus: 'paid',
+            paymentStatus: 'paid', // Mark as paid immediately
             link: `/admin/payments/${newNotifDocRef.id}`
         });
 
+        // 3. Create a record in the user's purchase history
         const userPurchaseHistoryRef = doc(firestore, 'users', user.uid, 'purchase_history', newNotifDocRef.id);
         batch.set(userPurchaseHistoryRef, {
             userId: user.uid,
@@ -105,7 +108,7 @@ export function PaymentFlow() {
             credits: credits,
             price: price,
             createdAt: serverTimestamp(),
-            paymentStatus: 'paid'
+            paymentStatus: 'paid' // Mark as paid immediately
         });
 
         await batch.commit();
