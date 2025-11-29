@@ -10,14 +10,11 @@ import { collection, doc, writeBatch, serverTimestamp, increment } from 'firebas
 import { DashboardLayout } from '@/components/dashboard/dashboard-layout';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, ArrowLeft, Banknote } from 'lucide-react';
+import { Loader2, ArrowLeft } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-
-const ADMIN_ACCOUNT_NAME = 'Nou AI';
 
 function PaymentPageSkeleton() {
     return (
@@ -28,6 +25,10 @@ function PaymentPageSkeleton() {
                     <CardContent className="p-6 space-y-4">
                         <Skeleton className="h-6 w-32" />
                         <Skeleton className="h-10 w-full" />
+                        <div className="flex space-x-4">
+                            <Skeleton className="h-10 w-1/2" />
+                            <Skeleton className="h-10 w-1/2" />
+                        </div>
                         <Skeleton className="h-10 w-full" />
                     </CardContent>
                     <CardFooter>
@@ -49,8 +50,12 @@ export function PaymentFlow() {
   const [credits, setCredits] = useState<number | null>(null);
   const [price, setPrice] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showBankDetails, setShowBankDetails] = useState(false);
-  const [userBankAccount, setUserBankAccount] = useState('');
+  
+  // Card details state
+  const [cardNumber, setCardNumber] = useState('');
+  const [expiryDate, setExpiryDate] = useState('');
+  const [cvc, setCvc] = useState('');
+  const [cardholderName, setCardholderName] = useState('');
 
   useEffect(() => {
     const creditsParam = searchParams.get('credits');
@@ -64,8 +69,10 @@ export function PaymentFlow() {
   }, [searchParams, router]);
 
   const handleConfirmPayment = async () => {
-    if (!user || !firestore || !credits || !price || !userBankAccount) {
-      toast({ title: "Error", description: "Please enter your bank account number.", variant: "destructive" });
+    if (!user || !firestore || !credits || !price) return;
+
+    if (!cardNumber || !expiryDate || !cvc || !cardholderName) {
+      toast({ title: "Error", description: "Please fill in all card details.", variant: "destructive" });
       return;
     }
     
@@ -74,14 +81,12 @@ export function PaymentFlow() {
     try {
         const batch = writeBatch(firestore);
         
-        // 1. Add credits to the user's document
         const userRef = doc(firestore, 'users', user.uid);
         batch.update(userRef, { credits: increment(credits) });
 
-        // 2. Create a notification for the admin
         const adminNotifCollection = collection(firestore, 'admin_notifications');
         const newNotifDocRef = doc(adminNotifCollection);
-        const message = `${user.displayName || user.email} purchased ${credits} credits for $${price} from account ${userBankAccount}.`;
+        const message = `${user.displayName || user.email} purchased ${credits} credits for $${price}.`;
         
         batch.set(newNotifDocRef, {
             userId: user.uid,
@@ -89,20 +94,18 @@ export function PaymentFlow() {
             message: message,
             createdAt: serverTimestamp(),
             read: false,
-            paymentStatus: 'paid', // Mark as paid immediately
+            paymentStatus: 'paid',
             link: `/admin/payments/${newNotifDocRef.id}`
         });
 
-        // 3. Create a record in the user's purchase history
         const userPurchaseHistoryRef = doc(firestore, 'users', user.uid, 'purchase_history', newNotifDocRef.id);
         batch.set(userPurchaseHistoryRef, {
             userId: user.uid,
             message: `Purchased ${credits} credits for $${price}.`,
             credits: credits,
             price: price,
-            userBankAccount: userBankAccount,
             createdAt: serverTimestamp(),
-            paymentStatus: 'paid' // Mark as paid immediately
+            paymentStatus: 'paid'
         });
 
         await batch.commit();
@@ -129,6 +132,8 @@ export function PaymentFlow() {
   if (isUserLoading || credits === null || price === null) {
       return <PaymentPageSkeleton />;
   }
+  
+  const isFormFilled = cardNumber && expiryDate && cvc && cardholderName;
 
   return (
     <DashboardLayout>
@@ -137,62 +142,52 @@ export function PaymentFlow() {
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
         </Button>
-        <h1 className="text-2xl font-bold mb-4">Complete your purchase</h1>
+        <h1 className="text-2xl font-bold mb-4">Payment method</h1>
         
-        <div className="border rounded-lg bg-card shadow-sm p-4">
-            <div className="flex justify-between items-center mb-4">
-                <span className="text-muted-foreground">Amount Due:</span>
-                <span className="font-bold text-lg">${price}</span>
-            </div>
-            <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Credits:</span>
-                <span className="font-bold text-lg">{credits}</span>
-            </div>
-            
-            <Separator className="my-4" />
+        <Card>
+            <CardContent className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                    <span className="text-muted-foreground">Amount Due:</span>
+                    <span className="font-bold text-lg">${price}</span>
+                </div>
+                <div className="flex justify-between items-center mb-4">
+                    <span className="text-muted-foreground">Credits to be added:</span>
+                    <span className="font-bold text-lg">{credits}</span>
+                </div>
+                
+                <Separator className="my-6" />
 
-            <div className="space-y-4">
-                <Button 
-                    variant="outline" 
-                    className={cn("w-full justify-start text-left h-auto py-3", showBankDetails && "border-primary ring-2 ring-primary")}
-                    onClick={() => setShowBankDetails(true)}
-                >
-                    <Banknote className="mr-4 h-6 w-6" />
-                    <div>
-                        <p className="font-semibold">Pay with Bank Transfer</p>
-                        <p className="text-xs text-muted-foreground">Transfer to the account below.</p>
+                <div className="space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="card-number">Card information</Label>
+                        <Input id="card-number" placeholder="1234 1234 1234 1234" value={cardNumber} onChange={(e) => setCardNumber(e.target.value)} />
                     </div>
+                    <div className="flex space-x-4">
+                        <div className="space-y-2 w-1/2">
+                            <Input placeholder="MM / YY" value={expiryDate} onChange={(e) => setExpiryDate(e.target.value)} />
+                        </div>
+                        <div className="space-y-2 w-1/2">
+                            <Input placeholder="CVC" value={cvc} onChange={(e) => setCvc(e.target.value)} />
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="cardholder-name">Cardholder name</Label>
+                        <Input id="cardholder-name" placeholder="Full name on card" value={cardholderName} onChange={(e) => setCardholderName(e.target.value)} />
+                    </div>
+                </div>
+            </CardContent>
+            <CardFooter>
+                 <Button className="w-full" size="lg" onClick={handleConfirmPayment} disabled={isSubmitting || !isFormFilled}>
+                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {isSubmitting ? "Processing..." : "Confirm Purchase"}
                 </Button>
+            </CardFooter>
+        </Card>
 
-                {showBankDetails && (
-                    <div className="p-3 bg-secondary rounded-md text-sm space-y-4">
-                        <p>Please transfer ${price} to the following account and enter your account number below for verification:</p>
-                        <div className="font-mono bg-background p-2 rounded">
-                            <p><strong>Account Name:</strong> {ADMIN_ACCOUNT_NAME}</p>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="user-bank-account">Your Bank Account Number</Label>
-                          <Input
-                              id="user-bank-account"
-                              placeholder="Enter your account number"
-                              value={userBankAccount}
-                              onChange={(e) => setUserBankAccount(e.target.value)}
-                          />
-                        </div>
-                        <p className="text-xs text-muted-foreground">Your credits will be added after confirming the purchase.</p>
-                    </div>
-                )}
-            </div>
-        </div>
-
-        <p className="text-xs text-muted-foreground my-4 px-1">
-            By clicking "Confirm Purchase", you agree that you have completed the bank transfer from the account provided.
+        <p className="text-xs text-muted-foreground my-4 px-1 text-center">
+            This is a demo application. Do not use real card details.
         </p>
 
-        <Button className="w-full" size="lg" onClick={handleConfirmPayment} disabled={isSubmitting || !showBankDetails || !userBankAccount}>
-          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isSubmitting ? "Processing..." : "Confirm Purchase & Get Credits"}
-        </Button>
       </div>
     </DashboardLayout>
   );
