@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect } from 'react';
@@ -7,13 +8,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bell, ImageIcon, VideoIcon, Mic } from 'lucide-react';
 import AdminDashboard from '@/components/dashboard/admin-dashboard';
-import { useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, limit, Timestamp, doc } from 'firebase/firestore';
-import { useCollection } from '@/firebase/firestore/use-collection';
 import { useDoc } from '@/firebase/firestore/use-doc';
 import Link from 'next/link';
 import { DashboardLayout } from '@/components/dashboard/dashboard-layout';
-
+import { useFirebase, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import { useNotifications } from '@/context/notifications-context';
 
 function DashboardSkeleton() {
   return (
@@ -58,15 +58,14 @@ function DashboardSkeleton() {
   );
 }
 
-interface UserNotification {
-  message: string;
-  createdAt: any; 
-  read: boolean;
-}
-
 function UserDashboard() {
   const { user: authUser } = useAuth(); 
   const { firestore } = useFirebase();
+
+  const { 
+    unreadNotifications,
+    isLoading: isNotificationsLoading 
+  } = useNotifications();
 
   const userDocRef = useMemoFirebase(() => {
     if (!firestore || !authUser) return null;
@@ -76,18 +75,6 @@ function UserDashboard() {
   const { data: userProfile, isLoading: isProfileLoading } = useDoc(userDocRef);
 
   const displayName = userProfile?.displayName || authUser?.displayName || authUser?.email;
-
-  const userNotificationsQuery = useMemoFirebase(() => {
-    if (!firestore || !authUser) return null;
-    return query(
-      collection(firestore, 'users', authUser.uid, 'user_notifications'),
-      orderBy('createdAt', 'desc'),
-      limit(5)
-    );
-  }, [firestore, authUser]);
-
-  const { data: notifications, isLoading: isNotificationsLoading } = useCollection<UserNotification>(userNotificationsQuery);
-  const unreadNotifications = notifications?.filter(n => !n.read) ?? [];
 
   if (isProfileLoading) {
     return <DashboardSkeleton />;
