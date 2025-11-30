@@ -29,8 +29,6 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Logo } from '../icons/logo';
 import { signOut } from 'firebase/auth';
 import { Header } from './header';
-import { useIsMobile } from '@/hooks/use-mobile';
-
 
 function UserProfile() {
   const { user, auth } = useFirebase();
@@ -121,8 +119,6 @@ export function DashboardLayout({
   const pathname = usePathname();
   const { user, auth } = useFirebase();
   const router = useRouter();
-    const isMobile = useIsMobile();
-
 
   const handleLogout = async () => {
     if (auth) {
@@ -142,9 +138,9 @@ export function DashboardLayout({
       <div className="flex min-h-screen w-full">
         <Sidebar
           side="left"
-          variant={isMobile ? "drawer" : "sidebar"}
+          variant="sidebar"
           collapsible="icon"
-          className="w-64 bg-sidebar border-r border-sidebar-border md:flex"
+          className="w-64 bg-sidebar border-r border-sidebar-border"
         >
           <SidebarHeader className="p-4">
             <Link href="/dashboard" className="flex items-center gap-2">
