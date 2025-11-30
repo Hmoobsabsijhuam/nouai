@@ -9,6 +9,11 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import OpenAI from 'openai';
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 const GenerateImageInputSchema = z.object({
   prompt: z.string().describe('The text prompt to generate an image from.'),
@@ -32,32 +37,18 @@ const generateImageFlow = ai.defineFlow(
     system: 'You are a multilingual AI assistant capable of generating images from text prompts in various languages, including Hmong.',
   },
   async (input) => {
-    // Generate the image using Genkit, which returns a URL.
-    const { media } = await ai.generate({
-        model: 'googleai/imagen-2',
-        prompt: `Generate an image of: ${input.prompt}`,
+    const image = await openai.images.generate({
+      model: 'dall-e-3',
+      prompt: `Generate an image of: ${input.prompt}`,
+      n: 1,
+      size: '1024x1024',
+      response_format: 'b64_json',
     });
-    
-    if (!media.url) {
-        throw new Error('Image generation failed to return a URL.');
-    }
 
-    // Fetch the image from the provided URL.
-    const imageResponse = await fetch(media.url);
-    if (!imageResponse.ok) {
-        throw new Error(`Failed to fetch generated image: ${imageResponse.statusText}`);
-    }
+    const imageUrl = `data:image/png;base64,${image.data[0].b64_json}`;
 
-    // Convert the image response to a Buffer.
-    const imageBuffer = await imageResponse.arrayBuffer();
-    const buffer = Buffer.from(imageBuffer);
-
-    // Convert the Buffer to a base64 data URI.
-    const imageUrl = `data:${media.contentType || 'image/png'};base64,${buffer.toString('base64')}`;
-
-    // Return the data URI, which the frontend expects for upload.
     return {
-        imageUrl: imageUrl,
+      imageUrl: imageUrl,
     };
   }
 );
