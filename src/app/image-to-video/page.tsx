@@ -64,7 +64,7 @@ function VideoFeed({ videos, isLoading, isGenerating }: { videos: WithId<Generat
 
     if ((!videos || videos.length === 0) && !isGenerating) {
         return (
-            <div className="mt-6 flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
+            <div className="mt-6 flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center bg-card">
                 <Video className="mx-auto h-10 w-10 text-muted-foreground" />
                 <h3 className="mt-4 text-md font-semibold">Tseem Tsis Tau Muaj Video</h3>
                 <p className="mt-1 text-xs text-muted-foreground">Koj cov videos yuav tshwm rau hauv qab no.</p>
@@ -115,7 +115,7 @@ function ImageToVideoControls({ form, isGenerating, cost }: { form: any, isGener
                                 <FormLabel>Upload Image</FormLabel>
                                 <FormControl>
                                     <div
-                                        className="relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-secondary hover:bg-muted transition-colors"
+                                        className="relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-card hover:bg-muted transition-colors"
                                         onClick={() => fileInputRef.current?.click()}
                                     >
                                         {imagePreview ? (
@@ -153,7 +153,7 @@ function ImageToVideoControls({ form, isGenerating, cost }: { form: any, isGener
                                     <Textarea
                                         placeholder="Piv txwv: make this character walk in a forest"
                                         {...field}
-                                        className="min-h-[100px] bg-secondary border-none"
+                                        className="min-h-[100px] bg-card border-none"
                                     />
                                 </FormControl>
                                 <FormMessage />

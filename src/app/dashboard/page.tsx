@@ -142,7 +142,7 @@ function UserDashboard() {
             <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <Link href="/generate-image" className="group">
-                        <Card className="h-full transition-all duration-300 group-hover:border-primary group-hover:shadow-lg">
+                        <Card className="h-full transition-all duration-300 group-hover:border-primary group-hover:shadow-lg group-hover:bg-muted">
                             <CardHeader className="items-center text-center">
                                 <ImageIcon className="h-10 w-10 text-primary mb-2" />
                                 <CardTitle className="text-lg">Image Generation</CardTitle>
@@ -153,7 +153,7 @@ function UserDashboard() {
                         </Card>
                     </Link>
                     <Link href="/text-to-video" className="group">
-                         <Card className="h-full transition-all duration-300 group-hover:border-primary group-hover:shadow-lg">
+                         <Card className="h-full transition-all duration-300 group-hover:border-primary group-hover:shadow-lg group-hover:bg-muted">
                             <CardHeader className="items-center text-center">
                                 <VideoIcon className="h-10 w-10 text-primary mb-2" />
                                 <CardTitle className="text-lg">Text to Video</CardTitle>
@@ -164,7 +164,7 @@ function UserDashboard() {
                         </Card>
                     </Link>
                      <Link href="/image-to-video" className="group">
-                         <Card className="h-full transition-all duration-300 group-hover:border-primary group-hover:shadow-lg">
+                         <Card className="h-full transition-all duration-300 group-hover:border-primary group-hover:shadow-lg group-hover:bg-muted">
                             <CardHeader className="items-center text-center">
                                 <VideoIcon className="h-10 w-10 text-primary mb-2" />
                                 <CardTitle className="text-lg">Image to Video</CardTitle>
@@ -175,7 +175,7 @@ function UserDashboard() {
                         </Card>
                     </Link>
                      <Link href="/text-to-speech" className="group">
-                         <Card className="h-full transition-all duration-300 group-hover:border-primary group-hover:shadow-lg">
+                         <Card className="h-full transition-all duration-300 group-hover:border-primary group-hover:shadow-lg group-hover:bg-muted">
                             <CardHeader className="items-center text-center">
                                 <Mic className="h-10 w-10 text-primary mb-2" />
                                 <CardTitle className="text-lg">Text to Speech</CardTitle>

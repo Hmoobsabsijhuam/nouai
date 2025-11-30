@@ -58,7 +58,7 @@ function VideoFeed({ videos, isLoading, isGenerating }: { videos: WithId<Generat
 
     if ((!videos || videos.length === 0) && !isGenerating) {
         return (
-            <div className="mt-6 flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
+            <div className="mt-6 flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center bg-card">
                 <Video className="mx-auto h-10 w-10 text-muted-foreground" />
                 <h3 className="mt-4 text-md font-semibold">Tseem Tsis Tau Muaj Video</h3>
                 <p className="mt-1 text-xs text-muted-foreground">Koj cov videos yuav tshwm rau hauv qab no.</p>
@@ -108,7 +108,7 @@ function TextToVideoControls({ form, isGenerating, cost }: { form: any, isGenera
                                     <Textarea
                                         placeholder="Piv txwv: Ib tug hluas nkauj hmoob zoo zoo nkauj tab tom ntis plaub hau"
                                         {...field}
-                                        className="min-h-[150px] bg-secondary border-none"
+                                        className="min-h-[150px] bg-card border-none"
                                     />
                                 </FormControl>
                                 <FormMessage />

@@ -69,7 +69,7 @@ function ImageFeed({ images, isLoading }: { images: WithId<GeneratedImage>[] | n
   
   if (!images || images.length === 0) {
     return (
-       <div className="mt-6 flex flex-col items-center justify-center rounded-lg border border-dashed text-center p-8">
+       <div className="mt-6 flex flex-col items-center justify-center rounded-lg border border-dashed text-center p-8 bg-card">
             <ImageIcon className="mx-auto h-10 w-10 text-muted-foreground" />
             <h3 className="mt-4 text-md font-semibold">Tseem Tsis Tau Muaj Duab Li</h3>
             <p className="mt-1 text-xs text-muted-foreground">
@@ -125,55 +125,58 @@ function ImageGeneratorControls({ form, isGenerating }: { form: any, isGeneratin
                                     <Textarea 
                                         placeholder="Piv txwv: Ib tug hluas nkauj hmoob zoo zoo nkauj tab tom ntsis plaub hau" 
                                         {...field} 
-                                        className="min-h-[120px] bg-secondary border-none"
+                                        className="min-h-[120px] bg-card border-none"
                                     />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
                         )}
                     />
-
-                    <FormField
-                        control={form.control}
-                        name="aspectRatio"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Aspect Ratio</FormLabel>
-                                <FormControl>
-                                   <ToggleGroup 
-                                        type="single" 
-                                        defaultValue="1:1" 
-                                        className="justify-start"
-                                        onValueChange={field.onChange}
-                                        value={field.value}
-                                    >
-                                        <ToggleGroupItem value="1:1" aria-label="1:1">1:1</ToggleGroupItem>
-                                        <ToggleGroupItem value="9:16" aria-label="9:16">9:16</ToggleGroupItem>
-                                        <ToggleGroupItem value="16:9" aria-label="16:9">16:9</ToggleGroupItem>
-                                    </ToggleGroup>
-                                </FormControl>
-                            </FormItem>
-                        )}
-                    />
-                    
-                     <FormField
-                        control={form.control}
-                        name="imageCount"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Images per batch: {field.value}</FormLabel>
-                            <FormControl>
-                                <Slider
-                                    min={1}
-                                    max={4}
-                                    step={1}
-                                    value={[field.value]}
-                                    onValueChange={(value) => field.onChange(value[0])}
-                                />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
+                    <Card>
+                        <CardContent className="space-y-6 pt-6">
+                            <FormField
+                                control={form.control}
+                                name="aspectRatio"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Aspect Ratio</FormLabel>
+                                        <FormControl>
+                                           <ToggleGroup 
+                                                type="single" 
+                                                defaultValue="1:1" 
+                                                className="justify-start"
+                                                onValueChange={field.onChange}
+                                                value={field.value}
+                                            >
+                                                <ToggleGroupItem value="1:1" aria-label="1:1">1:1</ToggleGroupItem>
+                                                <ToggleGroupItem value="9:16" aria-label="9:16">9:16</ToggleGroupItem>
+                                                <ToggleGroupItem value="16:9" aria-label="16:9">16:9</ToggleGroupItem>
+                                            </ToggleGroup>
+                                        </FormControl>
+                                    </FormItem>
+                                )}
+                            />
+                            
+                             <FormField
+                                control={form.control}
+                                name="imageCount"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Images per batch: {field.value}</FormLabel>
+                                    <FormControl>
+                                        <Slider
+                                            min={1}
+                                            max={4}
+                                            step={1}
+                                            value={[field.value]}
+                                            onValueChange={(value) => field.onChange(value[0])}
+                                        />
+                                    </FormControl>
+                                  </FormItem>
+                                )}
+                              />
+                        </CardContent>
+                    </Card>
                 </div>
 
                 <div className="space-y-2 pt-4">
