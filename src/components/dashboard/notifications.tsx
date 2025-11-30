@@ -149,17 +149,23 @@ export function Notifications() {
     }
   }, [globalNotifications, toast]);
 
-  // Merge notifications and apply client-side 'read' status for global ones
+  // Merge notifications and de-duplicate, preferring global announcements
   const mergedNotifications = useMemo<MergedNotification[]>(() => {
     const userNotifs: MergedNotification[] = userNotifications?.map(n => ({...n, type: 'user'})) || [];
     
     const globalNotifs: MergedNotification[] = globalNotifications?.map(n => ({
         ...n,
         type: 'global',
-        read: seenGlobalNotifIds.has(n.id) // Synthetic 'read' property
+        read: seenGlobalNotifIds.has(n.id)
     })) || [];
     
-    return [...userNotifs, ...globalNotifs]
+    // Create a set of messages from global notifications to identify duplicates
+    const globalNotifMessages = new Set(globalNotifs.map(n => n.message));
+
+    // Filter out user notifications that are duplicates of global ones
+    const filteredUserNotifs = userNotifs.filter(n => !globalNotifMessages.has(n.message));
+
+    return [...filteredUserNotifs, ...globalNotifs]
         .sort((a, b) => (b.createdAt?.toDate()?.getTime() || 0) - (a.createdAt?.toDate()?.getTime() || 0));
 
   }, [userNotifications, globalNotifications, seenGlobalNotifIds]);
