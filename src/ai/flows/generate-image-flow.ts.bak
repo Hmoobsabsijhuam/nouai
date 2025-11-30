@@ -32,9 +32,8 @@ const generateImageFlow = ai.defineFlow(
     system: 'You are a multilingual AI assistant capable of generating images from text prompts in various languages, including Hmong.',
   },
   async (input) => {
-    // Generate the image using Genkit, which returns a URL.
     const { media } = await ai.generate({
-        model: 'googleai/imagen-2',
+        model: 'googleai/gemini-pro',
         prompt: `Generate an image of: ${input.prompt}`,
     });
     
@@ -42,22 +41,8 @@ const generateImageFlow = ai.defineFlow(
         throw new Error('Image generation failed to return a URL.');
     }
 
-    // Fetch the image from the provided URL.
-    const imageResponse = await fetch(media.url);
-    if (!imageResponse.ok) {
-        throw new Error(`Failed to fetch generated image: ${imageResponse.statusText}`);
-    }
-
-    // Convert the image response to a Buffer.
-    const imageBuffer = await imageResponse.arrayBuffer();
-    const buffer = Buffer.from(imageBuffer);
-
-    // Convert the Buffer to a base64 data URI.
-    const imageUrl = `data:${media.contentType || 'image/png'};base64,${buffer.toString('base64')}`;
-
-    // Return the data URI, which the frontend expects for upload.
     return {
-        imageUrl: imageUrl,
+        imageUrl: media.url,
     };
   }
 );
