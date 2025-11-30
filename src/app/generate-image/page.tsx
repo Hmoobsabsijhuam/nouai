@@ -275,7 +275,9 @@ export default function GenerateImagePage() {
       let description = 'An unexpected error occurred.';
       if (typeof error.message === 'string') {
         const lowerCaseError = error.message.toLowerCase();
-        if (lowerCaseError.includes('429') || lowerCaseError.includes('quota')) {
+        if (lowerCaseError.includes('401') || lowerCaseError.includes('incorrect api key')) {
+            description = 'Incorrect API key. Please make sure your OPENAI_API_KEY in the .env.local file is correct and restart the server.';
+        } else if (lowerCaseError.includes('429') || lowerCaseError.includes('quota')) {
             description = 'You have exceeded the free usage limit for image generation. Please try again later or check your billing plan.';
         } else if (lowerCaseError.includes('billing')) {
              description = 'This feature may require a paid plan. Please check your billing details and try again.';
