@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Bell, ExternalLink } from 'lucide-react';
 import { collection, query, orderBy, limit, updateDoc, doc } from 'firebase/firestore';
 import { useCollection, WithId } from '@/firebase/firestore/use-collection';
@@ -12,32 +12,38 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { format, formatDistanceToNow, isToday, isYesterday, formatISO, startOfDay } from 'date-fns';
+import { format, formatDistanceToNow, isToday, isYesterday } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '../ui/skeleton';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Separator } from '../ui/separator';
+import { useToast } from '@/hooks/use-toast';
 
+// User-specific notifications (private)
 interface UserNotification {
   message: string;
-  createdAt: any; // Firestore Timestamp
+  createdAt: any;
   read: boolean;
   link?: string;
-  type?: 'user';
+  type: 'user';
   updatedAt?: any;
 }
 
-interface AdminNotification {
+// Global admin announcements (public)
+interface GlobalNotification {
     message: string;
     createdAt: any;
-    updatedAt?: any;
-    read: boolean;
     link?: string;
-    type?: 'admin';
+    type: 'global';
+    // 'read' status is handled client-side for global notifications
 }
 
-type MergedNotification = WithId<UserNotification | AdminNotification>;
+type MergedNotification = WithId<UserNotification | GlobalNotification>;
+
+// Local storage keys
+const SEEN_GLOBAL_NOTIFS_KEY = 'seenGlobalNotifIds';
+const LAST_SEEN_TOAST_TIMESTAMP_KEY = 'lastSeenToastTimestamp';
 
 function groupNotificationsByDay(notifications: MergedNotification[]): Record<string, MergedNotification[]> {
     return notifications.reduce((acc, notif) => {
@@ -65,10 +71,20 @@ function groupNotificationsByDay(notifications: MergedNotification[]): Record<st
 export function Notifications() {
   const { firestore, user } = useFirebase();
   const [open, setOpen] = useState(false);
-  
-  const isAdmin = user?.email === 'admin@noukha.com';
+  const { toast } = useToast();
+  const [seenGlobalNotifIds, setSeenGlobalNotifIds] = useState<Set<string>>(new Set());
 
-  // Query for standard user notifications
+  // Load seen global notification IDs from local storage on initial render
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+        const storedIds = localStorage.getItem(SEEN_GLOBAL_NOTIFS_KEY);
+        if (storedIds) {
+            setSeenGlobalNotifIds(new Set(JSON.parse(storedIds)));
+        }
+    }
+  }, []);
+
+  // Query for user-specific notifications
   const userNotificationsQuery = useMemoFirebase(
     () =>
       firestore && user
@@ -83,30 +99,70 @@ export function Notifications() {
   
   const { data: userNotifications, isLoading: isUserLoading } = useCollection<UserNotification>(userNotificationsQuery);
   
-  // Query for admin-specific notifications (only if user is an admin)
-  const adminNotificationsQuery = useMemoFirebase(
+  // Query for global admin announcements
+  const globalNotificationsQuery = useMemoFirebase(
       () =>
-        firestore && isAdmin
+        firestore
         ? query(
-            collection(firestore, 'admin_notifications'),
+            collection(firestore, 'notifications'),
             orderBy('createdAt', 'desc'),
             limit(20)
         )
         : null,
-      [firestore, isAdmin]
+      [firestore]
   );
 
-  const { data: adminNotifications, isLoading: isAdminLoading } = useCollection<AdminNotification>(adminNotificationsQuery);
+  const { data: globalNotifications, isLoading: isGlobalLoading } = useCollection<Omit<GlobalNotification, 'type'>>(globalNotificationsQuery);
 
-  // Merge and sort notifications
+  // Effect to show toast for new global announcements
+  useEffect(() => {
+    if (typeof window !== 'undefined' && globalNotifications && globalNotifications.length > 0) {
+        const lastSeenTimestamp = localStorage.getItem(LAST_SEEN_TOAST_TIMESTAMP_KEY);
+        const lastSeenDate = lastSeenTimestamp ? new Date(JSON.parse(lastSeenTimestamp)) : new Date(0);
+
+        let newestNotifDate: Date | null = null;
+
+        globalNotifications.forEach(notif => {
+            const notifDate = notif.createdAt?.toDate();
+            if (notifDate) {
+                if (!newestNotifDate || notifDate > newestNotifDate) {
+                    newestNotifDate = notifDate;
+                }
+
+                if (notifDate > lastSeenDate) {
+                    toast({
+                        title: "New Announcement",
+                        description: notif.message,
+                        action: notif.link ? (
+                            <Link href={notif.link}>
+                                <Button variant="outline">View</Button>
+                            </Link>
+                        ) : undefined,
+                    });
+                }
+            }
+        });
+
+        if (newestNotifDate && newestNotifDate > lastSeenDate) {
+            localStorage.setItem(LAST_SEEN_TOAST_TIMESTAMP_KEY, JSON.stringify(newestNotifDate.toISOString()));
+        }
+    }
+  }, [globalNotifications, toast]);
+
+  // Merge notifications and apply client-side 'read' status for global ones
   const mergedNotifications = useMemo<MergedNotification[]>(() => {
-    const userNotifsWithType: MergedNotification[] = userNotifications?.map(n => ({...n, type: 'user'})) || [];
-    const adminNotifsWithType: MergedNotification[] = adminNotifications?.map(n => ({...n, type: 'admin'})) || [];
+    const userNotifs: MergedNotification[] = userNotifications?.map(n => ({...n, type: 'user'})) || [];
     
-    return [...userNotifsWithType, ...adminNotifsWithType]
+    const globalNotifs: MergedNotification[] = globalNotifications?.map(n => ({
+        ...n,
+        type: 'global',
+        read: seenGlobalNotifIds.has(n.id) // Synthetic 'read' property
+    })) || [];
+    
+    return [...userNotifs, ...globalNotifs]
         .sort((a, b) => (b.createdAt?.toDate()?.getTime() || 0) - (a.createdAt?.toDate()?.getTime() || 0));
 
-  }, [userNotifications, adminNotifications]);
+  }, [userNotifications, globalNotifications, seenGlobalNotifIds]);
 
   const groupedNotifications = useMemo(() => groupNotificationsByDay(mergedNotifications), [mergedNotifications]);
   const notificationGroups = Object.entries(groupedNotifications);
@@ -116,18 +172,23 @@ export function Notifications() {
   }, [mergedNotifications]);
 
   const handleMarkAsRead = async (notif: MergedNotification) => {
-    if (!firestore || !user || notif.read) return;
+    if (notif.read) return;
 
-    try {
-        const collectionPath = notif.type === 'admin' ? 'admin_notifications' : `users/${user.uid}/user_notifications`;
-        const notifRef = doc(firestore, collectionPath, notif.id);
-        await updateDoc(notifRef, { read: true });
-    } catch (error) {
-        console.error("Failed to mark notification as read:", error);
+    if (notif.type === 'global') {
+        const newSeenIds = new Set(seenGlobalNotifIds).add(notif.id);
+        setSeenGlobalNotifIds(newSeenIds);
+        localStorage.setItem(SEEN_GLOBAL_NOTIFS_KEY, JSON.stringify(Array.from(newSeenIds)));
+    } else if (notif.type === 'user' && firestore && user) {
+        try {
+            const notifRef = doc(firestore, 'users', user.uid, 'user_notifications', notif.id);
+            await updateDoc(notifRef, { read: true });
+        } catch (error) {
+            console.error("Failed to mark user notification as read:", error);
+        }
     }
   };
   
-  const isLoading = isUserLoading || (isAdmin && isAdminLoading);
+  const isLoading = isUserLoading || isGlobalLoading;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
