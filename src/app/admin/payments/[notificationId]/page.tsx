@@ -1,3 +1,4 @@
+// Re-applying changes to sync with GitHub
 
 import PaymentClient from './payment-client';
 
