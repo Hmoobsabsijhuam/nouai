@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { Separator } from '../ui/separator';
 import { useNotifications } from '@/context/notifications-context';
 import { AppNotification } from '@/hooks/use-notifications';
+import { useFirebase } from '@/firebase';
 
 function groupNotificationsByDay(notifications: AppNotification[]): Record<string, AppNotification[]> {
     return notifications.reduce((acc, notif) => {
@@ -42,6 +43,7 @@ function groupNotificationsByDay(notifications: AppNotification[]): Record<strin
 
 export function Notifications() {
   const [open, setOpen] = useState(false);
+  const { user } = useFirebase();
   const {
       isLoading,
       mergedNotifications,
@@ -53,6 +55,14 @@ export function Notifications() {
 
   const groupedNotifications = useMemo(() => groupNotificationsByDay(mergedNotifications), [mergedNotifications]);
   const notificationGroups = Object.entries(groupedNotifications);
+
+  const isNotificationUnread = (notif: AppNotification) => {
+    if (!user) return false;
+    if (notif.type === 'admin') {
+      return !notif.read?.[user.uid];
+    }
+    return !notif.read;
+  };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -99,7 +109,9 @@ export function Notifications() {
                               </div>
                            </div>
                            <div className="space-y-2">
-                            {notifs.map(notif => (
+                            {notifs.map(notif => {
+                              const isUnread = isNotificationUnread(notif);
+                              return (
                                <Link
                                 key={notif.id}
                                 href={notif.link ?? '#'}
@@ -110,11 +122,11 @@ export function Notifications() {
                                 }}
                                 className={cn(
                                     "block rounded-lg p-3 -mx-2 hover:bg-accent",
-                                    !notif.read && "bg-primary/10 hover:bg-primary/20"
+                                    isUnread && "bg-primary/10 hover:bg-primary/20"
                                 )}
                                 >
                                 <div className="grid grid-cols-[15px_1fr_auto] items-start gap-3">
-                                    <span className={cn("flex h-2 w-2 translate-y-1.5 rounded-full", !notif.read ? 'bg-primary' : 'bg-muted')} />
+                                    <span className={cn("flex h-2 w-2 translate-y-1.5 rounded-full", isUnread ? 'bg-primary' : 'bg-muted')} />
                                     <div className="grid gap-1">
                                         <p className="text-sm font-medium leading-tight">{notif.message}</p>
                                         {(notif.createdAt?.toDate) && (
@@ -128,7 +140,8 @@ export function Notifications() {
                                     {notif.link && <ExternalLink className="h-4 w-4 text-muted-foreground justify-self-end" />}
                                 </div>
                                </Link>
-                            ))}
+                              )
+                            })}
                            </div>
                         </div>
                     ))}

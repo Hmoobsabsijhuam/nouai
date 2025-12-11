@@ -24,7 +24,7 @@ export interface AdminNotification {
     userEmail: string;
     message: string;
     createdAt: Timestamp;
-    read: boolean;
+    read: { [key: string]: boolean };
     link?: string;
     paymentStatus: 'pending' | 'paid' | 'rejected';
 }
@@ -108,24 +108,29 @@ export function useNotifications() {
 
   // --- DERIVED STATE ---
   const unreadNotifications = useMemo(() => {
-      return mergedNotifications.filter(n => !n.read);
-  }, [mergedNotifications]);
+      return mergedNotifications.filter(n => {
+        if (n.type === 'admin') {
+          return user && !n.read?.[user.uid];
+        }
+        return !n.read;
+      });
+  }, [mergedNotifications, user]);
   
   // --- ACTIONS ---
   const handleMarkAsRead = async (notif: AppNotification) => {
-    if (!user || !firestore || notif.read) return;
+    if (!user || !firestore) return;
 
     try {
         let notifRef;
-        // Determine which collection to update based on the notification type
-        if (notif.type === 'user') {
+        if (notif.type === 'user' && !notif.read) {
             notifRef = doc(firestore, 'users', user.uid, 'user_notifications', notif.id);
-        } else if (notif.type === 'admin') {
+            await updateDoc(notifRef, { read: true });
+        } else if (notif.type === 'admin' && !notif.read?.[user.uid]) {
             notifRef = doc(firestore, 'admin_notifications', notif.id);
+            await updateDoc(notifRef, { [`read.${user.uid}`]: true });
         } else {
-            return; // Unknown notification type
+            return; // Already read or unknown type
         }
-        await updateDoc(notifRef, { read: true });
     } catch (error) {
         console.error("Failed to mark notification as read:", error);
         toast({
