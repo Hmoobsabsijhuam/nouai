@@ -5,8 +5,8 @@ service firebase.storage {
   match /b/{bucket}/o {
     // Allow users to read and write their own profile pictures.
     // The path is restricted to a folder named 'profile-pictures'
-    // and a file named after their own user ID.
-    match /profile-pictures/{userId} {
+    // and any file within their own user ID folder.
+    match /profile-pictures/{userId}/{fileName} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
