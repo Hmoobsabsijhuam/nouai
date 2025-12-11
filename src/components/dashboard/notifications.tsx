@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { Separator } from '../ui/separator';
 import { useNotifications } from '@/context/notifications-context';
 import { MergedNotification } from '@/hooks/use-notifications';
+import { Badge } from '@/components/ui/badge';
 
 function groupNotificationsByDay(notifications: MergedNotification[]): Record<string, MergedNotification[]> {
     return notifications.reduce((acc, notif) => {
@@ -61,10 +62,9 @@ export function Notifications() {
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <span className="absolute top-0 right-0 flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-            </span>
+            <Badge variant="destructive" className="absolute -top-2 -right-2 h-6 w-6 rounded-full flex items-center justify-center text-xs">
+              {unreadCount}
+            </Badge>
           )}
         </Button>
       </PopoverTrigger>
@@ -73,7 +73,7 @@ export function Notifications() {
           <div className="space-y-1.5 p-4">
             <h4 className="font-medium leading-none">Notifications</h4>
             <p className="text-sm text-muted-foreground">
-              Recent updates.
+              You have {unreadCount} unread messages.
             </p>
           </div>
           <ScrollArea className="h-96 w-full">
