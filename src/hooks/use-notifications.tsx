@@ -136,6 +136,7 @@ export function useNotifications() {
     }
   };
 
+  // Return the hook's public API
   return {
       isLoading: (isUserLoading || isAdminLoading) && !!user,
       mergedNotifications, 
