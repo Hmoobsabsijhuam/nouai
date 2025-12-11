@@ -1,4 +1,4 @@
-
+// This is a comment to force a rebuild
 'use client';
 
 import { useMemo, useEffect } from 'react';
@@ -60,12 +60,6 @@ export function useNotifications() {
   );
   const { data: adminNotifications, isLoading: isAdminLoading } = useCollection<AdminNotification>(adminNotificationsQuery);
 
-  // --- DEBUGGING LOGS ---
-  useEffect(() => {
-    console.log("User Notifications:", userNotifications);
-    console.log("Admin Notifications:", adminNotifications);
-  }, [userNotifications, adminNotifications]);
-
 
   // --- TOASTS FOR NEW ANNOUNCEMENTS ---
   useEffect(() => {
@@ -107,20 +101,14 @@ export function useNotifications() {
 
     // Only include admin notifications if the user is an admin
     const adminNotifs: AppNotification[] = isAdmin ? (adminNotifications || []).map(n => ({ ...n, type: 'admin' })) : [];
-    
-    const allNotifications = [...userNotifs, ...adminNotifs]
+
+    return [...userNotifs, ...adminNotifs]
         .sort((a, b) => (b.createdAt?.toDate()?.getTime() || 0) - (a.createdAt?.toDate()?.getTime() || 0));
-
-    console.log("Merged Notifications:", allNotifications);
-
-    return allNotifications;
   }, [user, userNotifications, adminNotifications, isAdmin]);
 
   // --- DERIVED STATE ---
   const unreadNotifications = useMemo(() => {
-      const unread = mergedNotifications.filter(n => !n.read);
-      console.log("Unread Notifications:", unread);
-      return unread;
+      return mergedNotifications.filter(n => !n.read);
   }, [mergedNotifications]);
   
   // --- ACTIONS ---
