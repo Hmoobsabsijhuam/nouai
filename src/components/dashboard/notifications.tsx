@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -16,10 +15,9 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Separator } from '../ui/separator';
 import { useNotifications } from '@/context/notifications-context';
-import { MergedNotification } from '@/hooks/use-notifications';
-import { Badge } from '@/components/ui/badge';
+import { AppNotification } from '@/hooks/use-notifications';
 
-function groupNotificationsByDay(notifications: MergedNotification[]): Record<string, MergedNotification[]> {
+function groupNotificationsByDay(notifications: AppNotification[]): Record<string, AppNotification[]> {
     return notifications.reduce((acc, notif) => {
         if (!notif.createdAt?.toDate) return acc;
         
@@ -39,7 +37,7 @@ function groupNotificationsByDay(notifications: MergedNotification[]): Record<st
         }
         acc[dayLabel].push(notif);
         return acc;
-    }, {} as Record<string, MergedNotification[]>);
+    }, {} as Record<string, AppNotification[]>);
 }
 
 export function Notifications() {
@@ -62,9 +60,9 @@ export function Notifications() {
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <Badge variant="destructive" className="absolute -top-2 -right-2 h-6 w-6 rounded-full flex items-center justify-center text-xs">
+            <div className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground">
               {unreadCount}
-            </Badge>
+            </div>
           )}
         </Button>
       </PopoverTrigger>
@@ -122,10 +120,7 @@ export function Notifications() {
                                         {(notif.createdAt?.toDate) && (
                                             <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                                 <span>
-                                                    {formatDistanceToNow(notif.updatedAt?.toDate() || notif.createdAt.toDate(), { addSuffix: true })}
-                                                </span>
-                                                <span>
-                                                    · {format(notif.updatedAt?.toDate() || notif.createdAt.toDate(), 'dd/MM/yyyy')}
+                                                    {formatDistanceToNow(notif.createdAt.toDate(), { addSuffix: true })}
                                                 </span>
                                             </div>
                                         )}
