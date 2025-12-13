@@ -165,8 +165,8 @@ export function DashboardLayout({
                           </SidebarMenuButton>
                       </SidebarMenuItem>
                       <SidebarMenuItem>
-                          <SidebarMenuButton asChild isActive={pathname === '/challenges'} tooltip="Challenge">
-                              <Link href="/challenges"><Bot /> <span>Challenge</span></Link>
+                          <SidebarMenuButton asChild isActive={pathname === '/challenge'} tooltip="Challenge">
+                              <Link href="/challenge"><Bot /> <span>Challenge</span></Link>
                           </SidebarMenuButton>
                       </SidebarMenuItem>
                   </SidebarMenu>
