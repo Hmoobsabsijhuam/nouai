@@ -1,5 +1,5 @@
 import { Logo } from '@/components/icons/logo';
-import AnimatedBackground from '@/components/auth/animated-background';
+import AnimatedBackgroundClient from '@/components/auth/animated-background-client';
 
 export default function AuthLayout({
   children,
@@ -8,7 +8,7 @@ export default function AuthLayout({
 }) {
   return (
     <div className="flex min-h-screen w-full items-center justify-center p-4">
-      <AnimatedBackground />
+      <AnimatedBackgroundClient />
       <div className="relative z-10 w-full max-w-sm">
         <div className="mb-6 flex justify-center">
           <Logo />
