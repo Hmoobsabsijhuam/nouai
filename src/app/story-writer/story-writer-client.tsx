@@ -56,7 +56,7 @@ export default function StoryWriterClient() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-120px)] w-full">
+    <div className="flex flex-col h-full w-full">
       <div className="flex-grow overflow-y-auto p-4 space-y-4">
         {messages.map((message, index) => (
           <div key={index} className={`flex items-start gap-3 ${message.role === 'user' ? 'justify-end' : ''}`}>
@@ -65,7 +65,7 @@ export default function StoryWriterClient() {
                 <AvatarFallback><Bot size={20} /></AvatarFallback>
               </Avatar>
             )}
-            <div className={`p-3 rounded-lg max-w-lg ${message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+            <div className={`p-3 rounded-lg max-w-lg ${message.role === 'user' ? 'bg-primary/80 text-primary-foreground' : 'bg-white/80 text-black'}`}>
               <p className="whitespace-pre-wrap">{message.content}</p>
             </div>
             {message.role === 'user' && (
@@ -87,14 +87,14 @@ export default function StoryWriterClient() {
         )}
         <div ref={messagesEndRef} />
       </div>
-      <div className="p-4 bg-background border-t">
+      <div className="p-4 bg-transparent border-t border-white/20">
         <form onSubmit={handleSubmit} className="flex items-center gap-2">
           <Textarea
             placeholder="Tell me a story about..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
             rows={1}
-            className="flex-grow resize-none bg-white text-black"
+            className="flex-grow resize-none bg-white/80 text-black placeholder:text-gray-500 rounded-md border-white/30"
             onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();

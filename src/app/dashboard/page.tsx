@@ -99,14 +99,14 @@ function UserDashboard() {
                 </CardTitle>
                 <CardDescription>
                     {unreadNotifications.length > 0 
-                    ? `You have ${unreadNotifications.length} unread message(s).`
+                    ? `Koj muaj ${unreadNotifications.length} tsab ntawv tshiab.`
                     : 'Tsis tau muaj kev tshaj tawm tshiab li.'}
                 </CardDescription>
                 </CardHeader>
                 <CardContent>
                 <div className="space-y-4">
                     {isNotificationsLoading ? (
-                        <p>Loading notifications...</p>
+                        <p>Tab tom thauj cov ntawv ceeb toom...</p>
                     ) : unreadNotifications.length > 0 ? (
                     unreadNotifications.slice(0, 3).map(notif => (
                         <div key={notif.id} className="border-l-2 border-primary pl-3">
@@ -114,7 +114,7 @@ function UserDashboard() {
                         </div>
                     ))
                     ) : (
-                    <p className="text-sm text-muted-foreground">Your notification inbox is clear.</p>
+                    <p className="text-sm text-muted-foreground">Koj lub inbox ceeb toom yog dawb paug.</p>
                     )}
                 </div>
                 </CardContent>

@@ -113,7 +113,7 @@ function UserProfile() {
 }
 
 export function DashboardLayout({
-  children
+  children,
 }: {
   children: React.ReactNode;
 }) {

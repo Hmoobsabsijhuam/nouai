@@ -10,7 +10,7 @@ export default function WelcomePage() {
     <div className="flex min-h-screen w-full flex-col items-center justify-center p-4 text-center">
       <AnimatedBackground />
       <div className="relative z-10 flex flex-col items-center">
-        <Logo className="h-24 w-24" />
+        <Logo className="h-32 w-32" />
         <h1 className="mt-6 text-4xl font-bold tracking-tight text-white sm:text-6xl">
           Welcome to Nou AI
         </h1>
