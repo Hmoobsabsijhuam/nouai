@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bell, ImageIcon, VideoIcon, Mic } from 'lucide-react';
+import { Bell, ImageIcon, VideoIcon, Mic, BookOpen, UserCircle, BookPlus } from 'lucide-react';
 import AdminDashboard from '@/components/dashboard/admin-dashboard';
 import { useDoc } from '@/firebase/firestore/use-doc';
 import Link from 'next/link';
@@ -169,6 +169,39 @@ function UserDashboard() {
                             </CardHeader>
                             <CardContent>
                                 <p className="text-sm text-muted-foreground text-center">Convert text into natural-sounding audio.</p>
+                            </CardContent>
+                        </Card>
+                    </Link>
+                    <Link href="/story-weaver" className="group">
+                         <Card className="h-full transition-all duration-300 group-hover:border-primary group-hover:shadow-lg group-hover:bg-muted">
+                            <CardHeader className="items-center text-center">
+                                <BookOpen className="h-10 w-10 text-primary mb-2" />
+                                <CardTitle className="text-lg">StoryWeaver</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-sm text-muted-foreground text-center">Weave your words into a captivating story.</p>
+                            </CardContent>
+                        </Card>
+                    </Link>
+                    <Link href="/avatar-generator" className="group">
+                         <Card className="h-full transition-all duration-300 group-hover:border-primary group-hover:shadow-lg group-hover:bg-muted">
+                            <CardHeader className="items-center text-center">
+                                <UserCircle className="h-10 w-10 text-primary mb-2" />
+                                <CardTitle className="text-lg">Avatar Generator</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-sm text-muted-foreground text-center">Create a unique avatar for your profile.</p>
+                            </CardContent>
+                        </Card>
+                    </Link>
+                    <Link href="/story-writer" className="group">
+                        <Card className="h-full transition-all duration-300 group-hover:border-primary group-hover:shadow-lg group-hover:bg-muted">
+                            <CardHeader className="items-center text-center">
+                                <BookPlus className="h-10 w-10 text-primary mb-2" />
+                                <CardTitle className="text-lg">Story Writer</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-sm text-muted-foreground text-center">Craft a compelling story with AI assistance.</p>
                             </CardContent>
                         </Card>
                     </Link>

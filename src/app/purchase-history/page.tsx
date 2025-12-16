@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo } from 'react';
@@ -12,9 +11,20 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { CreditCard, Coins, History } from 'lucide-react';
 import { format } from 'date-fns';
 
+// Helper to safely convert Firestore timestamps
+const toSafeDate = (timestamp: any): Date => {
+  if (timestamp?.toDate) {
+    return timestamp.toDate();
+  }
+  if (timestamp?.seconds) {
+    return new Timestamp(timestamp.seconds, timestamp.nanoseconds).toDate();
+  }
+  return new Date(timestamp);
+};
+
 interface PurchaseRecord {
     message: string;
-    createdAt: Timestamp;
+    createdAt: Timestamp | Date | string;
     credits: number;
     previousBalance: number;
     paymentStatus: 'pending' | 'paid' | 'rejected';
@@ -103,10 +113,10 @@ export default function PurchaseHistoryPage() {
                                     {purchases?.map(item => (
                                         <TableRow key={item.id}>
                                             <TableCell className="hidden md:table-cell">
-                                                 {item.createdAt ? format(item.createdAt.toDate(), 'PPP p') : 'N/A'}
+                                                 {item.createdAt ? format(toSafeDate(item.createdAt), 'PPP p') : 'N/A'}
                                             </TableCell>
                                              <TableCell className="md:hidden">
-                                                 {item.createdAt ? format(item.createdAt.toDate(), 'dd/MM/yy') : 'N/A'}
+                                                 {item.createdAt ? format(toSafeDate(item.createdAt), 'dd/MM/yy') : 'N/A'}
                                             </TableCell>
                                             <TableCell>
                                                 Credit Purchase
@@ -128,4 +138,3 @@ export default function PurchaseHistoryPage() {
         </DashboardLayout>
     );
 }
-    

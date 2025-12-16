@@ -9,9 +9,9 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ImageIcon, Download, Share2 } from 'lucide-react';
 import Image from 'next/image';
-import { formatDistanceToNow } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface PublicImage {
   prompt: string;
@@ -68,12 +68,6 @@ export default function FeedPage() {
                     <h1 className="text-3xl font-bold tracking-tight">Public Feed</h1>
                     <p className="text-muted-foreground">Discover images created by the community.</p>
                 </div>
-                 <Link href="/gallery" passHref>
-                    <Button>
-                        <Share2 className="mr-2 h-4 w-4" />
-                        Share Your Images
-                    </Button>
-                </Link>
             </div>
 
             {publicImages && publicImages.length === 0 ? (
@@ -107,10 +101,12 @@ export default function FeedPage() {
                             <div className="p-3">
                                 <p className="text-xs font-medium truncate" title={item.prompt}>{item.prompt}</p>
                                 <div className="flex items-center gap-2 mt-1">
-                                    {item.authorPhotoUrl ? 
-                                      <Image src={item.authorPhotoUrl} alt={item.authorName} width={20} height={20} className="rounded-full" />
-                                      : <div className="w-5 h-5 rounded-full bg-muted-foreground"></div>
-                                    }
+                                    <Avatar className="h-5 w-5">
+                                        <AvatarImage src={item.authorPhotoUrl} alt={item.authorName} />
+                                        <AvatarFallback>
+                                            {item.authorName?.charAt(0).toUpperCase()}
+                                        </AvatarFallback>
+                                    </Avatar>
                                     <p className="text-xs text-muted-foreground truncate">{item.authorName}</p>
                                 </div>
                             </div>

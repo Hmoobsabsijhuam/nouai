@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { storyWriterFlow } from '@/ai/flows/story-writer-flow';
-import { Loader2, User, Bot, Send } from 'lucide-react';
+import { Loader2, User, Bot, Send, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Logo } from '@/components/icons/logo';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -19,6 +21,7 @@ export default function StoryWriterClient() {
   const [running, setRunning] = useState(false);
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -56,56 +59,68 @@ export default function StoryWriterClient() {
   };
 
   return (
-    <div className="flex flex-col h-full w-full">
-      <div className="flex-grow overflow-y-auto p-4 space-y-4">
-        {messages.map((message, index) => (
-          <div key={index} className={`flex items-start gap-3 ${message.role === 'user' ? 'justify-end' : ''}`}>
-            {message.role === 'assistant' && (
-              <Avatar className="h-8 w-8">
-                <AvatarFallback><Bot size={20} /></AvatarFallback>
-              </Avatar>
-            )}
-            <div className={`p-3 rounded-lg max-w-lg ${message.role === 'user' ? 'bg-primary/80 text-primary-foreground' : 'bg-white/80 text-black'}`}>
-              <p className="whitespace-pre-wrap">{message.content}</p>
-            </div>
-            {message.role === 'user' && (
-              <Avatar className="h-8 w-8">
-                <AvatarFallback><User size={20} /></AvatarFallback>
-              </Avatar>
-            )}
-          </div>
-        ))}
-         {running && messages[messages.length - 1]?.role === 'user' && (
-            <div className="flex items-start gap-3">
-                 <Avatar className="h-8 w-8">
+    <div className="relative h-full w-full">
+      <div className="absolute inset-x-0 top-0 bottom-24 z-0 flex items-center justify-center">
+        <Logo className="h-[512px] w-[512px] opacity-40 dark:opacity-20" />
+      </div>
+
+      <div className="relative z-10 mx-auto flex h-full w-full max-w-3xl flex-col">
+        <div className="flex items-center justify-between p-4 border-b border-border">
+            <h1 className="text-xl font-bold">AI Story Writer</h1>
+            <Button variant="ghost" size="icon" onClick={() => router.back()}>
+                <X className="h-6 w-6" />
+            </Button>
+        </div>
+        <div className="flex-grow overflow-y-auto p-4 space-y-4">
+            {messages.map((message, index) => (
+            <div key={index} className={`flex items-start gap-3 ${message.role === 'user' ? 'justify-end' : ''}`}>
+                {message.role === 'assistant' && (
+                <Avatar className="h-8 w-8">
                     <AvatarFallback><Bot size={20} /></AvatarFallback>
                 </Avatar>
-                <div className="p-3 rounded-lg bg-muted flex items-center">
-                    <Loader2 className="h-5 w-5 animate-spin" />
+                )}
+                <div className={`p-3 rounded-lg max-w-lg ${message.role === 'user' ? 'bg-primary/80 text-primary-foreground' : 'bg-muted/80'}`}>
+                <p className="whitespace-pre-wrap">{message.content}</p>
                 </div>
+                {message.role === 'user' && (
+                <Avatar className="h-8 w-8">
+                    <AvatarFallback><User size={20} /></AvatarFallback>
+                </Avatar>
+                )}
             </div>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
-      <div className="p-4 bg-transparent border-t border-white/20">
-        <form onSubmit={handleSubmit} className="flex items-center gap-2">
-          <Textarea
-            placeholder="Tell me a story about..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            rows={1}
-            className="flex-grow resize-none bg-white/80 text-black placeholder:text-gray-500 rounded-md border-white/30"
-            onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSubmit(e);
-                }
-            }}
-          />
-          <Button type="submit" disabled={running || !input.trim()} size="icon">
-            <Send className="h-4 w-4" />
-          </Button>
-        </form>
+            ))}
+            {running && messages[messages.length - 1]?.role === 'user' && (
+                <div className="flex items-start gap-3">
+                    <Avatar className="h-8 w-8">
+                        <AvatarFallback><Bot size={20} /></AvatarFallback>
+                    </Avatar>
+                    <div className="p-3 rounded-lg bg-muted/80 flex items-center">
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                    </div>
+                </div>
+            )}
+            <div ref={messagesEndRef} />
+        </div>
+        <div className="p-4 bg-background/80 border-t border-border backdrop-blur-sm">
+            <form onSubmit={handleSubmit} className="flex items-center gap-2">
+            <Textarea
+                placeholder="Tell me a story about..."
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                rows={1}
+                className="flex-grow resize-none bg-muted/80 placeholder:text-muted-foreground rounded-md border-border"
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSubmit(e);
+                    }
+                }}
+            />
+            <Button type="submit" disabled={running || !input.trim()} size="icon">
+                <Send className="h-4 w-4" />
+            </Button>
+            </form>
+        </div>
       </div>
     </div>
   );

@@ -21,12 +21,24 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
+// Helper to safely convert Firestore timestamps
+const toSafeDate = (timestamp: any): Date => {
+  if (timestamp?.toDate) {
+    return timestamp.toDate();
+  }
+  if (timestamp?.seconds) {
+    return new Timestamp(timestamp.seconds, timestamp.nanoseconds).toDate();
+  }
+  return new Date(timestamp);
+};
+
+
 interface UserData {
   email: string;
   id: string;
   displayName: string;
   photoURL?: string;
-  createdAt?: Timestamp;
+  createdAt?: Timestamp | Date | string;
   credits?: number;
 }
 
@@ -36,15 +48,15 @@ interface SupportTicket {
     subject: string;
     message: string;
     status: 'open' | 'closed';
-    createdAt: Timestamp;
-    updatedAt: Timestamp;
+    createdAt: Timestamp | Date | string;
+    updatedAt: Timestamp | Date | string;
 }
 
 interface AdminNotification {
     userId: string;
     userEmail: string;
     message: string;
-    createdAt: Timestamp;
+    createdAt: Timestamp | Date | string;
     read: boolean;
     link?: string;
     paymentStatus: 'pending' | 'paid' | 'rejected';
@@ -103,7 +115,7 @@ function RecentUsersTable({ users, isLoading }: { users: WithId<UserData>[] | nu
           </div>
           {user.createdAt && (
             <p className="text-xs text-muted-foreground whitespace-nowrap hidden sm:block">
-              {formatDistanceToNow(user.createdAt.toDate(), { addSuffix: true })}
+              {formatDistanceToNow(toSafeDate(user.createdAt), { addSuffix: true })}
             </p>
           )}
         </div>
@@ -228,7 +240,7 @@ export default function AdminDashboard({ user }: { user: any }) {
 
     const groupedByDay = users.reduce((acc, user) => {
       if (user.createdAt) {
-        const date = format(user.createdAt.toDate(), 'yyyy-MM-dd');
+        const date = format(toSafeDate(user.createdAt), 'yyyy-MM-dd');
         if (!acc[date]) {
           acc[date] = [];
         }
@@ -254,7 +266,7 @@ export default function AdminDashboard({ user }: { user: any }) {
     const purchases = adminNotifications.filter(n => n.paymentStatus === 'paid' && n.message.includes('purchased'));
 
     const groupedByDay = purchases.reduce((acc, notif) => {
-        const date = format(notif.createdAt.toDate(), 'yyyy-MM-dd');
+        const date = format(toSafeDate(notif.createdAt), 'yyyy-MM-dd');
         if (!acc[date]) {
             acc[date] = { credits: 0, revenue: 0 };
         }
@@ -286,7 +298,7 @@ export default function AdminDashboard({ user }: { user: any }) {
     const monthEnd = endOfMonth(now);
 
     const purchasesThisMonth = purchases.filter(n => {
-        const purchaseDate = n.createdAt.toDate();
+        const purchaseDate = toSafeDate(n.createdAt);
         return isWithinInterval(purchaseDate, { start: monthStart, end: monthEnd });
     });
 
@@ -570,7 +582,7 @@ export default function AdminDashboard({ user }: { user: any }) {
                                 {adminNotifications.filter(n => n.paymentStatus === 'paid').map(notif => (
                                     <Link href={`/admin/payments/${notif.id}`} key={notif.id} onClick={() => !notif.read && handleMarkAsRead(notif.id)} className={cn("block p-3 rounded-lg hover:bg-accent transition-colors border", !notif.read && "border-primary bg-primary/10")}>
                                         <p className="font-medium text-sm">{notif.message}</p>
-                                        <p className="text-xs text-muted-foreground">{formatDistanceToNow(notif.createdAt.toDate(), { addSuffix: true })}</p>
+                                        <p className="text-xs text-muted-foreground">{formatDistanceToNow(toSafeDate(notif.createdAt), { addSuffix: true })}</p>
                                     </Link>
                                 ))}
                             </div>

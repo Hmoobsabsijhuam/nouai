@@ -11,7 +11,7 @@ export default function AuthLayout({
       <AnimatedBackgroundClient />
       <div className="relative z-10 w-full max-w-sm">
         <div className="mb-6 flex justify-center">
-          <Logo />
+          <Logo width={200} height={200} />
         </div>
         {children}
       </div>

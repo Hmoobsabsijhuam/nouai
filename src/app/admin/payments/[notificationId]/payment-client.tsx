@@ -18,14 +18,25 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, CheckCircle, Clock, User, XCircle, QrCode, X } from 'lucide-react';
 import { format } from 'date-fns';
 
+// Helper to safely convert Firestore timestamps
+const toSafeDate = (timestamp: any): Date => {
+  if (timestamp?.toDate) {
+    return timestamp.toDate();
+  }
+  if (timestamp?.seconds) {
+    return new Timestamp(timestamp.seconds, timestamp.nanoseconds).toDate();
+  }
+  return new Date(timestamp);
+};
+
 type PaymentStatus = 'pending' | 'paid' | 'rejected';
 
 interface AdminNotification {
     userId: string;
     userEmail: string;
     message: string;
-    createdAt: Timestamp;
-    updatedAt?: Timestamp;
+    createdAt: Timestamp | Date | string;
+    updatedAt?: Timestamp | Date | string;
     read: boolean;
     link?: string;
     paymentStatus: PaymentStatus;
@@ -162,7 +173,7 @@ export default function PaymentClient() {
                             {StatusIcon}
                             <h2 className="text-xl font-semibold mt-2">{statusText}</h2>
                             <p className="text-sm text-muted-foreground">
-                                {format(notification.createdAt.toDate(), 'dd/MM/yy')} at {format(notification.createdAt.toDate(), 'HH:mm:ss')}
+                                {format(toSafeDate(notification.createdAt), 'dd/MM/yy')} at {format(toSafeDate(notification.createdAt), 'HH:mm:ss')}
                             </p>
                         </div>
                         

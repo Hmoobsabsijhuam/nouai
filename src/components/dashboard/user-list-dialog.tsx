@@ -44,17 +44,28 @@ import { Label } from '../ui/label';
 import { useCollection } from '@/firebase/firestore/use-collection';
 import { Separator } from '../ui/separator';
 
+// Helper to safely convert Firestore timestamps
+const toSafeDate = (timestamp: any): Date => {
+  if (timestamp?.toDate) {
+    return timestamp.toDate();
+  }
+  if (timestamp?.seconds) {
+    return new Timestamp(timestamp.seconds, timestamp.nanoseconds).toDate();
+  }
+  return new Date(timestamp);
+};
+
 interface UserData {
   email: string;
   id: string;
   displayName: string;
   photoURL?: string;
-  createdAt?: Timestamp;
+  createdAt?: Timestamp | Date | string;
   credits?: number;
 }
 
 interface PurchaseRecord {
-    createdAt: Timestamp;
+    createdAt: Timestamp | Date | string;
     credits: number;
 }
 
@@ -135,7 +146,7 @@ function EditCreditsDialog({
                         <div className="space-y-2 text-sm text-muted-foreground">
                             {purchaseHistory.map(record => (
                                 <div key={record.id} className="flex justify-between items-center">
-                                    <span>{format(record.createdAt.toDate(), 'MMM d, yyyy, p')}</span>
+                                    <span>{format(toSafeDate(record.createdAt), 'MMM d, yyyy, p')}</span>
                                     <span className="font-medium text-foreground">+{record.credits} credits</span>
                                 </div>
                             ))}
@@ -274,7 +285,7 @@ export function UserListDialog({ isOpen, onOpenChange, users, isLoading }: UserL
                     <TableCell className="font-medium truncate max-w-xs">{u.displayName || 'N/A'}</TableCell>
                     <TableCell className="truncate max-w-xs">{u.email}</TableCell>
                     <TableCell className="hidden sm:table-cell">
-                      {u.createdAt ? format(u.createdAt.toDate(), 'MMM d, yyyy') : 'N/A'}
+                      {u.createdAt ? format(toSafeDate(u.createdAt), 'MMM d, yyyy') : 'N/A'}
                     </TableCell>
                     <TableCell>
                         <div className="flex items-center gap-2">
