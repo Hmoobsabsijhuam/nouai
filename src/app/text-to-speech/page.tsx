@@ -91,11 +91,11 @@ function TextToSpeechControls({ form, isGenerating, cost }: { form: any, isGener
   );
 }
 
-function GeneratedAudioPlayer({ audioUrl, onDownload, isGenerating }: { audioUrl: string | null; onDownload: () => void; isGenerating: boolean; }) {
+function SpeechContent({ audioUrl, onDownload, isGenerating }: { audioUrl: string | null; onDownload: () => void; isGenerating: boolean; }) {
   if (isGenerating) {
     return (
-      <div className="mt-6">
-        <Card className="w-full max-w-md mx-auto">
+      <div className="h-full flex items-center justify-center">
+        <Card className="w-full max-w-md">
           <CardContent className="flex flex-col items-center gap-4 p-8 text-muted-foreground">
             <Loader2 className="h-8 w-8 animate-spin" />
             <p>Tab Tom Tsim Koj Lub Suab...</p>
@@ -106,12 +106,18 @@ function GeneratedAudioPlayer({ audioUrl, onDownload, isGenerating }: { audioUrl
   }
 
   if (!audioUrl) {
-    return null;
+    return (
+      <div className="h-full flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center bg-card">
+        <Mic className="mx-auto h-10 w-10 text-muted-foreground" />
+        <h3 className="mt-4 text-md font-semibold">Tseem tsis tau muaj suab</h3>
+        <p className="mt-1 text-xs text-muted-foreground">Koj lub suab yuav tshwm rau ntawm no.</p>
+      </div>
+    );
   }
   
   return (
-    <div className="mt-6">
-        <Card className="w-full max-w-md mx-auto">
+    <div className="flex items-center justify-center h-full">
+        <Card className="w-full max-w-md">
             <CardHeader>
                 <CardTitle>Generated Audio</CardTitle>
             </CardHeader>
@@ -243,22 +249,21 @@ export default function GenerateSpeechPage() {
     );
   }
   
-  const controlPanel = (
-    <div className="flex flex-col gap-6">
-        <TextToSpeechControls form={form} isGenerating={isGenerating} cost={cost} />
-        <GeneratedAudioPlayer
-            isGenerating={isGenerating}
-            audioUrl={generatedAudioUrl}
-            onDownload={handleDownload}
-        />
-    </div>
+  const controlPanel = <TextToSpeechControls form={form} isGenerating={isGenerating} cost={cost} />;
+
+  const contentPanel = (
+    <SpeechContent
+      isGenerating={isGenerating}
+      audioUrl={generatedAudioUrl}
+      onDownload={handleDownload}
+    />
   );
 
   return (
     <GeneratorLayout
         activeTab="speech"
         controlPanel={controlPanel}
-        contentPanel={null}
+        contentPanel={contentPanel}
     />
   );
 }

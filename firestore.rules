@@ -51,6 +51,15 @@ service cloud.firestore {
       }
 
       /**
+       * @description Manages user's generated avatars.
+       * @path /users/{userId}/generated_avatars/{avatarId}
+       * @allow (read, write) - Owner or admin can manage their avatars.
+       */
+      match /generated_avatars/{avatarId} {
+        allow read, write: if isOwner(userId) || isAdmin();
+      }
+
+      /**
        * @description Manages user's purchase history.
        * @path /users/{userId}/purchase_history/{purchaseId}
        * @allow (list, get) - The owner or an admin can read purchase history records.

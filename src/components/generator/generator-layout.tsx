@@ -104,7 +104,7 @@ export function GeneratorLayout({
   controlPanel,
   contentPanel,
 }: {
-  activeTab: 'image' | 'video' | 'animate' | 'speech';
+  activeTab: 'image' | 'video' | 'animate' | 'speech' | 'avatar';
   controlPanel: React.ReactNode;
   contentPanel: React.ReactNode | null;
 }) {
@@ -117,6 +117,7 @@ export function GeneratorLayout({
     if (value === 'video') router.push('/text-to-video');
     if (value === 'animate') router.push('/image-to-video');
     if (value === 'speech') router.push('/text-to-speech');
+    if (value === 'avatar') router.push('/avatar-generator');
   };
 
   return (
@@ -179,6 +180,11 @@ export function GeneratorLayout({
                               <Link href="/text-to-speech"><Mic /> <span>Text to Speech</span></Link>
                           </SidebarMenuButton>
                       </SidebarMenuItem>
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild isActive={pathname === '/avatar-generator'} tooltip="Avatar Generator">
+                            <Link href="/avatar-generator"><ImageIcon /> <span>Avatar Generator</span></Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
                   <SidebarMenuItem>
                       <SidebarMenuButton asChild isActive={pathname === '/apps'} tooltip="Apps">
                           <Link href="/apps"><LayoutGrid /> <span>Apps</span></Link>
@@ -226,30 +232,31 @@ export function GeneratorLayout({
             </SidebarFooter>
           </Sidebar>
   
-          <div className="flex-1 flex flex-col h-screen">
+          <div className="flex-1 flex flex-col">
             <Header />
             <div className={cn(
-              "grid flex-1 overflow-hidden",
+              "flex-1 md:grid",
               contentPanel ? "md:grid-cols-[400px_1fr]" : "grid-cols-1"
             )}>
               {/* Control Panel */}
-              <div className="w-full bg-background p-4 border-b md:border-b-0 md:border-r flex flex-col overflow-y-auto">
+              <div className="w-full bg-background p-4 border-b md:border-b-0 md:border-r md:flex md:flex-col md:overflow-y-auto">
                 <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-4">
-                  <TabsList className="grid w-full grid-cols-4">
+                  <TabsList className="grid w-full grid-cols-5">
                     <TabsTrigger value="image">Image</TabsTrigger>
                     <TabsTrigger value="video">Video</TabsTrigger>
                     <TabsTrigger value="animate">Animate</TabsTrigger>
                     <TabsTrigger value="speech">Speech</TabsTrigger>
+                    <TabsTrigger value="avatar">Avatar</TabsTrigger>
                   </TabsList>
                 </Tabs>
-                <div className={cn("overflow-y-auto", !contentPanel && "max-w-md w-full mx-auto")}>
+                <div className={cn("md:overflow-y-auto", !contentPanel && "max-w-md w-full mx-auto")}>
                     {controlPanel}
                 </div>
               </div>
               
               {/* Content Feed */}
               {contentPanel && (
-                  <main className="bg-secondary p-4 overflow-y-auto">
+                  <main className="bg-secondary p-4 md:overflow-y-auto">
                       {contentPanel}
                   </main>
               )}

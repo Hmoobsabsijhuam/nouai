@@ -48,7 +48,7 @@ function calculateCost(imageCount: number): number {
 
 function ImageGallerySkeleton() {
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array.from({ length: 3 }).map((_, i) => (
                  <Card key={i} className="overflow-hidden bg-muted border-none">
                     <Skeleton className="h-48 w-full" />
@@ -69,7 +69,7 @@ function ImageFeed({ images, isLoading }: { images: WithId<GeneratedImage>[] | n
   
   if (!images || images.length === 0) {
     return (
-       <div className="mt-6 flex flex-col items-center justify-center rounded-lg border border-dashed text-center p-8 bg-card">
+       <div className="h-full flex flex-col items-center justify-center rounded-lg border border-dashed text-center p-8 bg-card">
             <ImageIcon className="mx-auto h-10 w-10 text-muted-foreground" />
             <h3 className="mt-4 text-md font-semibold">Tseem Tsis Tau Muaj Duab Li</h3>
             <p className="mt-1 text-xs text-muted-foreground">
@@ -80,7 +80,7 @@ function ImageFeed({ images, isLoading }: { images: WithId<GeneratedImage>[] | n
   }
   
   return (
-     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {images.map(image => (
              <Card key={image.id} className="overflow-hidden group bg-muted border-none">
                 <div className="relative aspect-square w-full">
@@ -313,18 +313,14 @@ export default function GenerateImagePage() {
     );
   }
 
-  const controlPanel = (
-    <div className="flex flex-col gap-6">
-      <ImageGeneratorControls form={form} isGenerating={isGenerating} />
-      <ImageFeed images={images} isLoading={isImagesLoading} />
-    </div>
-  );
+  const controlPanel = <ImageGeneratorControls form={form} isGenerating={isGenerating} />;
+  const contentPanel = <ImageFeed images={images} isLoading={isImagesLoading} />;
 
   return (
     <GeneratorLayout
       activeTab="image"
       controlPanel={controlPanel}
-      contentPanel={null}
+      contentPanel={contentPanel}
     />
   );
 }

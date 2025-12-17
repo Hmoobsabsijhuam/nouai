@@ -41,7 +41,7 @@ function calculateCost(): number {
 
 function VideoFeedSkeleton() {
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {Array.from({ length: 2 }).map((_, i) => (
                 <Card key={i} className="overflow-hidden bg-muted border-none">
                     <Skeleton className="aspect-video w-full" />
@@ -58,7 +58,7 @@ function VideoFeed({ videos, isLoading, isGenerating }: { videos: WithId<Generat
 
     if ((!videos || videos.length === 0) && !isGenerating) {
         return (
-            <div className="mt-6 flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center bg-card">
+            <div className="h-full flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center bg-card">
                 <Video className="mx-auto h-10 w-10 text-muted-foreground" />
                 <h3 className="mt-4 text-md font-semibold">Tseem Tsis Tau Muaj Video</h3>
                 <p className="mt-1 text-xs text-muted-foreground">Koj cov videos yuav tshwm rau hauv qab no.</p>
@@ -67,7 +67,7 @@ function VideoFeed({ videos, isLoading, isGenerating }: { videos: WithId<Generat
     }
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {isGenerating && (
                 <Card className="overflow-hidden bg-muted border-none">
                     <div className="aspect-video w-full flex items-center justify-center">
@@ -243,18 +243,15 @@ export default function GenerateVideoPage() {
     );
   }
 
-  const controlPanel = (
-    <div className="flex flex-col gap-6">
-        <TextToVideoControls form={form} isGenerating={isGenerating} cost={cost} />
-        <VideoFeed videos={videos} isLoading={isVideosLoading} isGenerating={isGenerating} />
-    </div>
-  );
+  const controlPanel = <TextToVideoControls form={form} isGenerating={isGenerating} cost={cost} />;
+  const contentPanel = <VideoFeed videos={videos} isLoading={isVideosLoading} isGenerating={isGenerating} />;
+
 
   return (
     <GeneratorLayout
       activeTab="video"
       controlPanel={controlPanel}
-      contentPanel={null}
+      contentPanel={contentPanel}
     />
   );
 }

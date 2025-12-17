@@ -60,8 +60,8 @@ export default function StoryWriterClient() {
 
   return (
     <div className="relative h-full w-full">
-      <div className="absolute inset-x-0 top-0 bottom-24 z-0 flex items-center justify-center">
-        <Logo className="h-[512px] w-[512px] opacity-40 dark:opacity-20" />
+      <div className="absolute inset-x-0 top-0 bottom-24 z-0 flex items-center justify-center p-4">
+        <Logo className="h-auto w-full max-w-2xl opacity-40 dark:opacity-20" />
       </div>
 
       <div className="relative z-10 mx-auto flex h-full w-full max-w-3xl flex-col">
