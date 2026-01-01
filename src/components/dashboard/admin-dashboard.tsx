@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, FormEvent } from 'react';
-import { collection, Timestamp, query, orderBy, limit, updateDoc, doc, addDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { collection, Timestamp, query, orderBy, limit, updateDoc, doc, addDoc, serverTimestamp, writeBatch, collectionGroup } from 'firebase/firestore';
 import { useCollection, WithId } from '@/firebase/firestore/use-collection';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -52,14 +52,11 @@ interface SupportTicket {
     updatedAt: Timestamp | Date | string;
 }
 
-interface AdminNotification {
+interface PurchaseHistoryItem {
     userId: string;
-    userEmail: string;
-    message: string;
-    createdAt: Timestamp | Date | string;
-    read: boolean;
-    link?: string;
-    paymentStatus: 'pending' | 'paid' | 'rejected';
+    credits: number;
+    price: number;
+    purchaseDate: Timestamp | Date | string;
 }
 
 type UserChartDataItem = {
@@ -158,6 +155,44 @@ function SupportTickets({ tickets, isLoading, onTicketSelect }: { tickets: WithI
   );
 }
 
+function CreditPurchases({ purchases, isLoading, users }: { purchases: WithId<PurchaseHistoryItem>[] | null; isLoading: boolean; users: WithId<UserData>[] | null; }) {
+    if (isLoading) {
+        return (
+          <div className="space-y-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="flex flex-col gap-2">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-3 w-1/2" />
+                </div>
+            ))}
+          </div>
+        );
+    }
+
+    if (!purchases || purchases.length === 0) {
+        return <p className="text-sm text-muted-foreground">No new credit purchases.</p>;
+    }
+
+    const findUser = (userId: string) => users?.find(u => u.id === userId);
+
+    return (
+        <ScrollArea className="h-48">
+            <div className="space-y-2 pr-4">
+                {purchases.map(purchase => {
+                    const user = findUser(purchase.userId);
+                    return (
+                        <div key={purchase.id} className="p-3 rounded-lg border bg-card text-card-foreground">
+                            <p className="font-medium text-sm">{purchase.credits} credits purchased for ${purchase.price}</p>
+                            <p className="text-xs text-muted-foreground">{user?.email || purchase.userId}</p>
+                            <p className="text-xs text-muted-foreground">{formatDistanceToNow(toSafeDate(purchase.purchaseDate), { addSuffix: true })}</p>
+                        </div>
+                    )
+                })}
+            </div>
+        </ScrollArea>
+    )
+}
+
 
 function TicketDetailsDialog({
   ticket,
@@ -209,12 +244,11 @@ export default function AdminDashboard({ user }: { user: any }) {
   const [selectedTicket, setSelectedTicket] = useState<WithId<SupportTicket> | null>(null);
   const [isUserListOpen, setIsUserListOpen] = useState(false);
 
-  const usersCollection = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'users') : null),
+  const usersQuery = useMemoFirebase(
+    () => (firestore ? query(collection(firestore, 'users'), orderBy('createdAt', 'desc')) : null),
     [firestore]
   );
-  
-  const { data: users, isLoading: isUsersLoading } = useCollection<UserData>(usersCollection);
+  const { data: users, isLoading: isUsersLoading } = useCollection<UserData>(usersQuery);
   
   const recentUsersQuery = useMemoFirebase(
     () => (firestore ? query(collection(firestore, 'users'), orderBy('createdAt', 'desc'), limit(5)) : null),
@@ -223,16 +257,16 @@ export default function AdminDashboard({ user }: { user: any }) {
   const { data: recentUsers, isLoading: isRecentUsersLoading } = useCollection<UserData>(recentUsersQuery);
   
   const supportTicketsQuery = useMemoFirebase(
-    () => (firestore ? query(collection(firestore, 'support_tickets'), orderBy('updatedAt', 'desc')) : null),
+    () => (firestore ? query(collection(firestore, 'support_tickets'), orderBy('createdAt', 'desc')) : null),
     [firestore]
   );
   const { data: supportTickets, isLoading: isTicketsLoading } = useCollection<SupportTicket>(supportTicketsQuery);
 
-  const adminNotificationsQuery = useMemoFirebase(
-    () => (firestore ? query(collection(firestore, 'admin_notifications'), orderBy('createdAt', 'desc'), limit(100)) : null),
-    [firestore]
+  const purchaseHistoryQuery = useMemoFirebase(
+      () => (firestore ? query(collectionGroup(firestore, 'purchase_history'), orderBy('purchaseDate', 'desc'), limit(100)) : null),
+      [firestore]
   );
-  const { data: adminNotifications, isLoading: isAdminNotifsLoading } = useCollection<AdminNotification>(adminNotificationsQuery);
+  const { data: allPurchases, isLoading: isPurchasesLoading } = useCollection<PurchaseHistoryItem>(purchaseHistoryQuery);
 
 
   const { userChartData, totalUsers } = useMemo(() => {
@@ -260,27 +294,16 @@ export default function AdminDashboard({ user }: { user: any }) {
     return { userChartData, totalUsers: users.length };
   }, [users]);
   
-  const {creditChartData, monthlySummary} = useMemo(() => {
-    if (!adminNotifications) return { creditChartData: [], monthlySummary: { totalCredits: 0, totalRevenue: 0 } };
-    
-    const purchases = adminNotifications.filter(n => n.paymentStatus === 'paid' && n.message.includes('purchased'));
+  const {creditChartData, monthlySummary, recentPurchases} = useMemo(() => {
+    if (!allPurchases) return { creditChartData: [], monthlySummary: { totalCredits: 0, totalRevenue: 0 }, recentPurchases: [] };
 
-    const groupedByDay = purchases.reduce((acc, notif) => {
-        const date = format(toSafeDate(notif.createdAt), 'yyyy-MM-dd');
+    const groupedByDay = allPurchases.reduce((acc, purchase) => {
+        const date = format(toSafeDate(purchase.purchaseDate), 'yyyy-MM-dd');
         if (!acc[date]) {
             acc[date] = { credits: 0, revenue: 0 };
         }
-        
-        const creditAmountMatch = notif.message.match(/(\d+)\s*credits/);
-        const credits = creditAmountMatch ? parseInt(creditAmountMatch[1], 10) : 0;
-        
-        const priceMatch = notif.message.match(/\$(\d+)/);
-        const price = priceMatch ? parseInt(priceMatch[1], 10) : 0;
-
-        if (credits > 0) {
-            acc[date].credits += credits;
-            acc[date].revenue += price;
-        }
+        acc[date].credits += purchase.credits;
+        acc[date].revenue += purchase.price;
 
         return acc;
     }, {} as Record<string, { credits: number, revenue: number }>);
@@ -297,27 +320,22 @@ export default function AdminDashboard({ user }: { user: any }) {
     const monthStart = startOfMonth(now);
     const monthEnd = endOfMonth(now);
 
-    const purchasesThisMonth = purchases.filter(n => {
-        const purchaseDate = toSafeDate(n.createdAt);
+    const purchasesThisMonth = allPurchases.filter(p => {
+        const purchaseDate = toSafeDate(p.purchaseDate);
         return isWithinInterval(purchaseDate, { start: monthStart, end: monthEnd });
     });
 
-    const monthlySummary = purchasesThisMonth.reduce((acc, notif) => {
-        const creditAmountMatch = notif.message.match(/(\d+)\s*credits/);
-        const credits = creditAmountMatch ? parseInt(creditAmountMatch[1], 10) : 0;
-        
-        const priceMatch = notif.message.match(/\$(\d+)/);
-        const price = priceMatch ? parseInt(priceMatch[1], 10) : 0;
-
-        acc.totalCredits += credits;
-        acc.totalRevenue += price;
-
+    const monthlySummary = purchasesThisMonth.reduce((acc, purchase) => {
+        acc.totalCredits += purchase.credits;
+        acc.totalRevenue += purchase.price;
         return acc;
     }, { totalCredits: 0, totalRevenue: 0 });
 
-    return { creditChartData, monthlySummary };
+    const recentPurchases = allPurchases.slice(0, 5);
 
-  }, [adminNotifications]);
+    return { creditChartData, monthlySummary, recentPurchases };
+
+  }, [allPurchases]);
 
   const handleBarClick = (data: UserChartDataItem) => {
     setSelectedDay(data);
@@ -347,21 +365,6 @@ export default function AdminDashboard({ user }: { user: any }) {
         });
     }
   }
-
-  const handleMarkAsRead = async (notificationId: string) => {
-    if (!firestore) return;
-    try {
-      const notifRef = doc(firestore, 'admin_notifications', notificationId);
-      await updateDoc(notifRef, { read: true });
-    } catch (error) {
-      console.error("Failed to mark notification as read:", error);
-    }
-  };
-
-  const unreadAdminNotifications = useMemo(() => {
-      return adminNotifications?.filter(n => !n.read) ?? [];
-  }, [adminNotifications]);
-
 
   return (
     <div>
@@ -496,7 +499,7 @@ export default function AdminDashboard({ user }: { user: any }) {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    {isAdminNotifsLoading ? (
+                    {isPurchasesLoading ? (
                         <Skeleton className="h-[300px] w-full" />
                     ) : creditChartData.length > 0 ? (
                         <>
@@ -574,22 +577,7 @@ export default function AdminDashboard({ user }: { user: any }) {
                     <CardDescription>Recent credit refills by users.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    {isAdminNotifsLoading ? (
-                        <Skeleton className="h-24 w-full" />
-                    ) : adminNotifications && adminNotifications.length > 0 ? (
-                        <ScrollArea className="h-48">
-                            <div className="space-y-2 pr-4">
-                                {adminNotifications.filter(n => n.paymentStatus === 'paid').map(notif => (
-                                    <Link href={`/admin/payments/${notif.id}`} key={notif.id} onClick={() => !notif.read && handleMarkAsRead(notif.id)} className={cn("block p-3 rounded-lg hover:bg-accent transition-colors border", !notif.read && "border-primary bg-primary/10")}>
-                                        <p className="font-medium text-sm">{notif.message}</p>
-                                        <p className="text-xs text-muted-foreground">{formatDistanceToNow(toSafeDate(notif.createdAt), { addSuffix: true })}</p>
-                                    </Link>
-                                ))}
-                            </div>
-                        </ScrollArea>
-                    ) : (
-                        <p className="text-sm text-muted-foreground">No new credit purchases.</p>
-                    )}
+                    <CreditPurchases purchases={recentPurchases} isLoading={isPurchasesLoading} users={users} />
                 </CardContent>
             </Card>
              <Card>

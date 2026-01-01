@@ -26,7 +26,7 @@ service cloud.firestore {
     /**
      * @description Secure user profiles under /users/{userId}.
      * @path /users/{userId}
-     * @allow (create) - Any user can create a profile.
+     * @allow (create) - Any user can create their own profile.
      * @allow (list) - Admin can list all users.
      * @allow (get, update) - The owner or an admin can get and update a user's profile.
      * @allow (delete) - The owner can delete their own profile.
@@ -34,13 +34,13 @@ service cloud.firestore {
     match /users/{userId} {
       allow get, update: if isOwner(userId) || isAdmin();
       allow list: if isAdmin();
-      allow create: if true;
+      allow create: if isOwner(userId) || isAdmin();
       allow delete: if isOwner(userId);
 
       /**
        * @description Manages per-user notification data.
        * @path /users/{userId}/user_notifications/{notificationId}
-       * @allow (get, list, update) - Owner or admin can read, create and update their own notifications.
+       * @allow (get, list, update, create) - Owner or admin can manage their own notifications.
        */
       match /user_notifications/{notificationId} {
         allow get, list, update: if isOwner(userId) || isAdmin();
@@ -51,7 +51,7 @@ service cloud.firestore {
       /**
        * @description Manages user's generated images.
        * @path /users/{userId}/generated_images/{imageId}
-       * @allow (get, list, create, update, delete) - Owner can manage their images. Admin can read them.
+       * @allow (get, list, create, update, delete) - Owner can manage their images, admin can read.
        */
       match /generated_images/{imageId} {
         allow create, update, delete: if isOwner(userId);
@@ -84,15 +84,26 @@ service cloud.firestore {
     }
 
     /**
-     * @description Manages admin roles using documents under /roles_admin/{userId}. The presence of a document signifies admin status.
+     * @description Allow admins to query across all purchase_history collections.
+     * @path /{path=**}/purchase_history/{purchaseId}
+     * @allow (list) - Admins can list all purchases across all users.
+     */
+    match /{path=**}/purchase_history/{purchaseId} {
+      allow list: if isAdmin();
+    }
+
+    /**
+     * @description Allow admins to query across all user_notifications collections.
+     * @path /{path=**}/user_notifications/{notificationId}
+     * @allow (list) - Admins can list all notifications across all users.
+     */
+    match /{path=**}/user_notifications/{notificationId} {
+      allow list: if isAdmin();
+    }
+
+    /**
+     * @description Manages admin roles using documents under /roles_admin/{userId}.
      * @path /roles_admin/{userId}
-     * @allow (create) - Admin account 'admin@noukha.com' can create their admin role document.
-     *   - request.auth.uid: [The UID associated with admin@noukha.com]
-     * @allow (get) - Any authenticated user can check if they have admin privileges by reading their role document.
-     *   - request.auth.uid: 'some_user'
-     * @deny (create) - A non-admin user cannot create their own admin role document.
-     *   - request.auth.uid: 'normal_user'
-     * @principle Restricts admin role creation to authorized personnel.
      */
     match /roles_admin/{userId} {
       allow get: if isSignedIn();
@@ -105,9 +116,6 @@ service cloud.firestore {
     /**
      * @description Manages global notifications.
      * @path /notifications/{notificationId}
-     * @allow (list, get) - Any signed-in user can read notifications.
-     * @allow (create) - Only admins can create new notifications.
-     * @deny (update, delete) - Nobody can change a global notification after creation.
      */
     match /notifications/{notificationId} {
       allow list, get: if isSignedIn();
@@ -118,7 +126,6 @@ service cloud.firestore {
     /**
      * @description Manages notifications for admins (e.g. credit purchases).
      * @path /admin_notifications
-     * @allow (list) - Only admins can list all admin notifications.
      */
     match /admin_notifications {
         allow list: if isAdmin();
@@ -127,8 +134,6 @@ service cloud.firestore {
     /**
      * @description Manages individual admin notifications.
      * @path /admin_notifications/{notificationId}
-     * @allow (get, update, delete) - Only admins can manage individual notifications.
-     * @allow (create) - Any signed-in user can create a notification for admins.
      */
     match /admin_notifications/{notificationId} {
         allow get, update, delete: if isAdmin();
@@ -138,8 +143,6 @@ service cloud.firestore {
     /**
      * @description Public images for the feed.
      * @path /public_images/{imageId}
-     * @allow (list, get) - Any user can see public images.
-     * @allow (create) - Signed in users can post public images.
      */
     match /public_images/{imageId} {
       allow list, get: if true;
@@ -150,8 +153,6 @@ service cloud.firestore {
     /**
      * @description Manages support tickets submitted by users.
      * @path /support_tickets/{ticketId}
-     * @allow (create) - Any signed-in user can create a support ticket for themselves.
-     * @allow (get, list, update) - Admins can manage all tickets.
      */
     match /support_tickets/{ticketId} {
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;

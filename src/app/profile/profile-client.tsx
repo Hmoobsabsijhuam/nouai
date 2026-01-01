@@ -162,6 +162,7 @@ export default function ProfileClient() {
   }, [currentUser, isAuthLoading, router, profileUserId, isAdmin, toast]);
 
   useEffect(() => {
+    // If a user document exists, populate the form with its data
     if (profileUser) {
       profileForm.reset({
         displayName: profileUser.displayName || '',
@@ -170,13 +171,20 @@ export default function ProfileClient() {
         status: profileUser.status || undefined,
         country: profileUser.country || '',
       });
-      if (profileUser.photoURL) {
-        setPhotoPreview(profileUser.photoURL);
-      } else {
-        setPhotoPreview(null);
-      }
+      setPhotoPreview(profileUser.photoURL || null);
+    } 
+    // If it's the user's own profile but the document is missing, pre-fill with auth data
+    else if (isOwnProfile && currentUser) {
+      profileForm.reset({
+        displayName: currentUser.displayName || '',
+        email: currentUser.email || '',
+        dateOfBirth: undefined,
+        status: undefined,
+        country: '',
+      });
+      setPhotoPreview(currentUser.photoURL || null);
     }
-  }, [profileUser, profileForm]);
+  }, [profileUser, currentUser, isOwnProfile, profileForm]);
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -195,7 +203,7 @@ export default function ProfileClient() {
 
     setLoading(true);
     try {
-      let photoURL = profileUser?.photoURL || null;
+      let photoURL = profileUser?.photoURL || currentUser?.photoURL || null;
 
       if (photoFile) {
         const storage = getStorage(firebaseApp);
@@ -213,14 +221,24 @@ export default function ProfileClient() {
 
       const userDocRef = doc(firestore, 'users', targetUserId);
       
-      const dataToSave = {
+      const dataToSave: any = {
         displayName: values.displayName,
         email: values.email,
-        dateOfBirth: values.dateOfBirth,
-        status: values.status,
-        country: values.country,
         photoURL: photoURL,
       };
+
+      // Clean the data before saving
+      Object.keys(values).forEach(key => {
+          const typedKey = key as keyof typeof values;
+          if (values[typedKey] !== undefined && values[typedKey] !== null) {
+              dataToSave[typedKey] = values[typedKey];
+          }
+      });
+
+      // Add createdAt timestamp only if creating a new document
+      if (!profileUser) {
+          dataToSave.createdAt = serverTimestamp();
+      }
 
       await setDoc(userDocRef, dataToSave, { merge: true });
       
@@ -233,8 +251,8 @@ export default function ProfileClient() {
       }
 
       toast({
-        title: 'Profile Update Lawm',
-        description: 'Koj li profile tau update lawm.',
+        title: 'Profile Updated',
+        description: 'Your profile has been successfully updated.',
       });
       
       setPhotoFile(null);
@@ -319,11 +337,16 @@ export default function ProfileClient() {
     }
   };
 
-  const isLoading = isAuthLoading || isProfileLoading;
+  const isLoading = isAuthLoading || (isProfileLoading && !currentUser);
 
-  if (isLoading || !currentUser) {
+  if (isLoading) {
     return <ProfileSkeleton />;
   }
+  
+  const displayName = profileUser?.displayName || currentUser?.displayName;
+  const email = profileUser?.email || currentUser?.email;
+  const photoURL = photoPreview ?? profileUser?.photoURL ?? currentUser?.photoURL;
+
 
   return (
     <DashboardLayout>
@@ -350,11 +373,12 @@ export default function ProfileClient() {
           <TabsContent value="profile">
              <Card>
               <CardHeader>
-                  <CardTitle>Kuv Li Profile</CardTitle>
-                  <CardDescription>Kho koj li details ntawm koj tus profile.</CardDescription>
+                  <CardTitle>My Profile</CardTitle>
+                  <CardDescription>Update your personal details here.</CardDescription>
               </CardHeader>
               <CardContent>
-               {!profileUser && !isProfileLoading ? (
+               {/* Only show 'User not found' if an admin is viewing a non-existent profile */}
+               {!profileUser && !isProfileLoading && !isOwnProfile ? (
                    <div className="text-center py-10">
                        <p className="text-muted-foreground">User not found.</p>
                   </div>
@@ -363,21 +387,21 @@ export default function ProfileClient() {
                   <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-6">
                       <div className="flex items-center gap-4">
                           <Avatar className="h-20 w-20">
-                            <AvatarImage src={photoPreview ?? undefined} alt={profileUser?.displayName ?? ''} />
+                            <AvatarImage src={photoURL ?? undefined} alt={displayName ?? ''} />
                             <AvatarFallback>
-                              {profileUser?.displayName ? (
-                                profileUser.displayName.charAt(0).toUpperCase()
-                              ) : profileUser?.email ? (
-                                 profileUser.email.charAt(0).toUpperCase()
+                              {displayName ? (
+                                displayName.charAt(0).toUpperCase()
+                              ) : email ? (
+                                 email.charAt(0).toUpperCase()
                               ) : (
                                 <UserIcon className="h-10 w-10" />
                               )}
                             </AvatarFallback>
                           </Avatar>
                           <div className="grid w-full max-w-sm items-center gap-1.5">
-                              <Label htmlFor="picture">Duab Profile</Label>
+                              <Label htmlFor="picture">Profile Picture</Label>
                               <Input id="picture" type="file" accept="image/*" onChange={handlePhotoChange} className="file:text-primary file:font-semibold" disabled={!isOwnProfile}/>
-                               <p className="text-xs text-muted-foreground">Recommended: Duab ua plaub ceg, yam ntau kawg yog 1MB.</p>
+                               <p className="text-xs text-muted-foreground">Recommended: Square image, max 1MB.</p>
                           </div>
                       </div>
                     <FormField
@@ -385,9 +409,9 @@ export default function ProfileClient() {
                       name="displayName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Koj Lub Npe</FormLabel>
+                          <FormLabel>Display Name</FormLabel>
                           <FormControl>
-                            <Input placeholder="Koj Lub Npe" {...field} />
+                            <Input placeholder="Your Name" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -400,7 +424,7 @@ export default function ProfileClient() {
                         <FormItem>
                           <FormLabel>Email</FormLabel>
                           <FormControl>
-                            <Input placeholder="kojtusemail@example.com" {...field} disabled />
+                            <Input placeholder="your.email@example.com" {...field} disabled />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -411,7 +435,7 @@ export default function ProfileClient() {
                       name="dateOfBirth"
                       render={({ field }) => (
                         <FormItem className="flex flex-col">
-                          <FormLabel>Koj lub hnub yug</FormLabel>
+                          <FormLabel>Date of birth</FormLabel>
                           <Popover>
                             <PopoverTrigger asChild>
                               <FormControl>
@@ -425,7 +449,7 @@ export default function ProfileClient() {
                                   {field.value ? (
                                     format(field.value, "PPP")
                                   ) : (
-                                    <span>Tso koj lub hnub yug</span>
+                                    <span>Pick a date</span>
                                   )}
                                   <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                 </Button>
@@ -452,16 +476,16 @@ export default function ProfileClient() {
                       name="status"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Puas tau muaj neej</FormLabel>
+                          <FormLabel>Marital Status</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value ?? ''}>
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="xaiv koj li status" />
+                                <SelectValue placeholder="Select your status" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="Single">Tus Hluas</SelectItem>
-                              <SelectItem value="Married">Muaj Neej Lawm</SelectItem>
+                              <SelectItem value="Single">Single</SelectItem>
+                              <SelectItem value="Married">Married</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -473,7 +497,7 @@ export default function ProfileClient() {
                       name="country"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Koj lub teb chaws</FormLabel>
+                          <FormLabel>Country</FormLabel>
                           <FormControl>
                             <Input placeholder="e.g. United States" {...field} value={field.value ?? ''} />
                           </FormControl>
@@ -612,4 +636,3 @@ export default function ProfileClient() {
   );
 }
 
-// Force update by adding a comment
