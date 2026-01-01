@@ -4,10 +4,7 @@ location: "us-central1"
 schema:
   source: "./schema"
   datasource:
-    postgresql:
-      database: "fdcdb"
-      cloudSql:
-        instanceId: "studio-fdc"
-        # schemaValidation: "STRICT"     # STRICT mode makes Postgres schema match Data Connect exactly.
-        # schemaValidation: "COMPATIBLE" # COMPATIBLE mode makes Postgres schema compatible with Data Connect.
+    firestore:
+      project: "gen-lang-client-0645126554"
+      database: "(default)"
 connectorDirs: ["./example"]

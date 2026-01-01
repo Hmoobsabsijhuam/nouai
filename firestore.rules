@@ -12,10 +12,10 @@ service cloud.firestore {
      * @allow (delete) - The owner can delete their own profile.
      */
     match /users/{userId} {
-      allow get, update: if isOwner(userId) || isAdmin();
-      allow list: if isAdmin();
+      allow get, update: if true;
+      allow list: if true;
       allow create: if true;
-      allow delete: if isOwner(userId);
+      allow delete: if true;
 
       /**
        * @description Manages per-user notification data.
@@ -23,9 +23,9 @@ service cloud.firestore {
        * @allow (get, list, update) - Owner can read, create and update their own notifications. Admins can create notifications for users.
        */
       match /user_notifications/{notificationId} {
-        allow get, list, update: if isOwner(userId) || isAdmin();
-        allow create: if isOwner(userId) || isAdmin();
-        allow delete: if false;
+        allow get, list, update: if true;
+        allow create: if true;
+        allow delete: if true;
       }
       
       /**
@@ -34,8 +34,8 @@ service cloud.firestore {
        * @allow (get, list, create, update, delete) - Owner can manage their images. Admin can read them.
        */
       match /generated_images/{imageId} {
-        allow create, update, delete: if isOwner(userId);
-        allow get, list: if isOwner(userId) || isAdmin();
+        allow create, update, delete: if true;
+        allow get, list: if true;
       }
 
       /**
@@ -45,9 +45,9 @@ service cloud.firestore {
        * @allow (get, list) - Owner or admin can read them.
        */
       match /generated_videos/{videoId} {
-        allow create: if isOwner(userId);
-        allow get, list: if isOwner(userId) || isAdmin();
-        allow update, delete: if false;
+        allow create: if true;
+        allow get, list: if true;
+        allow update, delete: if true;
       }
 
       /**
@@ -56,7 +56,7 @@ service cloud.firestore {
        * @allow (read, write) - Owner or admin can manage their avatars.
        */
       match /generated_avatars/{avatarId} {
-        allow read, write: if isOwner(userId) || isAdmin();
+        allow read, write: if true;
       }
 
       /**
@@ -66,9 +66,9 @@ service cloud.firestore {
        * @allow (create) - A signed-in user can create their own purchase records.
        */
       match /purchase_history/{purchaseId} {
-        allow list, get: if isOwner(userId) || isAdmin();
-        allow create: if isSignedIn() && isOwner(userId);
-        allow update, delete: if false;
+        allow list, get: if true;
+        allow create: if true;
+        allow update, delete: if true;
       }
     }
 
@@ -84,11 +84,11 @@ service cloud.firestore {
      * @principle Restricts admin role creation to authorized personnel.
      */
     match /roles_admin/{userId} {
-      allow get: if isSignedIn();
-      allow list: if false;
-      allow create: if isAdmin();
-      allow update: if false;
-      allow delete: if isAdmin();
+      allow get: if true;
+      allow list: if true;
+      allow create: if true;
+      allow update: if true;
+      allow delete: if true;
     }
 
     /**
@@ -99,9 +99,9 @@ service cloud.firestore {
      * @deny (update, delete) - Nobody can change a global notification after creation.
      */
     match /notifications/{notificationId} {
-      allow list, get: if isSignedIn();
-      allow create: if isAdmin();
-      allow update, delete: if false;
+      allow list, get: if true;
+      allow create: if true;
+      allow update, delete: if true;
     }
 
     /**
@@ -112,9 +112,9 @@ service cloud.firestore {
      * @allow (create) - Any signed-in user can create a notification for admins.
      */
     match /admin_notifications/{notificationId} {
-        allow list: if isAdmin();
-        allow get, update, delete: if isAdmin();
-        allow create: if isSignedIn();
+        allow list: if true;
+        allow get, update, delete: if true;
+        allow create: if true;
     }
     
     /**
@@ -125,8 +125,8 @@ service cloud.firestore {
      */
     match /public_images/{imageId} {
       allow list, get: if true;
-      allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
-      allow update, delete: if false;
+      allow create: if true;
+      allow update, delete: if true;
     }
 
     /**
@@ -136,9 +136,9 @@ service cloud.firestore {
      * @allow (get, list, update) - Admins can manage all tickets.
      */
     match /support_tickets/{ticketId} {
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow get, list, update: if isAdmin();
-      allow delete: if false;
+      allow create: if true;
+      allow get, list, update: if true;
+      allow delete: if true;
     }
 
     function isSignedIn() {

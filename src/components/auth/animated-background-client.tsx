@@ -1,12 +1,11 @@
+
 'use client';
 
-import dynamic from 'next/dynamic';
+import AnimatedBackground from './animated-background';
 
-const AnimatedBackground = dynamic(
-  () => import('@/components/auth/animated-background'),
-  { ssr: false }
-);
-
+// This component was causing a ChunkLoadError because it was dynamically importing
+// another component that was also marked as a client component.
+// The dynamic import has been removed to fix the issue.
 export default function AnimatedBackgroundClient() {
   return <AnimatedBackground />;
 }
