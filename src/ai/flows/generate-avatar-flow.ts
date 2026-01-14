@@ -45,7 +45,7 @@ const generateAvatarFlow = ai.defineFlow(
       response_format: 'b64_json',
     });
 
-    const imageUrl = `data:image/png;base64,${image.data[0].b64_json}`;
+    const imageUrl = image.data && image.data[0] ? `data:image/png;base64,${image.data[0].b64_json}` : '';
 
     return {
       imageUrl: imageUrl,
