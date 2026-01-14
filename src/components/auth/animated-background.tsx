@@ -16,22 +16,20 @@ const AnimatedBackground = ({ className }: { className?: string }) => {
     let particles: Particle[] = [];
     const particleCount = 70;
 
-    const resizeCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      createParticles();
-    };
-
     class Particle {
       x: number;
       y: number;
       size: number;
       speedX: number;
       speedY: number;
+      canvas: HTMLCanvasElement;
+      ctx: CanvasRenderingContext2D;
 
-      constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
+      constructor(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
+        this.canvas = canvas;
+        this.ctx = ctx;
+        this.x = Math.random() * this.canvas.width;
+        this.y = Math.random() * this.canvas.height;
         this.size = Math.random() * 2 + 1;
         this.speedX = Math.random() * 1 - 0.5;
         this.speedY = Math.random() * 1 - 0.5;
@@ -43,27 +41,32 @@ const AnimatedBackground = ({ className }: { className?: string }) => {
 
         if (this.size > 0.2) this.size -= 0.01;
 
-        if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
-        if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+        if (this.x < 0 || this.x > this.canvas.width) this.speedX *= -1;
+        if (this.y < 0 || this.y > this.canvas.height) this.speedY *= -1;
       }
 
       draw() {
-        if (!ctx) return;
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.closePath();
-        ctx.fill();
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+        this.ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        this.ctx.closePath();
+        this.ctx.fill();
       }
     }
 
     const createParticles = () => {
       particles = [];
       for (let i = 0; i < particleCount; i++) {
-        particles.push(new Particle());
+        particles.push(new Particle(canvas, ctx));
       }
+    };
+
+    const resizeCanvas = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      createParticles();
     };
 
     let animationFrameId: number;
