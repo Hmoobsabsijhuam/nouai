@@ -35,7 +35,13 @@ const generateAvatarFlow = ai.defineFlow(
     name: 'generateAvatarFlow',
     inputSchema: GenerateAvatarInputSchema,
     outputSchema: GenerateAvatarOutputSchema,
-    system: 'You are an AI assistant that specializes in creating unique, high-quality avatars. Generate a visually appealing avatar based on the user\'s prompt. The avatar should be suitable for a profile picture and should be in a 1:1 aspect ratio.',
+    messages: [
+      {
+        role: 'system',
+        content:
+          'You are an AI assistant that specializes in creating unique, high-quality avatars. Generate a visually appealing avatar based on the user\'s prompt. The avatar should be suitable for a profile picture and should be in a 1:1 aspect ratio.',
+      },
+    ],
   },
   async (input) => {
     const image = await openai.images.generate({

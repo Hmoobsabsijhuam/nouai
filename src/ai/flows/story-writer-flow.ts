@@ -30,7 +30,13 @@ export const storyWriterFlow = ai.defineFlow(
     name: 'storyWriterFlow',
     inputSchema: StoryWriterInputSchema,
     outputSchema: StoryWriterOutputSchema,
-    system: 'You are a multilingual AI assistant capable of writing stories from text prompts in various languages, including Hmong.',
+    messages: [
+      {
+        role: 'system',
+        content:
+          'You are a multilingual AI assistant capable of writing stories from text prompts in various languages, including Hmong.',
+      },
+    ],
   },
   async (input) => {
     const response = await openai.chat.completions.create({
