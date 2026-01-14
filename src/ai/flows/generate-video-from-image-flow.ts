@@ -32,13 +32,6 @@ const generateVideoFromImageFlow = ai.defineFlow(
     name: 'generateVideoFromImageFlow',
     inputSchema: GenerateVideoFromImageInputSchema,
     outputSchema: GenerateVideoFromImageOutputSchema,
-    messages: [
-      {
-        role: 'system',
-        content:
-          'You are an AI assistant that generates videos from a source image and a text prompt.',
-      },
-    ],
   },
   async (input) => {
     let { operation } = await ai.generate({

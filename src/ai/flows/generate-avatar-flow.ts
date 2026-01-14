@@ -35,18 +35,11 @@ const generateAvatarFlow = ai.defineFlow(
     name: 'generateAvatarFlow',
     inputSchema: GenerateAvatarInputSchema,
     outputSchema: GenerateAvatarOutputSchema,
-    messages: [
-      {
-        role: 'system',
-        content:
-          'You are an AI assistant that specializes in creating unique, high-quality avatars. Generate a visually appealing avatar based on the user\'s prompt. The avatar should be suitable for a profile picture and should be in a 1:1 aspect ratio.',
-      },
-    ],
   },
   async (input) => {
     const image = await openai.images.generate({
       model: 'dall-e-3',
-      prompt: `Generate an avatar of: ${input.prompt}`,
+      prompt: `A unique, high-quality avatar suitable for a profile picture, 1:1 aspect ratio. Generate an avatar of: ${input.prompt}`,
       n: 1,
       size: '1024x1024',
       response_format: 'b64_json',

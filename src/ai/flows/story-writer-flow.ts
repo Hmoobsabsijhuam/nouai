@@ -30,18 +30,18 @@ export const storyWriterFlow = ai.defineFlow(
     name: 'storyWriterFlow',
     inputSchema: StoryWriterInputSchema,
     outputSchema: StoryWriterOutputSchema,
-    messages: [
-      {
-        role: 'system',
-        content:
-          'You are a multilingual AI assistant capable of writing stories from text prompts in various languages, including Hmong.',
-      },
-    ],
   },
   async (input) => {
     const response = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
-      messages: [{ role: 'user', content: `Write a story about: ${input.prompt}` }],
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You are a multilingual AI assistant capable of writing stories from text prompts in various languages, including Hmong.',
+        },
+        { role: 'user', content: `Write a story about: ${input.prompt}` }
+    ],
     });
 
     const story = response.choices[0].message.content ?? '';

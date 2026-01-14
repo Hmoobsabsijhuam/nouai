@@ -32,13 +32,6 @@ const generateVideoFlow = ai.defineFlow(
     name: 'generateVideoFlow',
     inputSchema: GenerateVideoInputSchema,
     outputSchema: GenerateVideoOutputSchema,
-    messages: [
-      {
-        role: 'system',
-        content:
-          'You are a multilingual AI assistant capable of generating videos from text prompts in various languages, including Hmong.',
-      },
-    ],
   },
   async (input) => {
     let { operation } = await ai.generate({
