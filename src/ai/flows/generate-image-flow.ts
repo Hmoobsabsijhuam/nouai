@@ -7,6 +7,7 @@
  * - GenerateImageOutput - The return type for the generateImage function.
  */
 
+// Force a new commit to clear Netlify's build cache.
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import OpenAI from 'openai';
