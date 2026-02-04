@@ -23,7 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Home, Library, MoreHorizontal, Settings, Shield, Bot, LayoutGrid, ImageIcon, VideoIcon, Mic, LifeBuoy, LogOut, CreditCard, History } from 'lucide-react';
+import { Home, Library, MoreHorizontal, Settings, Shield, Bot, LayoutGrid, ImageIcon, VideoIcon, Mic, LifeBuoy, LogOut, CreditCard, History, PenSquare } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Logo } from '../icons/logo';
@@ -174,6 +174,16 @@ export function DashboardLayout({
               <SidebarGroup>
                 <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Studio</SidebarGroupLabel>
                 <SidebarMenu>
+                      <SidebarMenuItem>
+                          <SidebarMenuButton asChild isActive={pathname === '/story-writer'} tooltip="Story Writer">
+                              <Link href="/story-writer"><PenSquare /> <span>Story Writer</span></Link>
+                          </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem>
+                          <SidebarMenuButton asChild isActive={pathname === '/storyweaver'} tooltip="Story Weaver">
+                              <Link href="/storyweaver"><PenSquare /> <span>Story Weaver</span></Link>
+                          </SidebarMenuButton>
+                      </SidebarMenuItem>
                       <SidebarMenuItem>
                           <SidebarMenuButton asChild isActive={pathname === '/generate-image'} tooltip="Image Generation">
                               <Link href="/generate-image"><ImageIcon /> <span>Image Generation</span></Link>
